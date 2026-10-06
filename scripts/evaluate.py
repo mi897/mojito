@@ -16,7 +16,8 @@ import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import IKNet, leg  # noqa: E402
+import mojito  # noqa: E402
+from mojito import leg  # noqa: E402
 
 BLUE, ORANGE = "#2a78d6", "#eb6834"
 INK, INK2, MUTED, SURFACE, GRID = "#0b0b0b", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
@@ -46,10 +47,12 @@ def main():
     ap.add_argument("--weights", default="weights/ik_leg.npz")
     ap.add_argument("--log", default="results/training_log.json")
     ap.add_argument("--out", default="results")
+    ap.add_argument("--backend", choices=mojito.backend.BACKENDS, default=None,
+                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
-    net = IKNet.load(args.weights)
+    net = mojito.load_model(args.weights, backend=args.backend)
     cfg = net.cfg
     rng = np.random.default_rng(12345)  # never used in training
     n = 200_000

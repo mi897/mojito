@@ -44,7 +44,7 @@ plots, an animated demo and an interactive page.
 
 ## Stage 1 — whole body, still geometry
 
-**Status: built**, apart from the PyTorch port, which is on its own branch.
+**Status: built.**
 
 - Body-frame foot targets for a commanded body pose (height, shift, roll,
   pitch, yaw) with the feet planted. One shared leg network drives all four
@@ -54,7 +54,8 @@ plots, an animated demo and an interactive page.
   body away from the lifted foot and stays statically stable.
 - Across the posture, trot and crawl demos the network's worst foot error is
   0.29 mm and every target is inside the joint limits.
-- Port the model to PyTorch behind a backend switch (NumPy stays the default).
+- The leg network runs on NumPy (default) or PyTorch behind one switch, with
+  shared weight files.
 
 **Known gaps carried forward:** no physics, so balance, motor effort and grip
 are unchecked; body dimensions are placeholders; the crawl lean is fast.

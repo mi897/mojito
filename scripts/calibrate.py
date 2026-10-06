@@ -16,7 +16,8 @@ import numpy as np
 from scipy.optimize import least_squares
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import IKNet, leg  # noqa: E402
+import mojito  # noqa: E402
+from mojito import leg  # noqa: E402
 
 
 def main():
@@ -26,9 +27,11 @@ def main():
     ap.add_argument("--noise-mm", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--out", default="results/calibration.json")
+    ap.add_argument("--backend", choices=mojito.backend.BACKENDS, default=None,
+                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
 
-    net = IKNet.load(args.weights)
+    net = mojito.load_model(args.weights, backend=args.backend)
     cfg = net.cfg
     rng = np.random.default_rng(args.seed)
 

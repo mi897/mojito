@@ -3,6 +3,7 @@
     python scripts/train.py                       # defaults
     python scripts/train.py --tolerance 0.2       # wider range of leg lengths
     python scripts/train.py --upper 0.15 --lower 0.14 --abduction 0.05
+    python scripts/train.py --backend torch       # PyTorch instead of NumPy
 """
 import argparse
 import json
@@ -13,7 +14,8 @@ import time
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import Adam, IKNet, leg  # noqa: E402
+import mojito  # noqa: E402
+from mojito import leg  # noqa: E402
 
 
 def main():
@@ -29,11 +31,15 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="weights/ik_leg.npz")
     ap.add_argument("--log", default="results/training_log.json")
+    ap.add_argument("--device", default="cpu", help="torch backend only: cpu, cuda, mps")
+    ap.add_argument("--backend", choices=mojito.backend.BACKENDS, default=None,
+                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
 
     cfg = leg.LegConfig(np.array([args.abduction, args.upper, args.lower]), None, args.tolerance)
-    net = IKNet(cfg, args.hidden, seed=args.seed)
-    opt = Adam(net.params, lr=args.lr)
+    kwargs = dict(device=args.device) if mojito.backend.resolve(args.backend) == "torch" else {}
+    net = mojito.make_model(cfg, args.hidden, seed=args.seed, backend=args.backend, **kwargs)
+    print(f"backend: {net.backend}", flush=True)
     rng = np.random.default_rng(args.seed)
     val_p, val_len, _ = leg.sample_batch(np.random.default_rng(10_000 + args.seed), 20000, cfg)
 
@@ -41,8 +47,7 @@ def main():
     for step in range(1, args.steps + 1):
         lr = 1e-5 + 0.5 * (args.lr - 1e-5) * (1 + np.cos(np.pi * step / args.steps))
         p, lengths, _ = leg.sample_batch(rng, args.batch, cfg)
-        _, grads = net.loss_and_grads(p, lengths)
-        opt.step(grads, lr)
+        net.train_step(p, lengths, lr)
 
         if step % 500 == 0 or step == 1:
             err = np.linalg.norm(leg.forward(net.predict(val_p, val_len), val_len) - val_p, axis=1) * 1000
@@ -56,7 +61,7 @@ def main():
     os.makedirs(os.path.dirname(args.log) or ".", exist_ok=True)
     net.save(args.out)
     with open(args.log, "w") as f:
-        json.dump(dict(args=vars(args), log=log), f, indent=1)
+        json.dump(dict(args=dict(vars(args), backend=net.backend), log=log), f, indent=1)
     print(f"saved {args.out}")
 
 

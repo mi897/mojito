@@ -3,8 +3,9 @@
 Input : target foot position (3) + that leg's link lengths (3)
 Output: joint angles (3), squashed so they always lie inside the joint limits
 
-Plain NumPy with hand-written backpropagation, so the only dependency is
-NumPy and the trained network is a handful of matrices that can run anywhere.
+This module is the NumPy backend: hand-written backpropagation, no dependency
+beyond NumPy. mojito/torch_model.py is the PyTorch backend. Both share
+IKNetBase and the same weight files; mojito/backend.py picks between them.
 """
 from __future__ import annotations
 
@@ -15,10 +16,75 @@ import numpy as np
 from . import leg
 
 
-class IKNet:
-    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128), seed=0):
+class IKNetBase:
+    """What every backend shares: configuration, mirroring, and the weight file format.
+
+    A subclass provides predict(p, lengths), train_step(p, lengths, lr),
+    state() and _set_weights(W, b). Weights travel as NumPy arrays with W[i]
+    shaped (inputs, outputs), whatever the backend stores internally.
+    """
+
+    backend = None
+
+    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128)):
         self.cfg = cfg or leg.LegConfig()
         self.hidden = tuple(hidden)
+        lim = self.cfg.limits
+        self.q_mid = lim.mean(axis=1)
+        self.q_half = 0.5 * (lim[:, 1] - lim[:, 0])
+
+    def predict_leg(self, p, lengths, right: bool = False):
+        """As `predict`, for either side of the robot."""
+        if not right:
+            return self.predict(p, lengths)
+        return leg.mirror_angles(self.predict(leg.mirror_target(p), lengths))
+
+    def weights(self):
+        """(list of W, list of b) as NumPy arrays."""
+        d = self.state()
+        n = sum(1 for k in d if k.startswith("W"))
+        return [d[f"W{i}"] for i in range(n)], [d[f"b{i}"] for i in range(n)]
+
+    def _config_state(self) -> dict:
+        return dict(nominal=self.cfg.nominal, limits=self.cfg.limits,
+                    length_tolerance=np.array(self.cfg.length_tolerance))
+
+    def save(self, path):
+        np.savez(path, **self.state())
+
+    @classmethod
+    def load(cls, path, **kwargs):
+        d = np.load(path)
+        n_layers = sum(1 for k in d.files if k.startswith("W"))
+        cfg = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
+        hidden = tuple(d[f"W{i}"].shape[1] for i in range(n_layers - 1))
+        net = cls(cfg, hidden, **kwargs)
+        net._set_weights([d[f"W{i}"] for i in range(n_layers)], [d[f"b{i}"] for i in range(n_layers)])
+        return net
+
+    def to_json(self, digits: int = 6) -> str:
+        """Compact export for running the network outside Python."""
+        r = lambda a: np.round(np.asarray(a, dtype=float), digits).tolist()
+        W, b = self.weights()
+        return json.dumps(
+            {
+                "W": [r(w) for w in W],
+                "b": [r(x) for x in b],
+                "nominal": r(self.cfg.nominal),
+                "limits": r(self.cfg.limits),
+                "tolerance": self.cfg.length_tolerance,
+            },
+            separators=(",", ":"),
+        )
+
+
+class IKNet(IKNetBase):
+    """NumPy implementation with hand-written backpropagation."""
+
+    backend = "numpy"
+
+    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128), seed=0):
+        super().__init__(cfg, hidden)
         rng = np.random.default_rng(seed)
         sizes = (6,) + self.hidden + (3,)
         self.W = [
@@ -26,9 +92,12 @@ class IKNet:
         ]
         self.b = [np.zeros(b) for b in sizes[1:]]
         self.W[-1] *= 0.1  # start near the middle of the joint range
-        lim = self.cfg.limits
-        self.q_mid = lim.mean(axis=1)
-        self.q_half = 0.5 * (lim[:, 1] - lim[:, 0])
+        self._opt = None
+
+    def _set_weights(self, W, b):
+        self.W = [np.array(w, dtype=float) for w in W]
+        self.b = [np.array(x, dtype=float) for x in b]
+        self._opt = None
 
     # ---- parameters as one flat list, convenient for the optimiser ----
     @property
@@ -51,12 +120,6 @@ class IKNet:
     def predict(self, p, lengths):
         """Joint angles for canonical (left-leg) targets. Shapes (..., 3)."""
         return self._forward(self.features(p, lengths))[0]
-
-    def predict_leg(self, p, lengths, right: bool = False):
-        """As `predict`, for either side of the robot."""
-        if not right:
-            return self.predict(p, lengths)
-        return leg.mirror_angles(self.predict(leg.mirror_target(p), lengths))
 
     def loss_and_grads(self, p, lengths):
         """Mean squared foot-position error (in units of leg reach) and its gradient.
@@ -82,44 +145,19 @@ class IKNet:
                 delta = (delta @ self.W[i].T) * (1.0 - acts[i] ** 2)
         return loss, gW + gb
 
-    # ---- persistence ----
+    def train_step(self, p, lengths, lr: float) -> float:
+        """One Adam update on a batch. Returns the loss before the update."""
+        if self._opt is None:
+            self._opt = Adam(self.params, lr=lr)
+        loss, grads = self.loss_and_grads(p, lengths)
+        self._opt.step(grads, lr)
+        return loss
+
     def state(self) -> dict:
         d = {f"W{i}": w for i, w in enumerate(self.W)}
         d.update({f"b{i}": b for i, b in enumerate(self.b)})
-        d.update(
-            nominal=self.cfg.nominal,
-            limits=self.cfg.limits,
-            length_tolerance=np.array(self.cfg.length_tolerance),
-        )
+        d.update(self._config_state())
         return d
-
-    def save(self, path):
-        np.savez(path, **self.state())
-
-    @classmethod
-    def load(cls, path) -> "IKNet":
-        d = np.load(path)
-        n_layers = sum(1 for k in d.files if k.startswith("W"))
-        cfg = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
-        hidden = tuple(d[f"W{i}"].shape[1] for i in range(n_layers - 1))
-        net = cls(cfg, hidden)
-        net.W = [d[f"W{i}"] for i in range(n_layers)]
-        net.b = [d[f"b{i}"] for i in range(n_layers)]
-        return net
-
-    def to_json(self, digits: int = 6) -> str:
-        """Compact export for running the network outside Python."""
-        r = lambda a: np.round(np.asarray(a, dtype=float), digits).tolist()
-        return json.dumps(
-            {
-                "W": [r(w) for w in self.W],
-                "b": [r(b) for b in self.b],
-                "nominal": r(self.cfg.nominal),
-                "limits": r(self.cfg.limits),
-                "tolerance": self.cfg.length_tolerance,
-            },
-            separators=(",", ":"),
-        )
 
 
 class Adam:

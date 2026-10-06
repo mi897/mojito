@@ -1,0 +1,33 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [numpy, torch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Install PyTorch (CPU)
+        if: matrix.backend == 'torch'
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Unit tests
+        run: python -m unittest discover tests -v
+      - name: Short training run and scripts on this backend
+        env:
+          MOJITO_BACKEND: ${{ matrix.backend }}
+        run: |
+          python scripts/train.py --steps 1500 --out /tmp/ci.npz --log /tmp/ci.json
+          python scripts/calibrate.py --out /tmp/cal.json
+          python scripts/make_body_demos.py --no-gif
+          git diff --stat

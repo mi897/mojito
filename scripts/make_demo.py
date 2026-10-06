@@ -17,7 +17,8 @@ import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import IKNet, leg  # noqa: E402
+import mojito  # noqa: E402
+from mojito import leg  # noqa: E402
 
 BLUE, ORANGE, INK2, MUTED, SURFACE, GRID = "#2a78d6", "#eb6834", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
 
@@ -76,8 +77,10 @@ def make_html(net, template, path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--weights", default="weights/ik_leg.npz")
+    ap.add_argument("--backend", choices=mojito.backend.BACKENDS, default=None,
+                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
-    net = IKNet.load(args.weights)
+    net = mojito.load_model(args.weights, backend=args.backend)
     os.makedirs("results", exist_ok=True)
     make_gif(net, "results/step_demo.gif")
     make_html(net, "docs/demo_template.html", "docs/demo.html")

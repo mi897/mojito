@@ -100,9 +100,10 @@ standing 170 mm high.
 
 ```python
 import numpy as np
-from mojito import IKNet, body, gaits
+import mojito
+from mojito import body, gaits
 
-robot = body.Robot(IKNet.load("weights/ik_leg.npz"))   # or body.AnalyticSolver()
+robot = body.Robot(mojito.load_model("weights/ik_leg.npz"))  # or body.AnalyticSolver()
 home = robot.stance()                                  # feet under the hips, body frame
 
 # Posture: keep the feet where they are, tilt and twist the body.
@@ -118,10 +119,41 @@ q = robot.solve(feet)                                  # (100, 4, 3)
 robot.lengths[0] = [0.041, 0.118, 0.125]               # per-leg lengths, changeable at any time
 ```
 
+## NumPy or PyTorch
+
+The leg network has two interchangeable backends. **NumPy is the default** and
+needs nothing extra. PyTorch is optional and is only imported when asked for.
+
+| How | Example |
+|---|---|
+| One command | `python scripts/train.py --backend torch` (every script takes `--backend`) |
+| Whole shell session | `export MOJITO_BACKEND=torch` |
+| In code, for the process | `mojito.set_backend("torch")` |
+| In code, for one call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
+
+```python
+import mojito
+
+net = mojito.load_model("weights/ik_leg.npz")                   # NumPy unless told otherwise
+net = mojito.load_model("weights/ik_leg.npz", backend="torch")  # same file, PyTorch
+new = mojito.make_model(backend="torch", device="cuda")         # untrained, on a GPU
+```
+
+- Both backends use the same weight files, so a network trained with one runs
+  under the other, and both start from identical weights for a given seed.
+- `predict` takes and returns NumPy arrays on both, so the body, gait and demo
+  code does not care which is active.
+- For building larger PyTorch models, `net.angles(p, lengths)` and
+  `mojito.torch_model.forward_kinematics(q, lengths)` take tensors and are
+  differentiable.
+- PyTorch uses autograd where NumPy uses a hand-derived Jacobian. The tests
+  check the two give the same predictions, gradients and training path.
+
 ## Run it
 
 Needs Python 3.10+ with NumPy, SciPy, Matplotlib and Pillow
-(`pip install -r requirements.txt`). No GPU, no PyTorch.
+(`pip install -r requirements.txt`). No GPU needed. PyTorch is optional
+(`pip install torch`).
 
 ```bash
 python -m unittest discover tests     # kinematics and gradient checks
@@ -142,9 +174,10 @@ argument, one row per leg:
 
 ```python
 import numpy as np
-from mojito import IKNet, leg
+import mojito
+from mojito import leg
 
-net = IKNet.load("weights/ik_leg.npz")
+net = mojito.load_model("weights/ik_leg.npz")
 my_leg = np.array([0.042, 0.115, 0.128])        # abduction offset, upper, lower [m]
 target = np.array([0.03, 0.05, -0.18])          # foot position in the shoulder frame [m]
 
@@ -175,15 +208,17 @@ Joint limits live in `JOINT_LIMITS` in `mojito/leg.py`.
 - **Uniqueness.** The knee bends one way only and stops 0.3 rad short of
   straight, so each target has exactly one answer.
 
-The network is 3 hidden layers of 128 units (about 34,000 weights), written in
-NumPy with hand-derived gradients that the tests check against finite
+The network is 3 hidden layers of 128 units (about 34,000 weights). The NumPy
+backend uses hand-derived gradients that the tests check against finite
 differences.
 
 ## Layout
 
 ```
 mojito/leg.py       forward kinematics, Jacobian, closed-form IK, sampling
-mojito/model.py     the network, its gradients, Adam, save/load/export
+mojito/model.py     the network (NumPy backend), shared base class, Adam
+mojito/torch_model.py  the network (PyTorch backend)
+mojito/backend.py   backend switch: make_model, load_model, set_backend
 mojito/body.py      four legs on a body: frames, posture, per-leg solving
 mojito/gaits.py     trot and crawl foot trajectories, crawl lean, stability
 scripts/            train, evaluate, calibrate, make_demo, make_body_demos
