@@ -4,14 +4,18 @@ Robots that learn to move in their environment by themselves: a first idea of
 the task from simulation, then refinement from real interaction.
 
 The first robot is a quadruped with 12 degrees of freedom, 3 per leg. This
-repository currently holds **Stage 0**: a neural network that learns inverse
-kinematics for one leg, with the link lengths as inputs so one network covers
-a family of slightly different legs. The full roadmap is in
+repository holds two stages so far. The full roadmap is in
 [docs/PLAN.md](docs/PLAN.md).
+
+- **Stage 0**: a neural network that learns inverse kinematics for one leg,
+  with the link lengths as inputs so one network covers a family of slightly
+  different legs.
+- **Stage 1**: the whole body. Four legs driven by that one network, body
+  posture control with the feet planted, and scripted trot and crawl gaits.
 
 ![Three leg sizes tracing the same step](results/step_demo.gif)
 
-## Results
+## Stage 0 results
 
 Placeholder leg: 40 mm abduction offset, 120 mm upper, 120 mm lower (240 mm
 reach). Each length varied independently by ±10% in training. Tested on
@@ -50,6 +54,70 @@ passes the lengths to the same network, with no retraining:
 | ![](results/error_distribution.png) | ![](results/error_vs_length.png) |
 | ![](results/error_map.png) | ![](results/training_curve.png) |
 
+## Stage 1: whole body
+
+Everything drawn in these animations comes from the network's joint angles
+pushed through forward kinematics. Only the orange markers are the requested
+foot positions. The side panels show the command, the network's output for one
+leg, and the worst foot error at each instant.
+
+**Twisting and turning in place.** The feet stay planted while the body is
+commanded to roll, pitch, yaw and bob, then all at once.
+
+![Body posture demo](results/posture_demo.gif)
+
+**Trot** (diagonal pairs together, two feet down) and **crawl** (one foot up at
+a time, body leaning away from it).
+
+| | |
+|---|---|
+| ![](results/trot_forward.gif) | ![](results/trot_turn.gif) |
+| ![](results/crawl_forward.gif) | |
+
+| Demo | Worst foot error | Median | Closest joint to its limit | Feet down |
+|---|---|---|---|---|
+| Posture: roll ±18°, pitch ±14°, yaw ±22°, height ±30 mm | 0.22 mm | 0.11 mm | 15° | 4 |
+| Trot forward, 0.15 m/s | 0.25 mm | 0.14 mm | 23° | 2 |
+| Trot turning on the spot, 1.2 rad/s | 0.21 mm | 0.10 mm | 23° | 2 |
+| Crawl forward, 0.04 m/s | 0.29 mm | 0.12 mm | 20° | 3 or 4 |
+
+- Every requested foot position in all four demos is inside the joint limits,
+  and the network's angles never differ from the exact solution by more than
+  0.14°.
+- Grounded feet do not slide: the gait generator holds each stance foot fixed
+  in the world for any mix of forward, sideways and turning speed (tested to
+  a nanometre with exact IK).
+- In the crawl the body centre stays at least 38 mm inside the triangle of
+  grounded feet.
+
+**What this does not show.** These are geometric reference motions. There is
+no physics, so nothing here says the robot would balance, that the motors are
+strong enough, or that the feet would grip. The trot has only two feet down
+and is balanced dynamically on a real robot, which geometry cannot check. The
+crawl lean is also quick (the body shifts 50 mm in 0.2 s). Body dimensions are
+placeholders: shoulders 240 mm apart front to back and 100 mm side to side,
+standing 170 mm high.
+
+```python
+import numpy as np
+from mojito import IKNet, body, gaits
+
+robot = body.Robot(IKNet.load("weights/ik_leg.npz"))   # or body.AnalyticSolver()
+home = robot.stance()                                  # feet under the hips, body frame
+
+# Posture: keep the feet where they are, tilt and twist the body.
+targets = body.apply_posture(home, offset=(0, 0, 0.02), roll=0.2, yaw=0.3)
+q = robot.solve(targets)                               # (4, 3) joint angles, FL FR RL RR
+print(robot.tracking_error(targets, q) * 1000)         # mm per foot
+
+# Gait: foot targets for a velocity command.
+t = np.linspace(0, 1, 100)
+feet, contact, _ = gaits.foot_targets(gaits.TROT, t, home, velocity=(0.15, 0.0), yaw_rate=0.3)
+q = robot.solve(feet)                                  # (100, 4, 3)
+
+robot.lengths[0] = [0.041, 0.118, 0.125]               # per-leg lengths, changeable at any time
+```
+
 ## Run it
 
 Needs Python 3.10+ with NumPy, SciPy, Matplotlib and Pillow
@@ -61,6 +129,7 @@ python scripts/train.py               # about 12 minutes on 2 CPU cores
 python scripts/evaluate.py            # results/metrics.json and the plots
 python scripts/calibrate.py           # adapt to a leg with unknown lengths
 python scripts/make_demo.py           # results/step_demo.gif and docs/demo.html
+python scripts/make_body_demos.py     # posture, trot and crawl animations and body_metrics.json
 ```
 
 Open `docs/demo.html` in a browser to drag the foot target and change the link
@@ -115,7 +184,9 @@ differences.
 ```
 mojito/leg.py       forward kinematics, Jacobian, closed-form IK, sampling
 mojito/model.py     the network, its gradients, Adam, save/load/export
-scripts/            train, evaluate, calibrate, make_demo
+mojito/body.py      four legs on a body: frames, posture, per-leg solving
+mojito/gaits.py     trot and crawl foot trajectories, crawl lean, stability
+scripts/            train, evaluate, calibrate, make_demo, make_body_demos
 tests/              unit tests
 weights/ik_leg.npz  trained network
 results/            metrics, plots, animation

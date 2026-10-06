@@ -1,0 +1,79 @@
+{
+ "posture_demo": {
+  "frames": 180,
+  "all_targets_within_joint_limits": true,
+  "foot_error_mm": {
+   "median": 0.10959551729176378,
+   "p95": 0.17851850159448163,
+   "max": 0.2186533868194756
+  },
+  "joint_limit_margin_deg": 15.58037898118355,
+  "max_joint_difference_from_exact_deg": 0.13357440735880446
+ },
+ "trot_forward": {
+  "frames": 60,
+  "all_targets_within_joint_limits": true,
+  "foot_error_mm": {
+   "median": 0.1397394204933338,
+   "p95": 0.24710828015596803,
+   "max": 0.24911508918186254
+  },
+  "joint_limit_margin_deg": 23.288497498738415,
+  "max_joint_difference_from_exact_deg": 0.09173549567369432,
+  "gait": "trot",
+  "period_s": 0.5,
+  "duty": 0.5,
+  "velocity_m_s": [
+   0.15,
+   0.0
+  ],
+  "yaw_rate_rad_s": 0.0,
+  "feet_down_min": 2,
+  "stance_foot_drift_mm_per_frame_max": 0.06757460906966456,
+  "body_centre_inside_support_mm_min": -11.250000000000007
+ },
+ "trot_turn": {
+  "frames": 90,
+  "all_targets_within_joint_limits": true,
+  "foot_error_mm": {
+   "median": 0.10160572210586008,
+   "p95": 0.19779427509163822,
+   "max": 0.21290901655395167
+  },
+  "joint_limit_margin_deg": 22.741888189233062,
+  "max_joint_difference_from_exact_deg": 0.07673682723744109,
+  "gait": "trot",
+  "period_s": 0.5,
+  "duty": 0.5,
+  "velocity_m_s": [
+   0.0,
+   0.0
+  ],
+  "yaw_rate_rad_s": 1.2,
+  "feet_down_min": 2,
+  "stance_foot_drift_mm_per_frame_max": 0.06361662530792508,
+  "body_centre_inside_support_mm_min": -0.0
+ },
+ "crawl_forward": {
+  "frames": 80,
+  "all_targets_within_joint_limits": true,
+  "foot_error_mm": {
+   "median": 0.12040905664111777,
+   "p95": 0.16584389014886222,
+   "max": 0.2866565107621558
+  },
+  "joint_limit_margin_deg": 20.41040835407997,
+  "max_joint_difference_from_exact_deg": 0.12094088340142352,
+  "gait": "crawl",
+  "period_s": 2.0,
+  "duty": 0.85,
+  "velocity_m_s": [
+   0.04,
+   0.0
+  ],
+  "yaw_rate_rad_s": 0.0,
+  "feet_down_min": 3,
+  "stance_foot_drift_mm_per_frame_max": 0.18599831076569065,
+  "body_centre_inside_support_mm_min": 37.71282839754364
+ }
+}
