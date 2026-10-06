@@ -1,0 +1,32 @@
+{
+ "measurements": 30,
+ "noise_mm": 1.0,
+ "true_lengths_mm": [
+  42.4,
+  114.0,
+  129.6
+ ],
+ "estimated_lengths_mm": [
+  42.6,
+  113.63,
+  129.74
+ ],
+ "true_offsets_deg": [
+  2.0,
+  -3.0,
+  4.0
+ ],
+ "estimated_offsets_deg": [
+  1.82,
+  -3.1,
+  4.31
+ ],
+ "error_before_mm": {
+  "median": 16.11931914800458,
+  "p95": 18.603065266126634
+ },
+ "error_after_mm": {
+  "median": 0.5589161204170823,
+  "p95": 0.7443418481204703
+ }
+}

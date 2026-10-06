@@ -1,0 +1,243 @@
+<title>Mojito Leg IK</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a bench instrument. Two orthographic views of one leg on the left, the controls and readouts in a column on the right; stacks on a phone. */
+:root {
+  --bg: #f4f6f8; --panel: #ffffff; --line: #d9dee5; --grid: #e8ecf1;
+  --fg: #12171d; --fg2: #4b5663; --muted: #7c8794;
+  --learned: #2a78d6; --exact: #7c8794; --target: #eb6834; --ok: #0c8a0c; --warn: #b4530a;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1317; --panel: #171c22; --line: #2a323c; --grid: #20272f;
+    --fg: #eef2f6; --fg2: #b3bdc9; --muted: #7c8794;
+    --learned: #4a94ea; --exact: #8c97a4; --target: #f07a48; --ok: #3fc03f; --warn: #f0a05a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1317; --panel: #171c22; --line: #2a323c; --grid: #20272f;
+  --fg: #eef2f6; --fg2: #b3bdc9; --muted: #7c8794;
+  --learned: #4a94ea; --exact: #8c97a4; --target: #f07a48; --ok: #3fc03f; --warn: #f0a05a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 40px; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 6px; }
+h1 { font-size: 24px; font-weight: 600; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+header p { margin: 0; color: var(--fg2); max-width: 68ch; }
+.bench { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.views { flex: 1 1 520px; min-width: 0; display: grid; grid-template-columns: 5fr 3fr; gap: 12px; align-items: start; }
+@media (max-width: 560px) { .views { grid-template-columns: 1fr; } }
+.view { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.view h2 { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg2); margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+.side-panel { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+legend { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg2); padding: 0; margin-bottom: 12px; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; }
+.ctl label { color: var(--fg); }
+.ctl output { font: 500 13px var(--mono); font-variant-numeric: tabular-nums; color: var(--fg2); }
+.ctl input { grid-column: 1 / -1; width: 100%; accent-color: var(--learned); }
+.ctl input:focus-visible, button:focus-visible { outline: 2px solid var(--learned); outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: 500 14px var(--sans); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--learned); color: var(--learned); }
+table { width: 100%; border-collapse: collapse; font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 5px 0 5px 10px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; padding-left: 0; font-family: var(--sans); font-size: 14px; }
+thead th { font-weight: 500; color: var(--fg2); }
+.sw { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+.readout { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.big { font: 500 30px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.readout span:last-child { color: var(--fg2); }
+#status { font-size: 14px; color: var(--ok); min-height: 1.5em; }
+#status.warn { color: var(--warn); }
+footer { color: var(--fg2); font-size: 14px; max-width: 72ch; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mojito Leg IK</h1>
+    <p>A neural network picks the three joint angles that put the foot on the orange target. Drag the target in either view, then change the link lengths: the same network handles the new leg with no retraining.</p>
+  </header>
+
+  <div class="bench">
+    <div class="views">
+      <div class="view side"><h2>Side view · x forward, z up</h2><canvas id="side" aria-label="Side view of the leg; drag to move the target"></canvas></div>
+      <div class="view"><h2>Front view · y out, z up</h2><canvas id="front" aria-label="Front view of the leg; drag to move the target"></canvas></div>
+    </div>
+
+    <div class="side-panel">
+      <div>
+        <div class="readout"><span class="big" id="err">0.00 mm</span><span>foot to target, learned IK</span></div>
+        <div id="status" role="status"></div>
+      </div>
+
+      <fieldset>
+        <legend>Leg geometry</legend>
+        <div class="ctl"><label for="lu">Upper leg</label><output id="lu_o"></output><input id="lu" type="range" step="0.5"></div>
+        <div class="ctl"><label for="ll">Lower leg</label><output id="ll_o"></output><input id="ll" type="range" step="0.5"></div>
+        <div class="ctl"><label for="la">Abduction offset</label><output id="la_o"></output><input id="la" type="range" step="0.25"></div>
+        <div class="row">
+          <button id="reset" type="button">Reset lengths</button>
+          <button id="trace" type="button" aria-pressed="false">Trace a step</button>
+        </div>
+      </fieldset>
+
+      <table>
+        <thead><tr><th>Joint angle</th><th><span class="sw" style="background:var(--learned)"></span>learned</th><th><span class="sw" style="background:var(--exact)"></span>exact</th></tr></thead>
+        <tbody>
+          <tr><td>Abduction</td><td id="n0"></td><td id="a0"></td></tr>
+          <tr><td>Hip pitch</td><td id="n1"></td><td id="a1"></td></tr>
+          <tr><td>Knee</td><td id="n2"></td><td id="a2"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>The blue leg is the network's answer; the thin grey leg is the closed-form solution for the same target. The network was trained on legs within ±<span id="tol"></span>% of the nominal lengths, and the sliders go to twice that so you can watch it degrade outside the range it has seen. Placeholder dimensions throughout.</footer>
+</div>
+
+<script>
+const NET = /*WEIGHTS*/;
+const NOM = NET.nominal, LIM = NET.limits, REACH = NOM[1] + NOM[2], TOL = NET.tolerance;
+const $ = id => document.getElementById(id);
+
+function predict(p, L) {
+  let x = [p[0] / REACH, p[1] / REACH, p[2] / REACH,
+           (L[0] / NOM[0] - 1) / TOL, (L[1] / NOM[1] - 1) / TOL, (L[2] / NOM[2] - 1) / TOL];
+  for (let k = 0; k < NET.W.length; k++) {
+    const W = NET.W[k], b = NET.b[k], y = b.slice();
+    for (let i = 0; i < x.length; i++) { const xi = x[i], Wi = W[i]; for (let j = 0; j < y.length; j++) y[j] += xi * Wi[j]; }
+    x = y.map(Math.tanh);
+  }
+  return x.map((t, j) => (LIM[j][0] + LIM[j][1]) / 2 + (LIM[j][1] - LIM[j][0]) / 2 * t);
+}
+function points(q, L) {
+  const [la, lu, ll] = L, s1 = Math.sin(q[0]), c1 = Math.cos(q[0]);
+  const hk = lu * Math.cos(q[1]), h = hk + ll * Math.cos(q[1] + q[2]);
+  return [[0, 0, 0], [0, la * c1, la * s1],
+          [-lu * Math.sin(q[1]), la * c1 + hk * s1, la * s1 - hk * c1],
+          [-lu * Math.sin(q[1]) - ll * Math.sin(q[1] + q[2]), la * c1 + h * s1, la * s1 - h * c1]];
+}
+function exact(p, L) {
+  const [la, lu, ll] = L, [x, y, z] = p;
+  const h = Math.sqrt(Math.max(y * y + z * z - la * la, 0));
+  const q1 = Math.atan2(z, y) + Math.atan2(h, la);
+  const c = (x * x + h * h - lu * lu - ll * ll) / (2 * lu * ll);
+  const q3 = -Math.acos(Math.min(1, Math.max(-1, c)));
+  const q2 = Math.atan2(-x, h) - Math.atan2(ll * Math.sin(q3), lu + ll * Math.cos(q3));
+  return [q1, q2, q3];
+}
+
+const state = { L: NOM.slice(), p: points([0, 0.75, -1.5], NOM)[3], tracing: false, t: 0 };
+const VIEWS = {
+  side:  { el: $("side"),  h: 0, v: 2, hmin: -0.30, hmax: 0.30 },
+  front: { el: $("front"), h: 1, v: 2, hmin: -0.14, hmax: 0.22 },
+};
+const VMIN = -0.31, VMAX = 0.05;
+
+function fit(view) {
+  const c = view.el, w = c.clientWidth, dpr = window.devicePixelRatio || 1;
+  view.scale = w / (view.hmax - view.hmin);
+  const hpx = Math.round((VMAX - VMIN) * view.scale);
+  c.style.height = hpx + "px";
+  c.width = Math.round(w * dpr); c.height = Math.round(hpx * dpr);
+  view.ctx = c.getContext("2d"); view.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  view.w = w; view.hpx = hpx;
+}
+const X = (view, m) => (m - view.hmin) * view.scale;
+const Y = (view, m) => (VMAX - m) * view.scale;
+
+function drawLeg(view, pts, color, width, joints) {
+  const g = view.ctx;
+  g.strokeStyle = color; g.lineWidth = width; g.lineCap = "round"; g.lineJoin = "round";
+  g.beginPath();
+  pts.forEach((p, i) => { const x = X(view, p[view.h]), y = Y(view, p[view.v]); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke();
+  if (joints) { g.fillStyle = color; pts.forEach(p => { g.beginPath(); g.arc(X(view, p[view.h]), Y(view, p[view.v]), width * 0.9, 0, 7); g.fill(); }); }
+}
+
+function render() {
+  const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
+  const qn = predict(state.p, state.L), qa = exact(state.p, state.L);
+  const pn = points(qn, state.L), pa = points(qa, state.L);
+  for (const view of Object.values(VIEWS)) {
+    const g = view.ctx; g.clearRect(0, 0, view.w, view.hpx);
+    g.strokeStyle = col("--grid"); g.lineWidth = 1; g.beginPath();
+    for (let m = Math.ceil(view.hmin / 0.05) * 0.05; m < view.hmax; m += 0.05) { g.moveTo(X(view, m), 0); g.lineTo(X(view, m), view.hpx); }
+    for (let m = Math.ceil(VMIN / 0.05) * 0.05; m < VMAX; m += 0.05) { g.moveTo(0, Y(view, m)); g.lineTo(view.w, Y(view, m)); }
+    g.stroke();
+    g.fillStyle = col("--muted"); g.font = "11px " + col("--mono");
+    g.fillText("50 mm grid", 8, view.hpx - 8);
+    drawLeg(view, pa, col("--exact"), 2, false);
+    drawLeg(view, pn, col("--learned"), 5, true);
+    const tx = X(view, state.p[view.h]), ty = Y(view, state.p[view.v]);
+    g.strokeStyle = col("--target"); g.lineWidth = 2;
+    g.beginPath(); g.arc(tx, ty, 9, 0, 7); g.moveTo(tx - 14, ty); g.lineTo(tx + 14, ty); g.moveTo(tx, ty - 14); g.lineTo(tx, ty + 14); g.stroke();
+  }
+  const e = Math.hypot(pn[3][0] - state.p[0], pn[3][1] - state.p[1], pn[3][2] - state.p[2]) * 1000;
+  $("err").textContent = e.toFixed(2) + " mm";
+  const deg = v => (v * 180 / Math.PI).toFixed(1) + "°";
+  for (let j = 0; j < 3; j++) { $("n" + j).textContent = deg(qn[j]); $("a" + j).textContent = deg(qa[j]); }
+  const fa = points(qa, state.L)[3];
+  const reachable = Math.hypot(fa[0] - state.p[0], fa[1] - state.p[1], fa[2] - state.p[2]) < 1e-6
+    && qa.every((v, j) => v >= LIM[j][0] - 1e-9 && v <= LIM[j][1] + 1e-9);
+  const outside = state.L.some((v, j) => Math.abs(v / NOM[j] - 1) > TOL + 1e-9);
+  const s = $("status");
+  s.className = reachable && !outside ? "" : "warn";
+  s.textContent = !reachable ? "Target is outside what the joint limits allow, so no pose reaches it."
+    : outside ? "Leg lengths are outside the trained range." : "Target reachable, leg within trained range.";
+}
+
+function setLengths() {
+  state.L = [+$("la").value / 1000, +$("lu").value / 1000, +$("ll").value / 1000];
+  $("la_o").textContent = (+$("la").value).toFixed(1) + " mm";
+  $("lu_o").textContent = (+$("lu").value).toFixed(1) + " mm";
+  $("ll_o").textContent = (+$("ll").value).toFixed(1) + " mm";
+  render();
+}
+[["la", 0], ["lu", 1], ["ll", 2]].forEach(([id, j]) => {
+  const el = $(id), mm = NOM[j] * 1000;
+  el.min = (mm * (1 - 2 * TOL)).toFixed(2); el.max = (mm * (1 + 2 * TOL)).toFixed(2); el.value = mm;
+  el.addEventListener("input", setLengths);
+});
+$("reset").addEventListener("click", () => { ["la", "lu", "ll"].forEach((id, j) => $(id).value = NOM[j] * 1000); setLengths(); });
+$("tol").textContent = Math.round(TOL * 100);
+
+for (const view of Object.values(VIEWS)) {
+  const move = ev => {
+    const r = view.el.getBoundingClientRect();
+    state.p[view.h] = view.hmin + (ev.clientX - r.left) / view.scale;
+    state.p[view.v] = VMAX - (ev.clientY - r.top) / view.scale;
+    render();
+  };
+  view.el.addEventListener("pointerdown", ev => { stopTrace(); view.el.setPointerCapture(ev.pointerId); move(ev); });
+  view.el.addEventListener("pointermove", ev => { if (ev.buttons || ev.pointerType === "touch") { if (view.el.hasPointerCapture(ev.pointerId)) move(ev); } });
+}
+
+let raf = 0;
+function stopTrace() { state.tracing = false; cancelAnimationFrame(raf); $("trace").setAttribute("aria-pressed", "false"); }
+function tick() {
+  state.t += 0.02;
+  const u = state.t % (2 * Math.PI), swing = Math.sin(u) > 0;
+  state.p = [0.07 * Math.cos(u), state.L[0] + 0.01, -0.17 + (swing ? 0.05 * Math.sin(u) : 0)];
+  render();
+  if (state.tracing) raf = requestAnimationFrame(tick);
+}
+$("trace").addEventListener("click", () => {
+  if (state.tracing) return stopTrace();
+  state.tracing = true; $("trace").setAttribute("aria-pressed", "true"); tick();
+});
+
+function layout() { Object.values(VIEWS).forEach(fit); render(); }
+window.addEventListener("resize", layout);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+Object.values(VIEWS).forEach(fit); setLengths();
+</script>
