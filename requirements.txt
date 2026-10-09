@@ -2,3 +2,5 @@ numpy
 scipy
 matplotlib
 pillow
+# Optional, only for the PyTorch backend:
+# torch

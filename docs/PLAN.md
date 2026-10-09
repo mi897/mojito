@@ -44,7 +44,7 @@ plots, an animated demo and an interactive page.
 
 ## Stage 1 — whole body, still geometry
 
-**Status: built**, apart from the PyTorch port, which is on its own branch.
+**Status: built.**
 
 - Body-frame foot targets for a commanded body pose (height, shift, roll,
   pitch, yaw) with the feet planted. One shared leg network drives all four
@@ -54,10 +54,24 @@ plots, an animated demo and an interactive page.
   body away from the lifted foot and stays statically stable.
 - Across the posture, trot and crawl demos the network's worst foot error is
   0.29 mm and every target is inside the joint limits.
-- Port the model to PyTorch behind a backend switch (NumPy stays the default).
+- The leg network runs on NumPy (default) or PyTorch behind one switch, with
+  shared weight files.
 
 **Known gaps carried forward:** no physics, so balance, motor effort and grip
 are unchecked; body dimensions are placeholders; the crawl lean is fast.
+
+## Robot description — URDF as the single source of truth (done)
+
+The robot's geometry lives in a URDF, not in Python, so other tools and languages
+can read it. `mojito/urdf.py` parses it, `mojito/spec.py` derives the network's
+description from it (and checks saved weights against it), `mojito/kinematics.py`
+runs any serial chain with NumPy or torch, and `IKNet` is sized from the chain.
+Any number of limbs, any number of joints per limb; limbs with the same structure
+share a network, mirrored limbs reuse it with verified sign flips.
+
+Not done yet: gaits for robots other than the four-legged one (`gaits.py` still
+assumes FL/FR/RL/RR), a JavaScript port of the spec layer for the browser demo, and
+resolving redundancy for limbs with more than 3 joints (Stage 2).
 
 ## Stage 2 — physics simulation
 

@@ -104,7 +104,7 @@ footer { color: var(--fg2); font-size: 14px; max-width: 72ch; }
 
 <script>
 const NET = /*WEIGHTS*/;
-const NOM = NET.nominal, LIM = NET.limits, REACH = NOM[1] + NOM[2], TOL = NET.tolerance;
+const NOM = NET.nominal, LIM = NET.limits, REACH = NET.reach || NOM[1] + NOM[2], TOL = NET.tolerance;
 const $ = id => document.getElementById(id);
 
 function predict(p, L) {

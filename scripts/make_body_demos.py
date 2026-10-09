@@ -26,7 +26,8 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import IKNet, body, gaits  # noqa: E402
+import mojito  # noqa: E402
+from mojito import body, gaits  # noqa: E402
 
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, INK2, MUTED, SURFACE, GRID = "#0b0b0b", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
@@ -205,8 +206,10 @@ def main():
     ap.add_argument("--weights", default="weights/ik_leg.npz")
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--no-gif", action="store_true", help="compute the metrics only")
+    ap.add_argument("--backend", choices=mojito.backend.BACKENDS, default=None,
+                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
-    robot = body.Robot(IKNet.load(args.weights))
+    robot = body.Robot(mojito.load_model(args.weights, backend=args.backend))
     reference = body.Robot(body.AnalyticSolver(), robot.lengths)
 
     demos = {
