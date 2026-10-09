@@ -52,11 +52,12 @@ docs/PLAN.md           roadmap;  docs/demo.html  interactive leg demo (generated
 
 ```bash
 python -m unittest discover tests          # all tests; PyTorch ones skip if torch is absent
-python scripts/train.py                    # about 12 min on 2 CPU cores, writes weights/ik_leg.npz
+python scripts/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
 python scripts/evaluate.py                 # results/metrics.json and plots
 python scripts/calibrate.py                # results/calibration.json
 python scripts/make_demo.py                # results/step_demo.gif, docs/demo.html
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
+python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
 ```
 
 Every script takes `--backend numpy|torch`. The default is `$MOJITO_BACKEND`,
@@ -72,9 +73,20 @@ else NumPy.
   (`leg.mirror_target`, `leg.mirror_angles`, `IKNet.predict_leg(right=True)`).
 - **Body frame:** origin at the centre of the four shoulders, x forward,
   y left, z up. Rotation is `Rz(yaw) Ry(pitch) Rx(roll)`, body to world.
-- **Leg order is always FL, FR, RL, RR.** Arrays are `(..., 4, 3)`.
-- **Link lengths are arguments, never module constants.** Functions take
-  `lengths` as `(..., 3)` = abduction offset, upper, lower, so a batch can
+- **Leg order is always FL, FR, RL, RR** in `body.Robot` and `gaits`. Arrays
+  are `(..., 4, 3)`. `body.URDFRobot` instead uses dicts keyed by limb name
+  (the hexapod has FL, FR, ML, MR, RL, RR) and has no gaits.
+- **The URDF is the source of truth for geometry.** Limb structure, axes,
+  limits and the number of free lengths come from `robots/*.urdf` (plus the
+  JSON manifest) via `mojito/spec.py`, not from Python constants. Weight files
+  embed the limb spec; loading them against a different URDF raises
+  `SpecMismatch`. The example URDFs in `robots/` come from the generators
+  in `mojito/robots.py`, so change the generator and regenerate rather than
+  hand-editing both. Joint-limit changes need retraining;
+  link-length changes do not.
+- **Link lengths are arguments, never module constants.** For the built-in
+  3-joint leg, functions take `lengths` as `(..., 3)` = abduction offset,
+  upper, lower (other URDF limbs have as many as the spec says), so a batch can
   hold different legs. `Robot.lengths` is `(4, 3)` and may be changed at any
   time. Keep it that way: training on varied lengths depends on it.
 - **Joint angles:** `q = (abduction, hip pitch, knee)`. The knee bends one way
