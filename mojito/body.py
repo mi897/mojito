@@ -125,3 +125,84 @@ def to_world(points_body, position=(0.0, 0.0, 0.0), roll=0.0, pitch=0.0, yaw=0.0
     """Body-frame points (..., N, 3) expressed in the world for a body at the given pose."""
     R = rotation(roll, pitch, yaw)
     return np.einsum("...ij,...kj->...ki", R, np.asarray(points_body, float)) + np.asarray(position, float)[..., None, :]
+
+
+class URDFRobot:
+    """Whole-body kinematics for any robot described by a URDF (any number of limbs, any DoF).
+
+    Built from a `spec.RobotSpec`. `solvers` maps each model group to anything with
+    predict(p, params) -> q for that group's canonical limb (a trained IKNet, or
+    `limb.numeric_ik`-based solver); a single solver is accepted when there is one group.
+    The body frame is the URDF base link's frame. Limbs keep the order of the manifest.
+
+    `params` maps limb name -> link lengths and starts from the URDF values.
+    It is a plain dict: update it at any time, for example with calibrated lengths.
+    """
+
+    def __init__(self, robot, solvers):
+        self.spec = robot
+        if not isinstance(solvers, dict):
+            if len(robot.groups) != 1:
+                raise ValueError(f"robot has {len(robot.groups)} model groups; pass solvers as {{group: model}}")
+            solvers = {next(iter(robot.groups)): solvers}
+        missing = set(robot.groups) - set(solvers)
+        if missing:
+            raise ValueError(f"no solver for group(s) {sorted(missing)}")
+        self.solvers = solvers
+        self.names = list(robot.limbs)
+        self.params = robot.params()
+        self._group = {m.name: g for g in robot.groups.values() for m in g.members}
+        self._member = {m.name: m for g in robot.groups.values() for m in g.members}
+
+    def limb(self, name):
+        return self.spec.limbs[name]
+
+    def _to_limb_frame(self, name, p_body):
+        l = self.limb(name)
+        return (np.asarray(p_body, float) - l.mount_t) @ l.mount_R  # R^T applied row-wise
+
+    def _from_limb_frame(self, name, p_limb):
+        l = self.limb(name)
+        return np.asarray(p_limb, float) @ l.mount_R.T + l.mount_t
+
+    def stance(self, height=STAND_HEIGHT) -> dict:
+        """Feet under each limb's zero pose, at `height` below the base. name -> (3,)."""
+        out = {}
+        for n in self.names:
+            l = self.limb(n)
+            foot = self._from_limb_frame(n, l.forward(np.zeros(l.dof), self.params[n]))
+            foot[2] = -height
+            out[n] = foot
+        return out
+
+    def solve(self, feet_body: dict) -> dict:
+        """Joint values per limb for body-frame tip targets (name -> (..., 3))."""
+        out = {}
+        for n in self.names:
+            m, g = self._member[n], self._group[n]
+            p = self._to_limb_frame(n, feet_body[n])
+            if m.mirror is not None:
+                p = m.mirror.target(p)
+            q = self.solvers[g.name].predict(p, self.params[n])
+            out[n] = m.mirror.angles(q) if m.mirror is not None else q
+        return out
+
+    def joint_points(self, q: dict) -> dict:
+        """Origin, joints and tip of every limb in the body frame. name -> (..., dof + 2, 3)."""
+        return {n: self._from_limb_frame(n, self.limb(n).points(np.asarray(q[n], float), self.params[n]))
+                for n in self.names}
+
+    def feet(self, q: dict) -> dict:
+        return {n: p[..., -1, :] for n, p in self.joint_points(q).items()}
+
+    def tracking_error(self, feet_body: dict, q: dict | None = None) -> dict:
+        """Distance in metres between requested and achieved tips. name -> (...,)."""
+        q = self.solve(feet_body) if q is None else q
+        f = self.feet(q)
+        return {n: np.linalg.norm(f[n] - np.asarray(feet_body[n], float), axis=-1) for n in self.names}
+
+    def limit_margin(self, q: dict) -> dict:
+        """Smallest distance from any joint to its limit, per limb."""
+        return {n: np.minimum(np.asarray(q[n], float) - self.limb(n).limits[:, 0],
+                              self.limb(n).limits[:, 1] - np.asarray(q[n], float)).min(axis=-1)
+                for n in self.names}

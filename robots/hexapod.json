@@ -1,0 +1,43 @@
+{
+  "length_tolerance": 0.1,
+  "limbs": [
+    {
+      "name": "FL",
+      "tip": "FL_foot",
+      "group": "leg"
+    },
+    {
+      "name": "FR",
+      "tip": "FR_foot",
+      "group": "leg",
+      "mirror_of": "FL"
+    },
+    {
+      "name": "ML",
+      "tip": "ML_foot",
+      "group": "leg"
+    },
+    {
+      "name": "MR",
+      "tip": "MR_foot",
+      "group": "leg",
+      "mirror_of": "ML"
+    },
+    {
+      "name": "RL",
+      "tip": "RL_foot",
+      "group": "leg"
+    },
+    {
+      "name": "RR",
+      "tip": "RR_foot",
+      "group": "leg",
+      "mirror_of": "RL"
+    }
+  ],
+  "groups": {
+    "leg": {
+      "reach": 0.24
+    }
+  }
+}

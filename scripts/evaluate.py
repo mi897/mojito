@@ -34,7 +34,14 @@ plt.rcParams.update({
 
 
 def errors_mm(net, p, lengths):
-    return np.linalg.norm(leg.forward(net.predict(p, lengths), lengths) - p, axis=1) * 1000
+    return np.linalg.norm(net.cfg.forward(net.predict(p, lengths), lengths) - p, axis=1) * 1000
+
+
+def baseline_ik(cfg, p, lengths):
+    """Exact IK where a closed form exists (the 3-joint leg), else the numeric solver."""
+    if leg.is_leg(cfg):
+        return leg.analytic_ik(p, lengths)
+    return cfg.numeric_ik(p, lengths, iters=100)
 
 
 def summary(e):
@@ -67,12 +74,12 @@ def main():
     metrics["joint_angle_error_deg"] = dict(
         median=float(np.degrees(np.median(np.abs(q_net - q_true)))),
         p95=float(np.degrees(np.percentile(np.abs(q_net - q_true), 95))))
-    e_exact = np.linalg.norm(leg.forward(leg.analytic_ik(p, lengths), lengths) - p, axis=1) * 1000
+    e_exact = np.linalg.norm(cfg.forward(baseline_ik(cfg, p, lengths), lengths) - p, axis=1) * 1000
     metrics["analytic_varied_legs"] = summary(e_exact)
 
     # 2. Same network told every leg is nominal: what ignoring length variation costs.
     q_blind = net.predict(p, cfg.nominal)
-    e_blind = np.linalg.norm(leg.forward(q_blind, lengths) - p, axis=1) * 1000
+    e_blind = np.linalg.norm(cfg.forward(q_blind, lengths) - p, axis=1) * 1000
     metrics["learned_assuming_nominal_lengths"] = summary(e_blind)
 
     # 3. The nominal leg only.
@@ -81,7 +88,7 @@ def main():
 
     # 4. Speed.
     t0 = time.perf_counter(); net.predict(p, lengths); t_net = time.perf_counter() - t0
-    t0 = time.perf_counter(); leg.analytic_ik(p, lengths); t_exact = time.perf_counter() - t0
+    t0 = time.perf_counter(); baseline_ik(cfg, p, lengths); t_exact = time.perf_counter() - t0
     one = p[:1], lengths[:1]
     t0 = time.perf_counter()
     for _ in range(2000):
@@ -95,7 +102,7 @@ def main():
     sweep = []
     for d in devs:
         L = np.tile(cfg.nominal * (1 + d), (40_000, 1))
-        ps = leg.forward(leg.sample_joint_angles(rng, L, cfg), L)
+        ps = cfg.forward(leg.sample_joint_angles(rng, L, cfg), L)
         es = errors_mm(net, ps, L)
         sweep.append((float(d), float(np.median(es)), float(np.percentile(es, 95))))
     metrics["length_scale_sweep"] = [dict(scale_deviation=d, median_mm=m, p95_mm=h) for d, m, h in sweep]
@@ -131,24 +138,25 @@ def main():
     ax.legend(frameon=False, loc="upper left")
     fig.tight_layout(); fig.savefig(os.path.join(args.out, "error_distribution.png")); plt.close(fig)
 
-    # Side-view slice through the workspace of the nominal leg (foot directly below the hip).
-    la = cfg.nominal[0]
-    gx, gz = np.meshgrid(np.linspace(-0.25, 0.25, 501), np.linspace(-0.25, 0.02, 271))
-    grid = np.stack([gx.ravel(), np.full(gx.size, la), gz.ravel()], axis=1)
-    q = leg.analytic_ik(grid, cfg.nominal)
-    ok = (np.all((q >= cfg.limits[:, 0]) & (q <= cfg.limits[:, 1]), axis=1)
-          & (np.linalg.norm(leg.forward(q, cfg.nominal) - grid, axis=1) < 1e-9))
-    em = np.where(ok, errors_mm(net, grid, np.tile(cfg.nominal, (grid.shape[0], 1))), np.nan).reshape(gx.shape)
-    fig, ax = plt.subplots(figsize=(6.4, 3.9))
-    im = ax.pcolormesh(gx * 1000, gz * 1000, em, cmap=BLUES, vmin=0, vmax=np.nanpercentile(em, 99.5), shading="auto")
-    ax.plot(0, 0, "o", color=INK, ms=6)
-    ax.annotate("shoulder", (0, 0), textcoords="offset points", xytext=(8, -3), color=INK2)
-    ax.set_aspect("equal"); ax.grid(False)
-    ax.set_xlabel("forward x (mm)"); ax.set_ylabel("up z (mm)")
-    ax.set_title("Where the error is: side-view slice, nominal leg")
-    cb = fig.colorbar(im, ax=ax, shrink=0.85); cb.set_label("foot position error (mm)"); cb.outline.set_visible(False)
-    fig.tight_layout(); fig.savefig(os.path.join(args.out, "error_map.png")); plt.close(fig)
-    metrics["slice_reachable_fraction"] = float(ok.mean())
+    if leg.is_leg(cfg):  # the side-view slice is drawn for the 3-joint leg only
+        # Side-view slice through the workspace of the nominal leg (foot directly below the hip).
+        la = cfg.nominal[0]
+        gx, gz = np.meshgrid(np.linspace(-0.25, 0.25, 501), np.linspace(-0.25, 0.02, 271))
+        grid = np.stack([gx.ravel(), np.full(gx.size, la), gz.ravel()], axis=1)
+        q = leg.analytic_ik(grid, cfg.nominal)
+        ok = (np.all((q >= cfg.limits[:, 0]) & (q <= cfg.limits[:, 1]), axis=1)
+              & (np.linalg.norm(leg.forward(q, cfg.nominal) - grid, axis=1) < 1e-9))
+        em = np.where(ok, errors_mm(net, grid, np.tile(cfg.nominal, (grid.shape[0], 1))), np.nan).reshape(gx.shape)
+        fig, ax = plt.subplots(figsize=(6.4, 3.9))
+        im = ax.pcolormesh(gx * 1000, gz * 1000, em, cmap=BLUES, vmin=0, vmax=np.nanpercentile(em, 99.5), shading="auto")
+        ax.plot(0, 0, "o", color=INK, ms=6)
+        ax.annotate("shoulder", (0, 0), textcoords="offset points", xytext=(8, -3), color=INK2)
+        ax.set_aspect("equal"); ax.grid(False)
+        ax.set_xlabel("forward x (mm)"); ax.set_ylabel("up z (mm)")
+        ax.set_title("Where the error is: side-view slice, nominal leg")
+        cb = fig.colorbar(im, ax=ax, shrink=0.85); cb.set_label("foot position error (mm)"); cb.outline.set_visible(False)
+        fig.tight_layout(); fig.savefig(os.path.join(args.out, "error_map.png")); plt.close(fig)
+        metrics["slice_reachable_fraction"] = float(ok.mean())
 
     fig, ax = plt.subplots(figsize=(6.4, 3.6))
     d = np.array([s[0] for s in sweep]) * 100

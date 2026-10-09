@@ -4,6 +4,10 @@
     python scripts/train.py --tolerance 0.2       # wider range of leg lengths
     python scripts/train.py --upper 0.15 --lower 0.14 --abduction 0.05
     python scripts/train.py --backend torch       # PyTorch instead of NumPy
+
+    # Build the network from a URDF instead of the built-in leg:
+    python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
+    python scripts/train.py --urdf robots/planar.urdf --out weights/ik_planar.npz
 """
 import argparse
 import json
@@ -15,7 +19,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import mojito  # noqa: E402
-from mojito import leg  # noqa: E402
+from mojito import leg, spec as specmod  # noqa: E402
 
 
 def main():
@@ -23,7 +27,10 @@ def main():
     ap.add_argument("--abduction", type=float, default=leg.NOMINAL_LENGTHS[0], help="nominal abduction offset [m]")
     ap.add_argument("--upper", type=float, default=leg.NOMINAL_LENGTHS[1], help="nominal upper-leg length [m]")
     ap.add_argument("--lower", type=float, default=leg.NOMINAL_LENGTHS[2], help="nominal lower-leg length [m]")
-    ap.add_argument("--tolerance", type=float, default=0.10, help="lengths vary by +/- this fraction in training")
+    ap.add_argument("--tolerance", type=float, default=None, help="lengths vary by +/- this fraction in training (default 0.10, or the manifest's)")
+    ap.add_argument("--urdf", help="build the network for a limb of this URDF (ignores --abduction/--upper/--lower)")
+    ap.add_argument("--manifest", help="JSON manifest beside the URDF: limbs, mirrors, groups")
+    ap.add_argument("--group", help="which model group of the URDF to train (default: the only one)")
     ap.add_argument("--hidden", type=int, nargs="+", default=[128, 128, 128])
     ap.add_argument("--steps", type=int, default=40000)
     ap.add_argument("--batch", type=int, default=2048)
@@ -36,7 +43,17 @@ def main():
                     help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
 
-    cfg = leg.LegConfig(np.array([args.abduction, args.upper, args.lower]), None, args.tolerance)
+    if args.urdf:
+        robot = specmod.load_robot(args.urdf, args.manifest)
+        print(robot.summary(), flush=True)
+        if args.group is None and len(robot.groups) != 1:
+            ap.error(f"the URDF has {len(robot.groups)} model groups {list(robot.groups)}; choose one with --group")
+        cfg = robot.groups[args.group or next(iter(robot.groups))].canonical
+        if args.tolerance is not None:
+            cfg = cfg.with_normalisation(cfg.nominal, args.tolerance, cfg.reach)
+    else:
+        cfg = leg.LegConfig(np.array([args.abduction, args.upper, args.lower]), None,
+                            0.10 if args.tolerance is None else args.tolerance)
     kwargs = dict(device=args.device) if mojito.backend.resolve(args.backend) == "torch" else {}
     net = mojito.make_model(cfg, args.hidden, seed=args.seed, backend=args.backend, **kwargs)
     print(f"backend: {net.backend}", flush=True)
@@ -50,7 +67,7 @@ def main():
         net.train_step(p, lengths, lr)
 
         if step % 500 == 0 or step == 1:
-            err = np.linalg.norm(leg.forward(net.predict(val_p, val_len), val_len) - val_p, axis=1) * 1000
+            err = np.linalg.norm(cfg.forward(net.predict(val_p, val_len), val_len) - val_p, axis=1) * 1000
             row = dict(step=step, median_mm=float(np.median(err)), p95_mm=float(np.percentile(err, 95)),
                        max_mm=float(err.max()), seconds=time.time() - t0)
             log.append(row)
