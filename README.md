@@ -20,6 +20,7 @@ network produced. The orange rings are where the feet were asked to be.*
 |---|---|---|
 | 0 | One network learns inverse kinematics for a leg, with link lengths as inputs | Done |
 | 1 | Whole body: posture control, trot and crawl, NumPy or PyTorch | Done |
+| – | Robots defined in URDF; the network is generated from it | Done |
 | 2 | Physics simulation (MuJoCo) and learned locomotion | Next |
 | 3 | The real robot: measurement, calibration, per-leg correction | Planned |
 | 4 | The loop: real experience updates the simulator, retrain, redeploy | Planned |
@@ -45,7 +46,7 @@ Python 3.10 or newer. No GPU needed.
 ```bash
 git clone https://github.com/mi897/mojito && cd mojito
 pip install -r requirements.txt          # NumPy, SciPy, Matplotlib, Pillow
-python -m unittest discover tests        # 34 tests; the 6 PyTorch ones skip if torch is absent
+python -m unittest discover tests        # 72 tests; the 7 PyTorch ones skip if torch is absent
 python scripts/make_body_demos.py        # re-render the animations from the trained network
 ```
 
@@ -205,7 +206,10 @@ only: no branching limbs, closed loops, `<mimic>` or xacro. With more than 3
 joints per limb the position-only IK is redundant, so the network learns one of
 many valid solutions; resolving that is Stage 2. `evaluate.py` falls back to a
 numeric solver where there is no closed form, and `make_demo.py` and the
-side-view error map are for the 3-joint leg only.
+side-view error map are for the 3-joint leg only. The gaits
+(`gaits.py`) and `body.Robot` assume four legs in FL, FR, RL, RR order;
+`body.URDFRobot` handles any limb layout (posture and solving, as in the
+hexapod example) but has no gaits.
 
 ## Results
 
@@ -286,7 +290,10 @@ foot error at that instant.
 Known weaknesses of these motions:
 
 - The trot has two feet down, so it relies on dynamic balance that geometry
-  cannot check.
+  cannot check. With two feet the body centre is never inside a support
+  polygon: in the forward trot it ends up as much as 11 mm off the line
+  between the grounded feet (`body_centre_inside_support_mm_min` in
+  `results/body_metrics.json`).
 - The crawl's lean is quick: the body shifts 50 mm in 0.2 s.
 - The gaits take a constant velocity command. Changing speed mid-stride is
   not handled yet.
