@@ -44,10 +44,20 @@ plots, an animated demo and an interactive page.
 
 ## Stage 1 — whole body, still geometry
 
-- Body-frame targets: place four feet given a body pose (height, roll, pitch, yaw).
-- Scripted gaits (trot, crawl) driven through the learned IK, to produce
-  reference motions and a sanity check on workspace and limits.
-- Port the model to PyTorch so it can sit inside larger learned controllers.
+**Status: built**, apart from the PyTorch port, which is on its own branch.
+
+- Body-frame foot targets for a commanded body pose (height, shift, roll,
+  pitch, yaw) with the feet planted. One shared leg network drives all four
+  legs; each leg can have its own lengths.
+- Scripted trot and crawl from a velocity command (forward, sideways, yaw
+  rate). Stance feet are held exactly fixed in the world. The crawl leans the
+  body away from the lifted foot and stays statically stable.
+- Across the posture, trot and crawl demos the network's worst foot error is
+  0.29 mm and every target is inside the joint limits.
+- Port the model to PyTorch behind a backend switch (NumPy stays the default).
+
+**Known gaps carried forward:** no physics, so balance, motor effort and grip
+are unchecked; body dimensions are placeholders; the crawl lean is fast.
 
 ## Stage 2 — physics simulation
 
