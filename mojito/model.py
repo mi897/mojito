@@ -1,7 +1,12 @@
 """A small neural network that learns inverse kinematics for a family of legs.
 
-Input : target foot position (3) + that leg's link lengths (3)
-Output: joint angles (3), squashed so they always lie inside the joint limits
+Input : target tip position (3) + that limb's link lengths (n_params)
+Output: joint values (dof), squashed so they always lie inside the joint limits
+
+The sizes come from the limb description: a `spec.LimbSpec` built from a URDF,
+or a `leg.LegConfig` for the original 3-joint leg. Saved weights carry the
+LimbSpec they were trained for, and loading them against a URDF checks that
+the two still describe the same limb.
 
 This module is the NumPy backend: hand-written backpropagation, no dependency
 beyond NumPy. mojito/torch_model.py is the PyTorch backend. Both share
@@ -14,6 +19,35 @@ import json
 import numpy as np
 
 from . import leg
+from .spec import LimbSpec, SpecMismatch
+
+
+def reconcile(file_cfg, spec: LimbSpec, where: str = "weights") -> LimbSpec:
+    """Check that weights trained for `file_cfg` fit the URDF-derived `spec`, and return the config to use.
+
+    The weights stay authoritative for input scaling (nominal lengths,
+    tolerance, reach); the URDF has to agree on structure.
+    """
+    if isinstance(file_cfg, LimbSpec):
+        diffs = file_cfg.describe_mismatch(spec)
+        if diffs:
+            raise SpecMismatch(f"{where} do not match the URDF limb {spec.name!r}:\n  " + "\n  ".join(diffs))
+        return file_cfg
+    # Legacy weights: a LegConfig. The URDF limb must be the same 3-joint leg.
+    diffs = []
+    if (spec.dof, spec.n_params) != (3, 3):
+        diffs.append(f"weights are for 3 joints and 3 lengths, the URDF limb has {spec.dof} and {spec.n_params}")
+    else:
+        if not np.allclose(spec.limits, file_cfg.limits, atol=1e-9):
+            diffs.append(f"joint limits: {file_cfg.limits.tolist()} in weights vs {spec.limits.tolist()} in URDF")
+        rng = np.random.default_rng(0)
+        q = rng.uniform(file_cfg.limits[:, 0], file_cfg.limits[:, 1], size=(32, 3))
+        L = file_cfg.nominal * (1 + rng.uniform(-0.1, 0.1, size=(32, 3)))
+        if not np.allclose(spec.forward(q, L), leg.forward(q, L), atol=1e-9):
+            diffs.append("forward kinematics of the URDF limb differs from the leg model the weights were trained on")
+    if diffs:
+        raise SpecMismatch(f"{where} do not match the URDF limb {spec.name!r}:\n  " + "\n  ".join(diffs))
+    return spec.with_normalisation(file_cfg.nominal, file_cfg.length_tolerance, file_cfg.reach)
 
 
 class IKNetBase:
@@ -26,18 +60,25 @@ class IKNetBase:
 
     backend = None
 
-    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128)):
+    def __init__(self, cfg=None, hidden=(128, 128, 128)):
         self.cfg = cfg or leg.LegConfig()
         self.hidden = tuple(hidden)
+        self.in_dim = 3 + self.cfg.n_params
+        self.out_dim = self.cfg.dof
         lim = self.cfg.limits
         self.q_mid = lim.mean(axis=1)
         self.q_half = 0.5 * (lim[:, 1] - lim[:, 0])
 
-    def predict_leg(self, p, lengths, right: bool = False):
-        """As `predict`, for either side of the robot."""
+    def predict_leg(self, p, lengths, right: bool = False, mirror=None):
+        """As `predict`, for either side of the robot.
+
+        `mirror` is the spec.Mirror relating the limb to this network's canonical
+        limb; by default the left/right leg mirror.
+        """
         if not right:
             return self.predict(p, lengths)
-        return leg.mirror_angles(self.predict(leg.mirror_target(p), lengths))
+        mirror = mirror or self.cfg.mirror
+        return mirror.angles(self.predict(mirror.target(p), lengths))
 
     def weights(self):
         """(list of W, list of b) as NumPy arrays."""
@@ -46,17 +87,29 @@ class IKNetBase:
         return [d[f"W{i}"] for i in range(n)], [d[f"b{i}"] for i in range(n)]
 
     def _config_state(self) -> dict:
-        return dict(nominal=self.cfg.nominal, limits=self.cfg.limits,
-                    length_tolerance=np.array(self.cfg.length_tolerance))
+        d = dict(nominal=self.cfg.nominal, limits=self.cfg.limits,
+                 length_tolerance=np.array(self.cfg.length_tolerance))
+        if isinstance(self.cfg, LimbSpec):
+            d["spec"] = np.array(json.dumps(self.cfg.to_dict()))
+        return d
 
     def save(self, path):
         np.savez(path, **self.state())
 
     @classmethod
-    def load(cls, path, **kwargs):
+    def load(cls, path, spec: LimbSpec | None = None, **kwargs):
+        """Load weights. Pass the URDF-derived `spec` to verify they belong to that limb.
+
+        Raises spec.SpecMismatch, listing every difference, if they do not.
+        """
         d = np.load(path)
         n_layers = sum(1 for k in d.files if k.startswith("W"))
-        cfg = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
+        if "spec" in d.files:
+            cfg = LimbSpec.from_dict(json.loads(str(d["spec"])))
+        else:  # weights from before limbs were described by URDFs
+            cfg = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
+        if spec is not None:
+            cfg = reconcile(cfg, spec, str(path))
         hidden = tuple(d[f"W{i}"].shape[1] for i in range(n_layers - 1))
         net = cls(cfg, hidden, **kwargs)
         net._set_weights([d[f"W{i}"] for i in range(n_layers)], [d[f"b{i}"] for i in range(n_layers)])
@@ -73,6 +126,8 @@ class IKNetBase:
                 "nominal": r(self.cfg.nominal),
                 "limits": r(self.cfg.limits),
                 "tolerance": self.cfg.length_tolerance,
+                "reach": self.cfg.reach,
+                **({"spec": self.cfg.to_dict()} if isinstance(self.cfg, LimbSpec) else {}),
             },
             separators=(",", ":"),
         )
@@ -83,10 +138,10 @@ class IKNet(IKNetBase):
 
     backend = "numpy"
 
-    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128), seed=0):
+    def __init__(self, cfg=None, hidden=(128, 128, 128), seed=0):
         super().__init__(cfg, hidden)
         rng = np.random.default_rng(seed)
-        sizes = (6,) + self.hidden + (3,)
+        sizes = (self.in_dim,) + self.hidden + (self.out_dim,)
         self.W = [
             rng.normal(0.0, np.sqrt(1.0 / a), size=(a, b)) for a, b in zip(sizes[:-1], sizes[1:])
         ]
@@ -108,7 +163,7 @@ class IKNet(IKNetBase):
         """Dimensionless inputs, each roughly in [-1, 1]."""
         p = np.asarray(p, dtype=float) / self.cfg.reach
         dev = (np.asarray(lengths, dtype=float) / self.cfg.nominal - 1.0) / self.cfg.length_tolerance
-        return np.concatenate([p, np.broadcast_to(dev, p.shape)], axis=-1)
+        return np.concatenate([p, np.broadcast_to(dev, p.shape[:-1] + dev.shape[-1:])], axis=-1)
 
     def _forward(self, x):
         acts = [x]
@@ -118,7 +173,7 @@ class IKNet(IKNetBase):
         return self.q_mid + self.q_half * t, acts, t
 
     def predict(self, p, lengths):
-        """Joint angles for canonical (left-leg) targets. Shapes (..., 3)."""
+        """Joint values for targets in the canonical limb frame. p: (..., 3), lengths: (..., n_params)."""
         return self._forward(self.features(p, lengths))[0]
 
     def loss_and_grads(self, p, lengths):
@@ -129,11 +184,11 @@ class IKNet(IKNetBase):
         """
         n = p.shape[0]
         q, acts, t = self._forward(self.features(p, lengths))
-        err = (leg.forward(q, lengths) - p) / self.cfg.reach
+        err = (self.cfg.forward(q, lengths) - p) / self.cfg.reach
         loss = float(np.mean(np.sum(err * err, axis=1)))
 
         # Back through forward kinematics: dL/dq = J^T dL/dp.
-        J = leg.jacobian(q, lengths)
+        J = self.cfg.jacobian(q, lengths)
         dq = np.einsum("nij,ni->nj", J, err) * (2.0 / (n * self.cfg.reach))
         delta = dq * self.q_half * (1.0 - t * t)
 
