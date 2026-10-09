@@ -55,6 +55,24 @@ class LegConfig:
         """Length scale used to make positions dimensionless."""
         return float(self.nominal[1] + self.nominal[2])
 
+    # The same interface as spec.LimbSpec, so networks and samplers take either.
+    dof = 3
+    n_params = 3
+    backend_agnostic = False  # forward() is NumPy only; torch code supplies its own
+
+    @property
+    def mirror(self):
+        """Right legs are left legs with y and abduction flipped."""
+        from .spec import Mirror
+
+        return Mirror()
+
+    def forward(self, q, params):
+        return forward(q, params)
+
+    def jacobian(self, q, params):
+        return jacobian(q, params)
+
 
 def forward(q: np.ndarray, lengths: np.ndarray) -> np.ndarray:
     """Foot position for joint angles q.  q: (..., 3), lengths: (..., 3)."""
@@ -148,7 +166,7 @@ def sample_lengths(
 ) -> np.ndarray:
     """n legs whose three lengths each deviate independently from nominal."""
     tol = cfg.length_tolerance if tolerance is None else tolerance
-    return cfg.nominal * (1.0 + rng.uniform(-tol, tol, size=(n, 3)))
+    return cfg.nominal * (1.0 + rng.uniform(-tol, tol, size=(n, len(cfg.nominal))))
 
 
 def sample_joint_angles(
@@ -169,10 +187,16 @@ def sample_joint_angles(
     n = lengths.shape[0]
     lo, hi = cfg.limits[:, 0], cfg.limits[:, 1]
     if not workspace_uniform:
-        return rng.uniform(lo, hi, size=(n, 3))
+        return rng.uniform(lo, hi, size=(n, cfg.dof))
 
-    q = rng.uniform(lo, hi, size=(n, oversample, 3))
-    w = np.abs(np.linalg.det(jacobian(q, lengths[:, None, :])))
+    q = rng.uniform(lo, hi, size=(n, oversample, cfg.dof))
+    J = cfg.jacobian(q, lengths[:, None, :])
+    if cfg.dof == 3:
+        w = np.abs(np.linalg.det(J))
+    else:  # volume swept per unit of joint motion, for chains that are not square
+        Jt = np.swapaxes(J, -1, -2)
+        G = Jt @ J if cfg.dof < 3 else J @ Jt
+        w = np.sqrt(np.maximum(np.linalg.det(G), 0.0))
     w = w / w.sum(axis=1, keepdims=True)
     pick = (rng.random((n, 1)) > np.cumsum(w, axis=1)).sum(axis=1)
     pick = np.minimum(pick, oversample - 1)
@@ -184,4 +208,19 @@ def sample_batch(rng: np.random.Generator, n: int, cfg: LegConfig, **kw):
     tolerance = kw.pop("tolerance", None)
     lengths = sample_lengths(rng, n, cfg, tolerance)
     q = sample_joint_angles(rng, lengths, cfg, **kw)
-    return forward(q, lengths), lengths, q
+    return cfg.forward(q, lengths), lengths, q
+
+
+def is_leg(cfg) -> bool:
+    """True if `cfg` (a LegConfig or a LimbSpec) has exactly this module's 3-joint leg kinematics.
+
+    Lets the closed-form IK and the leg-specific plots be used on URDF-derived limbs that turn out to be this leg.
+    """
+    if isinstance(cfg, LegConfig):
+        return True
+    if (cfg.dof, cfg.n_params) != (3, 3):
+        return False
+    rng = np.random.default_rng(0)
+    q = rng.uniform(JOINT_LIMITS[:, 0], JOINT_LIMITS[:, 1], size=(16, 3))
+    L = NOMINAL_LENGTHS * (1 + rng.uniform(-0.1, 0.1, size=(16, 3)))
+    return bool(np.allclose(cfg.forward(q, L), forward(q, L), atol=1e-9))

@@ -100,9 +100,10 @@ standing 170 mm high.
 
 ```python
 import numpy as np
-from mojito import IKNet, body, gaits
+import mojito
+from mojito import body, gaits
 
-robot = body.Robot(IKNet.load("weights/ik_leg.npz"))   # or body.AnalyticSolver()
+robot = body.Robot(mojito.load_model("weights/ik_leg.npz"))  # or body.AnalyticSolver()
 home = robot.stance()                                  # feet under the hips, body frame
 
 # Posture: keep the feet where they are, tilt and twist the body.
@@ -118,10 +119,100 @@ q = robot.solve(feet)                                  # (100, 4, 3)
 robot.lengths[0] = [0.041, 0.118, 0.125]               # per-leg lengths, changeable at any time
 ```
 
+## NumPy or PyTorch
+
+The leg network has two interchangeable backends. **NumPy is the default** and
+needs nothing extra. PyTorch is optional and is only imported when asked for.
+
+| How | Example |
+|---|---|
+| One command | `python scripts/train.py --backend torch` (every script takes `--backend`) |
+| Whole shell session | `export MOJITO_BACKEND=torch` |
+| In code, for the process | `mojito.set_backend("torch")` |
+| In code, for one call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
+
+```python
+import mojito
+
+net = mojito.load_model("weights/ik_leg.npz")                   # NumPy unless told otherwise
+net = mojito.load_model("weights/ik_leg.npz", backend="torch")  # same file, PyTorch
+new = mojito.make_model(backend="torch", device="cuda")         # untrained, on a GPU
+```
+
+- Both backends use the same weight files, so a network trained with one runs
+  under the other, and both start from identical weights for a given seed.
+- `predict` takes and returns NumPy arrays on both, so the body, gait and demo
+  code does not care which is active.
+- For building larger PyTorch models, `net.angles(p, lengths)` and
+  `mojito.torch_model.forward_kinematics(q, lengths)` take tensors and are
+  differentiable.
+- PyTorch uses autograd where NumPy uses a hand-derived Jacobian. The tests
+  check the two give the same predictions, gradients and training path.
+
+## Robots from URDF
+
+The robot is defined in a standard URDF, separate from the learning code, and
+the network is generated from it. Nothing about the limb (joint count, axes,
+limits, link lengths) is written in Python.
+
+```
+robots/quadruped.urdf + quadruped.json   <- the definition (any tool can read the URDF)
+        |  mojito.urdf     parse / write the URDF (pure Python, no NumPy)
+        v
+   RobotSpec / LimbSpec                  <- mojito.spec: the alignment layer
+        |  mojito.kinematics  forward kinematics + Jacobian for any serial chain
+        v                      (NumPy arrays or torch tensors, same code)
+     IKNet(spec)                         <- inputs and outputs sized from the chain
+```
+
+```bash
+python -m mojito.spec robots/quadruped.urdf --manifest robots/quadruped.json   # what the model will see
+python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
+python scripts/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FR
+```
+
+```python
+import mojito
+from mojito import body, IKNet
+
+robot = mojito.load_robot("robots/hexapod.urdf", "robots/hexapod.json")   # 6 legs, one network
+net = IKNet.load("weights/ik_leg.npz", spec=robot.groups["leg"].canonical) # fails with a diff if they disagree
+rig = body.URDFRobot(robot, net)
+q = rig.solve(rig.stance())                                                # joint values per limb
+```
+
+**What the URDF decides.** Which joints each limb has and their axes and
+limits (structure); how many free link lengths there are (one per link with a
+non-zero origin translation, direction fixed); where each limb is mounted. The
+free lengths are the network's "link length" inputs, so a longer leg in the
+URDF needs no retraining, while a different joint limit does.
+
+**What the manifest adds** (a small JSON file beside the URDF, so the URDF
+stays a plain URDF): which links are limb tips, which limbs are mirror images
+of which, group names, the length tolerance used in training, and an optional
+`reach` that scales positions. With no manifest, every leaf link is a limb.
+
+**Alignment.** Limbs with the same structure share one network (a "group").
+A limb that is the mirror image of another joins its group, and the sign flips
+that relate the two are found and verified numerically instead of assumed. The
+limb description is saved inside the weight file with a signature, so loading
+weights against a URDF raises `SpecMismatch` with a line for every difference
+(joint limit, axis, number of lengths, kinematics). Weights from before this
+layer load too, and are checked against the URDF the same way. Calibrated link
+lengths go back into a copy of the URDF with `RobotSpec.write_back`.
+
+**Limits.** Serial chains of revolute, continuous, prismatic and fixed joints
+only: no branching limbs, closed loops, `<mimic>` or xacro. With more than 3
+joints per limb the position-only IK is redundant, so the network learns one of
+many valid solutions; resolving that is Stage 2. `evaluate.py` falls back to a
+numeric solver where there is no closed form, and `make_demo.py` and the
+side-view error map are for the 3-joint leg only.
+
 ## Run it
 
 Needs Python 3.10+ with NumPy, SciPy, Matplotlib and Pillow
-(`pip install -r requirements.txt`). No GPU, no PyTorch.
+(`pip install -r requirements.txt`). No GPU needed. PyTorch is optional
+(`pip install torch`).
 
 ```bash
 python -m unittest discover tests     # kinematics and gradient checks
@@ -142,9 +233,10 @@ argument, one row per leg:
 
 ```python
 import numpy as np
-from mojito import IKNet, leg
+import mojito
+from mojito import leg
 
-net = IKNet.load("weights/ik_leg.npz")
+net = mojito.load_model("weights/ik_leg.npz")
 my_leg = np.array([0.042, 0.115, 0.128])        # abduction offset, upper, lower [m]
 target = np.array([0.03, 0.05, -0.18])          # foot position in the shoulder frame [m]
 
@@ -175,17 +267,24 @@ Joint limits live in `JOINT_LIMITS` in `mojito/leg.py`.
 - **Uniqueness.** The knee bends one way only and stops 0.3 rad short of
   straight, so each target has exactly one answer.
 
-The network is 3 hidden layers of 128 units (about 34,000 weights), written in
-NumPy with hand-derived gradients that the tests check against finite
+The network is 3 hidden layers of 128 units (about 34,000 weights). The NumPy
+backend uses hand-derived gradients that the tests check against finite
 differences.
 
 ## Layout
 
 ```
-mojito/leg.py       forward kinematics, Jacobian, closed-form IK, sampling
-mojito/model.py     the network, its gradients, Adam, save/load/export
-mojito/body.py      four legs on a body: frames, posture, per-leg solving
+mojito/urdf.py      read and write URDF (no NumPy)
+mojito/spec.py      URDF + manifest -> LimbSpec / RobotSpec; groups, mirrors, checks, write-back
+mojito/kinematics.py  forward kinematics, Jacobian, numeric IK for any serial chain
+mojito/robots.py    generators for the example URDFs in robots/
+mojito/leg.py       the 3-joint leg: closed-form IK (reference), sampling
+mojito/model.py     the network (NumPy backend), shared base class, Adam
+mojito/torch_model.py  the network (PyTorch backend)
+mojito/backend.py   backend switch: make_model, load_model, set_backend
+mojito/body.py      legs on a body: frames, posture, per-leg solving (Robot: quadruped; URDFRobot: any URDF)
 mojito/gaits.py     trot and crawl foot trajectories, crawl lean, stability
+robots/             example URDFs and manifests: quadruped, hexapod, planar 2-joint leg
 scripts/            train, evaluate, calibrate, make_demo, make_body_demos
 tests/              unit tests
 weights/ik_leg.npz  trained network
