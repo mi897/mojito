@@ -60,6 +60,19 @@ plots, an animated demo and an interactive page.
 **Known gaps carried forward:** no physics, so balance, motor effort and grip
 are unchecked; body dimensions are placeholders; the crawl lean is fast.
 
+## Robot description — URDF as the single source of truth (done)
+
+The robot's geometry lives in a URDF, not in Python, so other tools and languages
+can read it. `mojito/urdf.py` parses it, `mojito/spec.py` derives the network's
+description from it (and checks saved weights against it), `mojito/kinematics.py`
+runs any serial chain with NumPy or torch, and `IKNet` is sized from the chain.
+Any number of limbs, any number of joints per limb; limbs with the same structure
+share a network, mirrored limbs reuse it with verified sign flips.
+
+Not done yet: gaits for robots other than the four-legged one (`gaits.py` still
+assumes FL/FR/RL/RR), a JavaScript port of the spec layer for the browser demo, and
+resolving redundancy for limbs with more than 3 joints (Stage 2).
+
 ## Stage 2 — physics simulation
 
 - MuJoCo model built from the same length parameters, so a leg-length change

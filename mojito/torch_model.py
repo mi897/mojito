@@ -38,12 +38,12 @@ class TorchIKNet(IKNetBase):
 
     backend = "torch"
 
-    def __init__(self, cfg: leg.LegConfig | None = None, hidden=(128, 128, 128), seed=0,
+    def __init__(self, cfg=None, hidden=(128, 128, 128), seed=0,
                  device="cpu", dtype=torch.float32):
         super().__init__(cfg, hidden)
         self.device = torch.device(device)
         self.dtype = dtype
-        sizes = (6,) + self.hidden + (3,)
+        sizes = (self.in_dim,) + self.hidden + (self.out_dim,)
         layers = []
         for a, b in zip(sizes[:-1], sizes[1:]):
             layers += [nn.Linear(a, b), nn.Tanh()]  # the final Tanh squashes into the joint range
@@ -81,15 +81,21 @@ class TorchIKNet(IKNetBase):
         return d
 
     # ---- tensors in, tensors out (differentiable) ----
+    def forward_kinematics(self, q: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        """Differentiable tip position. URDF-derived limbs use the generic chain; the legacy leg its own formula."""
+        if getattr(self.cfg, "backend_agnostic", False):
+            return self.cfg.forward(q, lengths)
+        return forward_kinematics(q, lengths)
+
     def angles(self, p: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
         """Joint angles for canonical (left-leg) targets."""
         dev = (lengths / self._nominal - 1.0) / self.cfg.length_tolerance
-        x = torch.cat([p / self.cfg.reach, torch.broadcast_to(dev, p.shape)], dim=-1)
+        x = torch.cat([p / self.cfg.reach, torch.broadcast_to(dev, p.shape[:-1] + dev.shape[-1:])], dim=-1)
         return self._q_mid + self._q_half * self.net(x)
 
     def loss(self, p: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
         """Mean squared foot-position error in units of leg reach. Same definition as IKNet."""
-        err = (forward_kinematics(self.angles(p, lengths), lengths) - p) / self.cfg.reach
+        err = (self.forward_kinematics(self.angles(p, lengths), lengths) - p) / self.cfg.reach
         return (err * err).sum(dim=-1).mean()
 
     # ---- NumPy in, NumPy out (the interface the rest of the project uses) ----

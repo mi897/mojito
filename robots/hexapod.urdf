@@ -1,0 +1,183 @@
+<robot name="mojito_hexapod">
+  <link name="body" />
+  <link name="FL_hip" />
+  <link name="FL_thigh" />
+  <link name="FL_shank" />
+  <link name="FL_foot" />
+  <link name="FR_hip" />
+  <link name="FR_thigh" />
+  <link name="FR_shank" />
+  <link name="FR_foot" />
+  <link name="ML_hip" />
+  <link name="ML_thigh" />
+  <link name="ML_shank" />
+  <link name="ML_foot" />
+  <link name="MR_hip" />
+  <link name="MR_thigh" />
+  <link name="MR_shank" />
+  <link name="MR_foot" />
+  <link name="RL_hip" />
+  <link name="RL_thigh" />
+  <link name="RL_shank" />
+  <link name="RL_foot" />
+  <link name="RR_hip" />
+  <link name="RR_thigh" />
+  <link name="RR_shank" />
+  <link name="RR_foot" />
+  <joint name="FL_abduction" type="revolute">
+    <parent link="body" />
+    <child link="FL_hip" />
+    <origin xyz="0.18 0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="FL_hip_pitch" type="revolute">
+    <parent link="FL_hip" />
+    <child link="FL_thigh" />
+    <origin xyz="0.0 0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="FL_knee" type="revolute">
+    <parent link="FL_thigh" />
+    <child link="FL_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="FL_foot" type="fixed">
+    <parent link="FL_shank" />
+    <child link="FL_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+  <joint name="FR_abduction" type="revolute">
+    <parent link="body" />
+    <child link="FR_hip" />
+    <origin xyz="0.18 -0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="FR_hip_pitch" type="revolute">
+    <parent link="FR_hip" />
+    <child link="FR_thigh" />
+    <origin xyz="0.0 -0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="FR_knee" type="revolute">
+    <parent link="FR_thigh" />
+    <child link="FR_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="FR_foot" type="fixed">
+    <parent link="FR_shank" />
+    <child link="FR_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+  <joint name="ML_abduction" type="revolute">
+    <parent link="body" />
+    <child link="ML_hip" />
+    <origin xyz="0.0 0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="ML_hip_pitch" type="revolute">
+    <parent link="ML_hip" />
+    <child link="ML_thigh" />
+    <origin xyz="0.0 0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="ML_knee" type="revolute">
+    <parent link="ML_thigh" />
+    <child link="ML_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="ML_foot" type="fixed">
+    <parent link="ML_shank" />
+    <child link="ML_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+  <joint name="MR_abduction" type="revolute">
+    <parent link="body" />
+    <child link="MR_hip" />
+    <origin xyz="0.0 -0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="MR_hip_pitch" type="revolute">
+    <parent link="MR_hip" />
+    <child link="MR_thigh" />
+    <origin xyz="0.0 -0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="MR_knee" type="revolute">
+    <parent link="MR_thigh" />
+    <child link="MR_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="MR_foot" type="fixed">
+    <parent link="MR_shank" />
+    <child link="MR_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+  <joint name="RL_abduction" type="revolute">
+    <parent link="body" />
+    <child link="RL_hip" />
+    <origin xyz="-0.18 0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="RL_hip_pitch" type="revolute">
+    <parent link="RL_hip" />
+    <child link="RL_thigh" />
+    <origin xyz="0.0 0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="RL_knee" type="revolute">
+    <parent link="RL_thigh" />
+    <child link="RL_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="RL_foot" type="fixed">
+    <parent link="RL_shank" />
+    <child link="RL_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+  <joint name="RR_abduction" type="revolute">
+    <parent link="body" />
+    <child link="RR_hip" />
+    <origin xyz="-0.18 -0.06 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="1.0 0.0 0.0" />
+    <limit lower="-0.6" upper="0.6" effort="0" velocity="0" />
+  </joint>
+  <joint name="RR_hip_pitch" type="revolute">
+    <parent link="RR_hip" />
+    <child link="RR_thigh" />
+    <origin xyz="0.0 -0.04 0.0" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="0.0" upper="1.5" effort="0" velocity="0" />
+  </joint>
+  <joint name="RR_knee" type="revolute">
+    <parent link="RR_thigh" />
+    <child link="RR_shank" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+    <axis xyz="0.0 1.0 0.0" />
+    <limit lower="-2.3" upper="-0.3" effort="0" velocity="0" />
+  </joint>
+  <joint name="RR_foot" type="fixed">
+    <parent link="RR_shank" />
+    <child link="RR_foot" />
+    <origin xyz="0.0 0.0 -0.12" rpy="0.0 0.0 0.0" />
+  </joint>
+</robot>

@@ -81,6 +81,8 @@ def main():
                     help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
     net = mojito.load_model(args.weights, backend=args.backend)
+    if not leg.is_leg(net.cfg):
+        raise SystemExit("make_demo.py draws the 3-joint leg; these weights are for a different limb.")
     os.makedirs("results", exist_ok=True)
     make_gif(net, "results/step_demo.gif")
     make_html(net, "docs/demo_template.html", "docs/demo.html")

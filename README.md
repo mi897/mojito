@@ -148,6 +148,65 @@ python scripts/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0
 Joint limits live in `JOINT_LIMITS` in `mojito/leg.py`. After retraining,
 re-run the other scripts so the results match the new weights.
 
+### Robots from URDF
+
+The robot is defined in a standard URDF, separate from the learning code, and
+the network is generated from it. Nothing about the limb (joint count, axes,
+limits, link lengths) is written in Python.
+
+```
+robots/quadruped.urdf + quadruped.json   <- the definition (any tool can read the URDF)
+        |  mojito.urdf     parse / write the URDF (pure Python, no NumPy)
+        v
+   RobotSpec / LimbSpec                  <- mojito.spec: the alignment layer
+        |  mojito.kinematics  forward kinematics + Jacobian for any serial chain
+        v                      (NumPy arrays or torch tensors, same code)
+     IKNet(spec)                         <- inputs and outputs sized from the chain
+```
+
+```bash
+python -m mojito.spec robots/quadruped.urdf --manifest robots/quadruped.json   # what the model will see
+python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
+python scripts/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FR
+```
+
+```python
+import mojito
+from mojito import body, IKNet
+
+robot = mojito.load_robot("robots/hexapod.urdf", "robots/hexapod.json")   # 6 legs, one network
+net = IKNet.load("weights/ik_leg.npz", spec=robot.groups["leg"].canonical) # fails with a diff if they disagree
+rig = body.URDFRobot(robot, net)
+q = rig.solve(rig.stance())                                                # joint values per limb
+```
+
+**What the URDF decides.** Which joints each limb has and their axes and
+limits (structure); how many free link lengths there are (one per link with a
+non-zero origin translation, direction fixed); where each limb is mounted. The
+free lengths are the network's "link length" inputs, so a longer leg in the
+URDF needs no retraining, while a different joint limit does.
+
+**What the manifest adds** (a small JSON file beside the URDF, so the URDF
+stays a plain URDF): which links are limb tips, which limbs are mirror images
+of which, group names, the length tolerance used in training, and an optional
+`reach` that scales positions. With no manifest, every leaf link is a limb.
+
+**Alignment.** Limbs with the same structure share one network (a "group").
+A limb that is the mirror image of another joins its group, and the sign flips
+that relate the two are found and verified numerically instead of assumed. The
+limb description is saved inside the weight file with a signature, so loading
+weights against a URDF raises `SpecMismatch` with a line for every difference
+(joint limit, axis, number of lengths, kinematics). Weights from before this
+layer load too, and are checked against the URDF the same way. Calibrated link
+lengths go back into a copy of the URDF with `RobotSpec.write_back`.
+
+**Limits.** Serial chains of revolute, continuous, prismatic and fixed joints
+only: no branching limbs, closed loops, `<mimic>` or xacro. With more than 3
+joints per limb the position-only IK is redundant, so the network learns one of
+many valid solutions; resolving that is Stage 2. `evaluate.py` falls back to a
+numeric solver where there is no closed form, and `make_demo.py` and the
+side-view error map are for the 3-joint leg only.
+
 ## Results
 
 All numbers come from the JSON files in `results/`, produced by the scripts
@@ -271,12 +330,17 @@ FR, RL, RR.
 ## Repository layout
 
 ```
-mojito/leg.py          one leg: forward kinematics, Jacobian, closed-form IK, sampling
+mojito/urdf.py         read and write URDF (no NumPy)
+mojito/spec.py         URDF + manifest -> LimbSpec / RobotSpec; groups, mirrors, checks, write-back
+mojito/kinematics.py   forward kinematics, Jacobian, numeric IK for any serial chain
+mojito/robots.py       generators for the example URDFs in robots/
+mojito/leg.py          the 3-joint leg: closed-form IK (reference), sampling
 mojito/model.py        the leg network, NumPy backend; shared base class
 mojito/torch_model.py  the leg network, PyTorch backend
 mojito/backend.py      backend switch: make_model, load_model, set_backend
-mojito/body.py         four legs on a body: frames, posture, per-leg solving
+mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot: quadruped; URDFRobot: any URDF)
 mojito/gaits.py        trot and crawl, crawl lean, stability margin
+robots/                example URDFs and manifests: quadruped, hexapod, planar 2-joint leg
 scripts/               train, evaluate, calibrate, make_demo, make_body_demos
 tests/                 unit tests (standard-library unittest)
 weights/ik_leg.npz     the trained leg network

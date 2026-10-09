@@ -30,12 +30,17 @@ for results and usage. Keep both current when the work changes them.
 ## Layout
 
 ```
-mojito/leg.py          one leg: forward kinematics, Jacobian, closed-form IK, sampling
+mojito/urdf.py         read and write URDF (no NumPy)
+mojito/spec.py         URDF + manifest -> LimbSpec / RobotSpec; groups, mirrors, checks, write-back
+mojito/kinematics.py   forward kinematics, Jacobian, numeric IK for any serial chain
+mojito/robots.py       generators for the example URDFs in robots/
+mojito/leg.py          the 3-joint leg: closed-form IK (reference), sampling
 mojito/model.py        IK network, NumPy backend; shared base class; Adam
 mojito/torch_model.py  IK network, PyTorch backend
 mojito/backend.py      backend switch: make_model, load_model, set_backend
-mojito/body.py         four legs on a body: frames, posture, per-leg solving
+mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot, URDFRobot)
 mojito/gaits.py        trot and crawl foot trajectories, crawl lean, stability margin
+robots/                example URDFs + manifests: quadruped, hexapod, planar
 scripts/               train, evaluate, calibrate, make_demo, make_body_demos
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
