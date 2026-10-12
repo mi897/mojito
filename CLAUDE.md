@@ -132,7 +132,7 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 2. Actuators: 20 kg·cm hobby servos ("DSServo DS3218 20KG Digital Metal
    Servo"), supply adjustable 5–6.5 V, no position feedback, decided. Later: DC motors
    with position, velocity and current feedback. First robot: external joint-angle
-   sensors. Open: datasheet figures (5–6.5 V is interpolated from listed 5 and 6.8 V points), sensor type. Servo figures in `docs/STAGE2.md`
+   sensors, in line with the joint axis close to the motor. Open: datasheet figures (5–6.5 V is interpolated from listed 5 and 6.8 V points), sensor type. Servo figures in `docs/STAGE2.md`
    are unverified retailer numbers.
 3. Measurement: simulation ground truth for now, external system later. Keep
    ground truth out of policy observations.

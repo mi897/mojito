@@ -88,8 +88,16 @@ actual gap becomes at the torque limit.
 - **First robot:** an external angle sensor on each joint (type not chosen;
   encoders or potentiometers are the usual options). Model it as true angle
   plus offset, noise, quantisation and delay, all parameters. The policy sees
-  this measured angle. The sensor placement (before or after any gear play)
-  matters and is open.
+  this measured angle. **Placement (decided):** packaged close to the motor, in
+  line with the joint axis, so it does not interfere with anything else on the
+  leg. Consequence for the model: a sensor on the joint axis reads the same
+  angle the link has, so there is no linkage or belt between sensor and joint to
+  model. One thing to check on the real part: whether it reads the servo's
+  output shaft (after the gearbox, the link's true angle) or something before the
+  gearbox (which would hide gear play). The DS3218's shaft is only accessible on
+  the horn side, so this must be settled when the mount is designed. Sensor
+  type (magnetic or optical, resolution) is not chosen; resolution is a model
+  parameter until then.
 - **Later robots:** DC motors with position, velocity and current feedback.
   Current is a torque estimate, so the policy could observe effort. Keep the
   policy's observation a named list built from whatever the actuator reports,
@@ -228,6 +236,7 @@ do.
 1. Datasheet figures for the DS3218 20KG. The model interpolates torque and speed
    between the listed 5 V and 6.8 V points to cover 5–6.5 V; the datasheet would
    confirm or replace that.
-2. Joint-angle sensor type and where it sits on the joint.
+2. Joint-angle sensor type and resolution (placement is decided: in line with
+   the joint axis, close to the motor).
 3. Whether the 1.5 kg working target is acceptable, or whether the robot must
    carry a heavier battery or payload (then the legs must be shorter).
