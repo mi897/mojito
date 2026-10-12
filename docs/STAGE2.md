@@ -18,7 +18,7 @@ the model is trusted.
 | Question | Answer | Consequence |
 |---|---|---|
 | Real dimensions | None yet; to be chosen from simulation | Dimensions are sweep parameters, never constants. The URDF generator in `mojito/robots.py` stays the single source. |
-| Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 4.8–7 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
+| Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 5–6.5 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
 | Actuators, later robots | DC motors reporting position, velocity and current | The actuator is an interface: command in, torque out, plus a list of what it reports. Swapping servos for motors must not change the policy code. |
 | Joint feedback | The servo reports nothing. The first robot gets external joint-angle sensors fed back to the system | Simulation reports a **measured** angle (noise, quantisation, delay, offset), never the true one, as the policy's joint observation. |
 | Measurement | Simulation ground truth for evaluation and rewards; external measuring system later | Policies must not observe anything the real robot could not measure. |
@@ -69,13 +69,11 @@ Conversion used: 1 kg·cm = 0.0980665 N·m. So 19 kg·cm = 1.86 N·m and
   sustained loads should not assume the best case.
 - Joint velocity limit from the no-load speed, also a parameter.
 - Command latency and a servo position resolution (dead band) as parameters.
-- Torque and speed are functions of supply voltage, adjustable from 4.8 to
-  7 V. The listings give two points only (5 V and 6.8 V). Between them use a
-  straight line. **7 V is above the listed 6.8 V maximum and 4.8 V is below the
-  lowest listed point; there is no data for either**, so the model clamps to the
-  nearest listed value and flags the run. Running at 7 V may exceed the
-  servo's rating (heat, wear, damage); that is the owner's call and should be
-  checked against the datasheet first.
+- Torque and speed are functions of supply voltage. The owner keeps the supply
+  within 5–6.5 V, which sits inside the listed 5–6.8 V points, so no
+  extrapolation is needed. The listings give two points only (5 V and 6.8 V);
+  between them the model uses a straight line, which is an assumption (it gives
+  21.1 kg·cm, 2.07 N·m, at 6.5 V). Outside 5–6.5 V the model refuses to run.
 - Variant: the title "DS3218 20KG Digital Metal Servo" reads as the standard
   part, so the PRO figures are not used.
 
@@ -114,13 +112,14 @@ landing impacts, friction limits, and heat. So it is an **upper bound on the
 total mass a stance can hold, not a mass you can walk with.**
 
 Largest total mass whose weight keeps every joint under the torque shown, using
-the unverified listed stall torques (1.86 N·m at 5 V, 2.11 N·m at 6.8 V):
+the unverified listed stall torques (1.86 N·m at 5 V, and 2.07 N·m at 6.5 V by
+straight-line interpolation between the listed 5 V and 6.8 V points):
 
-| Stance | 5 V, full stall torque | 5 V, half of stall | 6.8 V, half of stall |
+| Stance | 5 V, full stall torque | 5 V, half of stall | 6.5 V, half of stall |
 |---|---|---|---|
-| Standing, 4 feet | 8.97 kg | 4.48 kg | 5.07 kg |
-| Crawl, 3 feet, body leaning 25 mm | 5.66 kg | 2.83 kg | 3.21 kg |
-| Trot, 2 diagonal feet | 4.48 kg | 2.24 kg | 2.54 kg |
+| Standing, 4 feet | 8.97 kg | 4.48 kg | 4.98 kg |
+| Crawl, 3 feet, body leaning 25 mm | 5.66 kg | 2.83 kg | 3.14 kg |
+| Trot, 2 diagonal feet | 4.48 kg | 2.24 kg | 2.49 kg |
 
 **How to read the table.** Each cell answers one question: if the robot froze in
 this pose, how heavy could it be before the weakest servo reached the torque
@@ -139,7 +138,7 @@ knee torque = share of weight × 9.81 m/s² × mass × 0.085 m.
 
 *Columns are how much torque the servo is allowed to give.* Full stall is the
 listed 1.86 N·m at 5 V, which a servo can hold only briefly. "Half of stall" is
-my assumption for a torque it could hold continuously. 6.8 V gives more torque
+my assumption for a torque it could hold continuously. 6.5 V gives more torque
 than 5 V, so the allowed mass rises.
 
 *Worked example, trot at 5 V, half of stall.* Knee torque per kg of robot
@@ -187,7 +186,7 @@ Each is one branch-sized step. Tick them off here as they land.
    `mojito/kinematics.py` to numerical precision, for random lengths and angles
    (left and right legs, and several body poses).
 2. [ ] **Servo and sensor model.** Torque and speed limits as functions of
-   voltage (4.8–7 V, clamped outside the listed 5–6.8 V points), latency,
+   voltage (5–6.5 V, straight line between the listed 5 V and 6.8 V points), latency,
    resolution, and a joint-angle sensor with noise, quantisation, delay and
    offset, behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
@@ -226,8 +225,9 @@ do.
 
 ## Open items for the owner
 
-1. Datasheet figures for the DS3218 20KG, especially torque and speed at 7 V and
-   whether 7 V is within the servo's rating. The listings stop at 6.8 V.
+1. Datasheet figures for the DS3218 20KG. The model interpolates torque and speed
+   between the listed 5 V and 6.8 V points to cover 5–6.5 V; the datasheet would
+   confirm or replace that.
 2. Joint-angle sensor type and where it sits on the joint.
 3. Whether the 1.5 kg working target is acceptable, or whether the robot must
    carry a heavier battery or payload (then the legs must be shorter).

@@ -19,8 +19,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from mojito import gaits, leg, statics  # noqa: E402
 
 KGCM = 0.0980665  # N*m per kg*cm
-# Stall torque from retailer listings for the DS3218 (unverified, see docs/STAGE2.md).
-SERVO_KGCM = {"5.0 V": 19.0, "6.8 V": 21.5}
+# Stall torque from retailer listings for the DS3218 (unverified, see docs/STAGE2.md):
+# 19 kg*cm at 5 V and 21.5 kg*cm at 6.8 V. Between them a straight line; the supply is
+# kept within 5 to 6.5 V, so the model never needs a value outside the listed points.
+LISTED_V, LISTED_KGCM = (5.0, 6.8), (19.0, 21.5)
+SERVO_KGCM = {f"{v} V": float(np.interp(v, LISTED_V, LISTED_KGCM)) for v in (5.0, 6.5)}
 DERATES = (1.0, 0.5)
 NAMES = ("abduction", "hip_pitch", "knee")
 

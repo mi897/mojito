@@ -78,7 +78,7 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 **Status: planned, in detail in `docs/STAGE2.md`** (branch `stage-2-mujoco-model`).
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
-Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 4.8–7 V,
+Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5–6.5 V,
 listed figures unverified, no position feedback), with external joint-angle sensors on
 the first robot and DC motors with position, velocity and current feedback later (see
 `docs/STAGE2.md`). A first static bound on total mass is done: with the placeholder
@@ -114,8 +114,8 @@ for evaluation and rewards, not as policy input.
 1. Real link lengths, abduction offset and joint limits (all placeholders now).
    No robot exists; dimensions will be chosen by trying designs in simulation.
 2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG), supply
-   adjustable 4.8–7 V, no position feedback; external joint-angle sensors for the
+   adjustable 5–6.5 V, no position feedback; external joint-angle sensors for the
    first robot; DC motors with position, velocity and current feedback later. Still
-   open: servo data at 7 V (listings stop at 6.8 V), and the angle sensor type.
+   open: datasheet figures (5–6.5 V is interpolated from listed 5 V and 6.8 V points), and the angle sensor type.
 3. Foot position on the real robot: simulation ground truth for now; an external
    measuring system can be built later if needed.

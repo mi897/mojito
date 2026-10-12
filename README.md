@@ -390,10 +390,10 @@ These decide what Stage 2 and 3 look like.
    No robot exists yet; the plan is to try dimensions in simulation first
    (`docs/STAGE2.md`).
 2. Actuators: decided as 20 kg·cm hobby servos (listed as "DSServo DS3218 20KG
-   Digital Metal Servo"), supply adjustable 4.8–7 V, no position feedback. The first
+   Digital Metal Servo"), supply adjustable 5–6.5 V, no position feedback. The first
    robot gets external joint-angle sensors; DC motors with position, velocity and
-   current feedback come later. Still open: servo data at 7 V (listings stop at
-   6.8 V) and the angle sensor type.
+   current feedback come later. Still open: the datasheet figures (the 5–6.5 V
+   range is interpolated from listed 5 V and 6.8 V points) and the angle sensor type.
    The torque and speed figures in `docs/STAGE2.md` come from retailer
    listings and are unverified.
 3. How foot or body position will be measured on the real robot. Simulation

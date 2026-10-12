@@ -10,7 +10,7 @@
  "body_width_m": 0.1,
  "servo_stall_nm_unverified": {
   "5.0 V": 1.863,
-  "6.8 V": 2.108
+  "6.5 V": 2.068
  },
  "derates": [
   1.0,
@@ -38,20 +38,20 @@
   "stand_4_feet": {
    "5.0 V derate 1.0": 8.97,
    "5.0 V derate 0.5": 4.48,
-   "6.8 V derate 1.0": 10.15,
-   "6.8 V derate 0.5": 5.07
+   "6.5 V derate 1.0": 9.95,
+   "6.5 V derate 0.5": 4.98
   },
   "trot_2_feet": {
    "5.0 V derate 1.0": 4.48,
    "5.0 V derate 0.5": 2.24,
-   "6.8 V derate 1.0": 5.07,
-   "6.8 V derate 0.5": 2.54
+   "6.5 V derate 1.0": 4.98,
+   "6.5 V derate 0.5": 2.49
   },
   "crawl_3_feet": {
    "5.0 V derate 1.0": 5.66,
    "5.0 V derate 0.5": 2.83,
-   "6.8 V derate 1.0": 6.41,
-   "6.8 V derate 0.5": 3.21
+   "6.5 V derate 1.0": 6.29,
+   "6.5 V derate 0.5": 3.14
   }
  },
  "max_mass_kg_by_leg_scale_5V_derate_0.5": {
