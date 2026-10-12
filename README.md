@@ -21,7 +21,7 @@ network produced. The orange rings are where the feet were asked to be.*
 | 0 | One network learns inverse kinematics for a leg, with link lengths as inputs | Done |
 | 1 | Whole body: posture control, trot and crawl, NumPy or PyTorch | Done |
 | – | Robots defined in URDF; the network is generated from it | Done |
-| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model built (work package 1 of 8); servo model next |
+| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model and servo/sensor model built (work packages 0–2 of 8); stand test next |
 | 3 | The real robot: measurement, calibration, per-leg correction | Planned |
 | 4 | The loop: real experience updates the simulator, retrain, redeploy | Planned |
 
