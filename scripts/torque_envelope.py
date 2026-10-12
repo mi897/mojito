@@ -6,7 +6,7 @@ leg mass, no motion: a first bound for comparing designs, not a prediction.
 
     results/torque_envelope.json
 
-    python scripts/torque_envelope.py [--height 0.17] [--body-length 0.24] [--body-width 0.10]
+    python scripts/torque_envelope.py [--height 0.2125] [--body-length 0.30] [--body-width 0.15]
 """
 import argparse
 import json
@@ -25,6 +25,9 @@ KGCM = 0.0980665  # N*m per kg*cm
 LISTED_V, LISTED_KGCM = (5.0, 6.8), (19.0, 21.5)
 SERVO_KGCM = {f"{v} V": float(np.interp(v, LISTED_V, LISTED_KGCM)) for v in (5.0, 6.5)}
 DERATES = (1.0, 0.5)
+# Stage 2 design placeholders (docs/STAGE2.md): 1.25x the Stage 0-1 placeholders so the
+# servos (listed 40 x 20 x 40.5 mm) are not oversized against the legs. Still placeholders.
+DESIGN = {"lengths": [0.05, 0.15, 0.15], "height": 0.2125, "body_length": 0.30, "body_width": 0.15}
 NAMES = ("abduction", "hip_pitch", "knee")
 
 
@@ -65,10 +68,10 @@ def max_mass(torque_per_weight, torque_nm):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--lengths", type=float, nargs=3, default=leg.NOMINAL_LENGTHS.tolist())
-    ap.add_argument("--height", type=float, default=0.17)
-    ap.add_argument("--body-length", type=float, default=0.24)
-    ap.add_argument("--body-width", type=float, default=0.10)
+    ap.add_argument("--lengths", type=float, nargs=3, default=DESIGN["lengths"])
+    ap.add_argument("--height", type=float, default=DESIGN["height"])
+    ap.add_argument("--body-length", type=float, default=DESIGN["body_length"])
+    ap.add_argument("--body-width", type=float, default=DESIGN["body_width"])
     args = ap.parse_args()
     lengths = np.array(args.lengths)
 

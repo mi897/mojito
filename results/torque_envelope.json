@@ -1,13 +1,13 @@
 {
  "what": "static joint torque per unit body weight, vertical foot loads only; no leg or servo mass, no motion, no friction limit",
  "lengths_m": [
-  0.04,
-  0.12,
-  0.12
+  0.05,
+  0.15,
+  0.15
  ],
- "stand_height_m": 0.17,
- "body_length_m": 0.24,
- "body_width_m": 0.1,
+ "stand_height_m": 0.2125,
+ "body_length_m": 0.3,
+ "body_width_m": 0.15,
  "servo_stall_nm_unverified": {
   "5.0 V": 1.863,
   "6.5 V": 2.068
@@ -16,87 +16,87 @@
   1.0,
   0.5
  ],
- "crawl_min_foot_load_fraction": 0.24305555555555547,
+ "crawl_min_foot_load_fraction": 0.18333333333333324,
  "torque_per_weight_m": {
   "stand_4_feet": {
-   "abduction": 0.01,
+   "abduction": 0.0125,
    "hip_pitch": 0.0,
-   "knee": 0.02117634293262177
+   "knee": 0.026470428665777215
   },
   "trot_2_feet": {
-   "abduction": 0.02,
+   "abduction": 0.025,
    "hip_pitch": 0.0,
-   "knee": 0.04235268586524354
+   "knee": 0.05294085733155443
   },
   "crawl_3_feet": {
-   "abduction": 0.015833333333333335,
+   "abduction": 0.020833333333333336,
    "hip_pitch": 0.0,
-   "knee": 0.033529209643317806
+   "knee": 0.04411738110962869
   }
  },
  "max_total_mass_kg": {
   "stand_4_feet": {
-   "5.0 V derate 1.0": 8.97,
-   "5.0 V derate 0.5": 4.48,
-   "6.5 V derate 1.0": 9.95,
-   "6.5 V derate 0.5": 4.98
+   "5.0 V derate 1.0": 7.18,
+   "5.0 V derate 0.5": 3.59,
+   "6.5 V derate 1.0": 7.96,
+   "6.5 V derate 0.5": 3.98
   },
   "trot_2_feet": {
-   "5.0 V derate 1.0": 4.48,
-   "5.0 V derate 0.5": 2.24,
-   "6.5 V derate 1.0": 4.98,
-   "6.5 V derate 0.5": 2.49
+   "5.0 V derate 1.0": 3.59,
+   "5.0 V derate 0.5": 1.79,
+   "6.5 V derate 1.0": 3.98,
+   "6.5 V derate 0.5": 1.99
   },
   "crawl_3_feet": {
-   "5.0 V derate 1.0": 5.66,
-   "5.0 V derate 0.5": 2.83,
-   "6.5 V derate 1.0": 6.29,
-   "6.5 V derate 0.5": 3.14
+   "5.0 V derate 1.0": 4.31,
+   "5.0 V derate 0.5": 2.15,
+   "6.5 V derate 1.0": 4.78,
+   "6.5 V derate 0.5": 2.39
   }
  },
  "max_mass_kg_by_leg_scale_5V_derate_0.5": {
   "0.75": {
-   "stand_4_feet": 5.98,
-   "trot_2_feet": 2.99,
-   "crawl_3_feet": 3.78
+   "stand_4_feet": 4.78,
+   "trot_2_feet": 2.39,
+   "crawl_3_feet": 2.87
   },
   "1.0": {
-   "stand_4_feet": 4.48,
-   "trot_2_feet": 2.24,
-   "crawl_3_feet": 2.83
-  },
-  "1.25": {
    "stand_4_feet": 3.59,
    "trot_2_feet": 1.79,
-   "crawl_3_feet": 2.27
+   "crawl_3_feet": 2.15
+  },
+  "1.25": {
+   "stand_4_feet": 2.87,
+   "trot_2_feet": 1.44,
+   "crawl_3_feet": 1.72
   },
   "1.5": {
-   "stand_4_feet": 2.99,
-   "trot_2_feet": 1.49,
-   "crawl_3_feet": 1.89
+   "stand_4_feet": 2.39,
+   "trot_2_feet": 1.2,
+   "crawl_3_feet": 1.44
   },
   "2.0": {
-   "stand_4_feet": 2.24,
-   "trot_2_feet": 1.12,
-   "crawl_3_feet": 1.39
+   "stand_4_feet": 1.79,
+   "trot_2_feet": 0.9,
+   "crawl_3_feet": 1.05
   }
  },
  "body_length_over_width_effect": {
   "1.0": {
-   "crawl_max_mass_kg": 2.88,
-   "crawl_min_foot_load_fraction": 0.25
+   "crawl_max_mass_kg": 2.24,
+   "crawl_min_foot_load_fraction": 0.267
   },
   "1.5": {
-   "crawl_max_mass_kg": 3.1,
-   "crawl_min_foot_load_fraction": 0.306
+   "crawl_max_mass_kg": 2.24,
+   "crawl_min_foot_load_fraction": 0.211
   },
   "2.0": {
-   "crawl_max_mass_kg": 2.99,
-   "crawl_min_foot_load_fraction": 0.264
+   "crawl_max_mass_kg": 2.15,
+   "crawl_min_foot_load_fraction": 0.183
   },
   "2.4": {
-   "crawl_max_mass_kg": 2.83,
-   "crawl_min_foot_load_fraction": 0.243
+   "crawl_max_mass_kg": 2.08,
+   "crawl_min_foot_load_fraction": 0.169
   }
  }
 }

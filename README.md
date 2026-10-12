@@ -374,9 +374,10 @@ committed so this page renders. Regenerate them rather than editing by hand.
 
 `python scripts/torque_envelope.py` writes `results/torque_envelope.json`: the
 static joint torque needed to hold the body in a stance, and the largest total
-mass a servo can hold. For the placeholder leg (40, 120, 120 mm links, 170 mm
-stand height) and the unverified listed stall torque of 1.86 N·m at 5 V, at half
-of stall: 4.48 kg standing on four feet, 2.83 kg in the crawl, 2.24 kg in the trot.
+mass a servo can hold. For the Stage 2 design placeholders (50, 150, 150 mm
+links, 212.5 mm stand height, 300 × 150 mm shoulder spacing; larger than the
+Stage 0–1 ones above) and the unverified listed stall torque of 1.86 N·m at 5 V, at
+half of stall: 3.59 kg standing on four feet, 2.15 kg in the crawl, 1.79 kg in the trot.
 This counts weight on vertical foot loads only. It leaves out leg and servo mass
 (twelve listed servos are 0.72 kg alone), gait dynamics, friction and heat, so it
 is an upper bound, not a mass the robot can walk with. Details and the

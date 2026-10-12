@@ -110,9 +110,10 @@ actual gap becomes at the torque limit.
 
 `scripts/torque_envelope.py` (maths in `mojito/statics.py`, test in
 `tests/test_statics.py`) computes the joint torque needed to hold the body's
-weight in three stances, with the placeholder leg (40, 120, 120 mm) standing
-170 mm high, feet under the hips, and the placeholder body (240 × 100 mm
-shoulder spacing). The output is `results/torque_envelope.json`.
+weight in three stances, with the Stage 2 design placeholders (see "Sizing
+against the servo"): leg 50, 150, 150 mm standing 212.5 mm high, feet under the
+hips, and a body of 300 × 150 mm shoulder spacing. The output is
+`results/torque_envelope.json`.
 
 What it computes: vertical foot loads only, from weight. What it leaves out:
 the mass of the legs and of the servos hanging on them, gait dynamics and
@@ -125,9 +126,9 @@ straight-line interpolation between the listed 5 V and 6.8 V points):
 
 | Stance | 5 V, full stall torque | 5 V, half of stall | 6.5 V, half of stall |
 |---|---|---|---|
-| Standing, 4 feet | 8.97 kg | 4.48 kg | 4.98 kg |
-| Crawl, 3 feet, body leaning 25 mm | 5.66 kg | 2.83 kg | 3.14 kg |
-| Trot, 2 diagonal feet | 4.48 kg | 2.24 kg | 2.49 kg |
+| Standing, 4 feet | 7.18 kg | 3.59 kg | 3.98 kg |
+| Crawl, 3 feet, body leaning 25 mm | 4.31 kg | 2.15 kg | 2.39 kg |
+| Trot, 2 diagonal feet | 3.59 kg | 1.79 kg | 1.99 kg |
 
 **How to read the table.** Each cell answers one question: if the robot froze in
 this pose, how heavy could it be before the weakest servo reached the torque
@@ -136,13 +137,13 @@ shown? The cell is that total mass.
 *Rows are how many feet carry the weight.* Standing: four legs, about a quarter
 of the weight each (the easiest case). Crawl: three legs, with the body leaning
 away from the lifted foot, so the load is uneven; the busiest leg carries about
-40% of the weight (derived from `results/torque_envelope.json`, not a separate
+42% of the weight (derived from `results/torque_envelope.json`, not a separate
 output). Trot: two diagonal legs, half each (the hardest case).
 
 *The knee decides.* The foot sits under the hip, so the hip-pitch joint holds
-almost nothing. The knee is offset horizontally from the foot by about 85 mm,
+almost nothing. The knee is offset horizontally from the foot by about 106 mm,
 and it must resist the leg's share of the weight across that lever arm:
-knee torque = share of weight × 9.81 m/s² × mass × 0.085 m.
+knee torque = share of weight × 9.81 m/s² × mass × 0.106 m.
 
 *Columns are how much torque the servo is allowed to give.* Full stall is the
 listed 1.86 N·m at 5 V, which a servo can hold only briefly. "Half of stall" is
@@ -150,8 +151,8 @@ my assumption for a torque it could hold continuously. 6.5 V gives more torque
 than 5 V, so the allowed mass rises.
 
 *Worked example, trot at 5 V, half of stall.* Knee torque per kg of robot
-= 0.5 × 9.81 × 0.085 ≈ 0.42 N·m. The servo allows 0.93 N·m. 0.93 ÷ 0.42 ≈ 2.2 kg,
-matching the 2.24 kg in the table (the small difference is rounding of the lever
+= 0.5 × 9.81 × 0.106 ≈ 0.52 N·m. The servo allows 0.93 N·m. 0.93 ÷ 0.52 ≈ 1.8 kg,
+matching the 1.79 kg in the table (the small difference is rounding of the lever
 arm here).
 
 *Reading the result.* These are ceilings from weight on the feet alone, not
@@ -166,21 +167,55 @@ unverified listing figures on placeholder leg lengths.
 - In every stance the knee is the limiting joint; with the foot under the hip
   the hip-pitch joint carries no static torque. This is specific to that
   stance, and walking moves the foot off the hip.
-- The mass scales inversely with leg length: scaling every link and the stand
-  height by 1.5 cuts the 5 V, half-stall limits to 2.99, 1.89 and 1.49 kg
-  (standing, crawl, trot). Longer legs mean a lighter robot.
-- **Body ratio:** at the same width, changing length over width from 1 to 2.4
-  moves the crawl limit between 2.83 and 3.10 kg, within about 10%, and not in
-  one direction. The ratio does not limit the static torque. It matters for
-  tipping and pitch, which this calculation does not cover.
+- The mass scales inversely with leg length. Scaling the 150 mm design by 1.25
+  (links 188 mm) cuts the 5 V, half-stall limits from 3.59, 2.15, 1.79 kg to
+  2.87, 1.72, 1.44 kg (standing, crawl, trot). Longer legs mean a lighter robot.
+  Going from the 120 mm links of the Stage 0–1 placeholders to 150 mm already
+  cost about a fifth of the limit (trot, 5 V, half of stall: 2.24 to 1.79 kg).
+- **Body ratio:** at the same width (150 mm), changing length over width from 1
+  to 2.4 moves the crawl limit between 2.24 and 2.08 kg, about 8%, slightly
+  lower for longer bodies. The ratio does not limit the static torque much. It
+  matters for tipping and pitch, which this calculation does not cover.
 - **Servo mass counts.** Twelve servos at 60 g (listed) are 0.72 kg before the
   frame, battery, electronics and sensors.
 
-**Working target, a recommendation rather than a result:** aim for a total mass
-of about 1.5 kg for the first robot with these placeholder legs. At that mass
-the trot knee needs about 0.62 N·m, one third of the 5 V stall figure. That
-leaves room for gait peaks, which the static bound ignores. The stand test and
-gait replay in the work packages below are what turn this into a real answer.
+**Working target, a recommendation rather than a result:** treat 1.5 kg as an
+upper limit for the first robot with the design placeholders, and aim below it.
+At 1.5 kg the trot knee needs about 0.78 N·m, 42% of the 5 V stall figure and
+84% of the half-of-stall ceiling at 5 V (75% at 6.5 V). That is thinner than it
+looked with the 120 mm legs, and the static bound ignores gait peaks. Running
+nearer 6.5 V helps. The stand test and gait replay in the work packages below are
+what turn this into a real answer.
+
+## Sizing against the servo
+
+The listings give the servo as about 40 × 20 × 40.5 mm and 60 g (retailer
+numbers, unverified). They do not give mounting-hole spacing, shaft position or
+horn size, which decide the real fit. Against the Stage 0–1 placeholders (40 mm
+abduction offset, 120 mm links, 240 × 100 mm shoulder spacing) the servo was
+about as big as the abduction offset and a third of a link, so the legs and body
+looked small for it.
+
+Decision (owner asked for parts that are not smaller than the motors): the
+**Stage 2 design placeholders are 1.25× the Stage 0–1 ones.**
+
+| | Stage 0–1 placeholder | Stage 2 design placeholder |
+|---|---|---|
+| Abduction offset | 40 mm | 50 mm |
+| Upper and lower leg | 120 mm each | 150 mm each |
+| Stand height | 170 mm | 212.5 mm |
+| Shoulder spacing, length × width | 240 × 100 mm | 300 × 150 mm (2:1) |
+
+The Stage 0–1 network, results and demos keep the 120 mm placeholders. Changing
+them would mean retraining and regenerating every result, so it is deferred; the
+two sets differ until a design is chosen. The MuJoCo model and the design sweep
+use the new sizes (`scripts/torque_envelope.py` already does).
+
+What this does not settle: whether the structure is sound. The frame and links
+must carry the servos, battery and electronics, with enough stiffness and
+strength at the peak gait loads. That needs a mass budget (servos 0.72 kg listed;
+battery, electronics, frame and sensors are not known yet) and a volume check
+that the battery and electronics fit between the hip servos. See work package 6.
 
 ## Work packages
 
@@ -210,9 +245,14 @@ Each is one branch-sized step. Tick them off here as they land.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.
-6. [ ] **Locomotion learning.** Policy acts in foot space through the IK layer.
+6. [ ] **Mechanical fit and structure check.** Servo-sized boxes in the model
+   (listed 40 × 20 × 40.5 mm), a mass budget (servos, battery, electronics, frame,
+   sensors), battery and electronics volume against the body, and link stiffness
+   and strength against the peak joint torque from the stand test and gait
+   replay. Needs the battery and electronics choices from the owner.
+7. [ ] **Locomotion learning.** Policy acts in foot space through the IK layer.
    Randomise mass, friction, servo strength and latency. Reintroduce the
-   current-angle input and smoothness penalties. Only after 1–5.
+   current-angle input and smoothness penalties. Only after 1–6.
 
 ## What this stage will and will not show
 
@@ -238,5 +278,6 @@ do.
    confirm or replace that.
 2. Joint-angle sensor type and resolution (placement is decided: in line with
    the joint axis, close to the motor).
-3. Whether the 1.5 kg working target is acceptable, or whether the robot must
-   carry a heavier battery or payload (then the legs must be shorter).
+3. Battery type and capacity, and the electronics (controller, regulator, sensors).
+   They set the mass budget and the volume the body must hold. If the robot must
+   carry more than about 1.5 kg, the legs must be shorter.

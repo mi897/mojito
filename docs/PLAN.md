@@ -82,8 +82,10 @@ Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5
 listed figures unverified, no position feedback), with external joint-angle sensors on
 the first robot and DC motors with position, velocity and current feedback later (see
 `docs/STAGE2.md`). A first static bound on total mass is done: with the placeholder
-legs, about 2.2–2.8 kg at most in trot and crawl at 5 V and half of stall torque,
-before leg and servo mass and gait dynamics; working target 1.5 kg. Simulation ground truth (foot and base world positions) is used
+design placeholders (150 mm links, 1.25× the Stage 0–1 ones so the servos are not
+oversized), about 1.8–2.2 kg at most in trot and crawl at 5 V and half of stall
+torque, before leg and servo mass and gait dynamics; 1.5 kg is an upper limit.
+Stage 0–1 keeps its 120 mm placeholders until a design is chosen. Simulation ground truth (foot and base world positions) is used
 for evaluation and rewards, not as policy input.
 
 - MuJoCo model built from the same length parameters, so a leg-length change
