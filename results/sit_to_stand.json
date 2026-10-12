@@ -1,0 +1,683 @@
+{
+ "what": "sit-to-stand in MuJoCo through the servo model, 5 V, listed stall torque (unverified); legs of negligible mass; minimum-jerk height profile; 1 s hold crouched, rise, 1 s hold standing. Fractions are of the 1.86 N.m stall torque; 'stood' means within 50 mm of the target height and never tilted past 20 degrees. Not shown: anything about a real robot (masses, gains and servo figures are placeholders), or about a lying-down start.",
+ "lengths_m": [
+  0.05,
+  0.15,
+  0.15
+ ],
+ "sit_height_m": 0.14,
+ "stand_height_m": 0.2125,
+ "static_knee_torque_per_kg_nm": {
+  "crouched": 0.3254,
+  "standing": 0.2597,
+  "note": "equal quarter of the weight per foot, per kg of robot"
+ },
+ "sweeps": {
+  "kp 10 N.m/rad, kd 0.2, command resolution 0.66 deg": [
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.279,
+    "rise_peak_fraction_of_limit": 0.398,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.5,
+    "final_height_error_mm": 11.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.279,
+    "rise_peak_fraction_of_limit": 0.34,
+    "rise_peak_time_after_start_s": 0.12,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.5,
+    "final_height_error_mm": 11.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.279,
+    "rise_peak_fraction_of_limit": 0.34,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.5,
+    "final_height_error_mm": 11.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.279,
+    "rise_peak_fraction_of_limit": 0.34,
+    "rise_peak_time_after_start_s": 0.4,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.5,
+    "final_height_error_mm": 11.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.38,
+    "rise_peak_fraction_of_limit": 0.519,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.9,
+    "final_height_error_mm": 14.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.38,
+    "rise_peak_fraction_of_limit": 0.443,
+    "rise_peak_time_after_start_s": 0.17,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.9,
+    "final_height_error_mm": 14.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.38,
+    "rise_peak_fraction_of_limit": 0.44,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.9,
+    "final_height_error_mm": 14.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.38,
+    "rise_peak_fraction_of_limit": 0.44,
+    "rise_peak_time_after_start_s": 0.4,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.9,
+    "final_height_error_mm": 14.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.599,
+    "rise_peak_fraction_of_limit": 0.773,
+    "rise_peak_time_after_start_s": 0.2,
+    "fraction_of_rise_with_a_servo_saturated": 0.31,
+    "max_tilt_deg": 1.6,
+    "final_height_error_mm": 22.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.599,
+    "rise_peak_fraction_of_limit": 0.663,
+    "rise_peak_time_after_start_s": 0.17,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 1.6,
+    "final_height_error_mm": 22.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.599,
+    "rise_peak_fraction_of_limit": 0.654,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 1.6,
+    "final_height_error_mm": 22.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.599,
+    "rise_peak_fraction_of_limit": 0.654,
+    "rise_peak_time_after_start_s": 0.4,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 1.6,
+    "final_height_error_mm": 22.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.71,
+    "rise_peak_fraction_of_limit": 0.961,
+    "rise_peak_time_after_start_s": 0.5,
+    "fraction_of_rise_with_a_servo_saturated": 0.7,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 493.9,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.71,
+    "rise_peak_fraction_of_limit": 0.913,
+    "rise_peak_time_after_start_s": 0.31,
+    "fraction_of_rise_with_a_servo_saturated": 0.46,
+    "max_tilt_deg": 3.3,
+    "final_height_error_mm": 32.3,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.71,
+    "rise_peak_fraction_of_limit": 0.882,
+    "rise_peak_time_after_start_s": 0.54,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 2.5,
+    "final_height_error_mm": 32.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.71,
+    "rise_peak_fraction_of_limit": 0.877,
+    "rise_peak_time_after_start_s": 0.88,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 2.7,
+    "final_height_error_mm": 32.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.745,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.3,
+    "fraction_of_rise_with_a_servo_saturated": 0.72,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 454.0,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.745,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.37,
+    "fraction_of_rise_with_a_servo_saturated": 0.74,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 457.7,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.745,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.6,
+    "fraction_of_rise_with_a_servo_saturated": 0.75,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 457.1,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.745,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 1.05,
+    "fraction_of_rise_with_a_servo_saturated": 0.67,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 456.9,
+    "stood": false
+   }
+  ],
+  "kp 100 N.m/rad, kd 1, command resolution 0.66 deg": [
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.266,
+    "rise_peak_fraction_of_limit": 0.882,
+    "rise_peak_time_after_start_s": 0.07,
+    "fraction_of_rise_with_a_servo_saturated": 0.02,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 6.1,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.266,
+    "rise_peak_fraction_of_limit": 0.882,
+    "rise_peak_time_after_start_s": 0.12,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 6.1,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.266,
+    "rise_peak_fraction_of_limit": 0.882,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 6.1,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.266,
+    "rise_peak_fraction_of_limit": 0.888,
+    "rise_peak_time_after_start_s": 0.77,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.3,
+    "final_height_error_mm": 6.1,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.356,
+    "rise_peak_fraction_of_limit": 0.972,
+    "rise_peak_time_after_start_s": 0.07,
+    "fraction_of_rise_with_a_servo_saturated": 0.09,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 7.9,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.356,
+    "rise_peak_fraction_of_limit": 0.972,
+    "rise_peak_time_after_start_s": 0.12,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 7.9,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.356,
+    "rise_peak_fraction_of_limit": 0.972,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 7.9,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.356,
+    "rise_peak_fraction_of_limit": 0.975,
+    "rise_peak_time_after_start_s": 0.77,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.3,
+    "final_height_error_mm": 7.9,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.539,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.07,
+    "fraction_of_rise_with_a_servo_saturated": 0.25,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 11.6,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.539,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.12,
+    "fraction_of_rise_with_a_servo_saturated": 0.1,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 11.6,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.539,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.05,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 11.6,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.539,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.4,
+    "fraction_of_rise_with_a_servo_saturated": 0.03,
+    "max_tilt_deg": 0.3,
+    "final_height_error_mm": 11.6,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.726,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.07,
+    "fraction_of_rise_with_a_servo_saturated": 0.73,
+    "max_tilt_deg": 1.7,
+    "final_height_error_mm": 15.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.726,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.96,
+    "fraction_of_rise_with_a_servo_saturated": 0.21,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 15.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.726,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.21,
+    "fraction_of_rise_with_a_servo_saturated": 0.1,
+    "max_tilt_deg": 0.2,
+    "final_height_error_mm": 15.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.726,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.63,
+    "fraction_of_rise_with_a_servo_saturated": 0.06,
+    "max_tilt_deg": 0.3,
+    "final_height_error_mm": 15.2,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 179.9,
+    "final_height_error_mm": 453.4,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 449.0,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 458.8,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 448.6,
+    "stood": false
+   }
+  ],
+  "kp 100 N.m/rad, kd 1, command resolution 0.006 deg": [
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.264,
+    "rise_peak_fraction_of_limit": 0.354,
+    "rise_peak_time_after_start_s": 0.17,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 6.5,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.264,
+    "rise_peak_fraction_of_limit": 0.292,
+    "rise_peak_time_after_start_s": 0.28,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 6.5,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.264,
+    "rise_peak_fraction_of_limit": 0.276,
+    "rise_peak_time_after_start_s": 0.48,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 6.5,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 1.5,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.264,
+    "rise_peak_fraction_of_limit": 0.27,
+    "rise_peak_time_after_start_s": 0.8,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 6.5,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.353,
+    "rise_peak_fraction_of_limit": 0.459,
+    "rise_peak_time_after_start_s": 0.16,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 8.4,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.353,
+    "rise_peak_fraction_of_limit": 0.383,
+    "rise_peak_time_after_start_s": 0.28,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 8.4,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.353,
+    "rise_peak_fraction_of_limit": 0.364,
+    "rise_peak_time_after_start_s": 0.48,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 8.4,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 2.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.353,
+    "rise_peak_fraction_of_limit": 0.358,
+    "rise_peak_time_after_start_s": 0.56,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.0,
+    "final_height_error_mm": 8.4,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.533,
+    "rise_peak_fraction_of_limit": 0.673,
+    "rise_peak_time_after_start_s": 0.16,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 12.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.533,
+    "rise_peak_fraction_of_limit": 0.568,
+    "rise_peak_time_after_start_s": 0.25,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 12.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.533,
+    "rise_peak_fraction_of_limit": 0.542,
+    "rise_peak_time_after_start_s": 0.48,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 12.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 3.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.533,
+    "rise_peak_fraction_of_limit": 0.535,
+    "rise_peak_time_after_start_s": 0.56,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 12.0,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 0.719,
+    "rise_peak_fraction_of_limit": 0.869,
+    "rise_peak_time_after_start_s": 0.13,
+    "fraction_of_rise_with_a_servo_saturated": 0.67,
+    "max_tilt_deg": 1.6,
+    "final_height_error_mm": 15.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 0.719,
+    "rise_peak_fraction_of_limit": 0.755,
+    "rise_peak_time_after_start_s": 0.25,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 15.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 0.719,
+    "rise_peak_fraction_of_limit": 0.721,
+    "rise_peak_time_after_start_s": 0.28,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 15.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 4.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 0.719,
+    "rise_peak_fraction_of_limit": 0.714,
+    "rise_peak_time_after_start_s": 0.54,
+    "fraction_of_rise_with_a_servo_saturated": 0.0,
+    "max_tilt_deg": 0.1,
+    "final_height_error_mm": 15.7,
+    "stood": true
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 0.5,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 453.5,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 1.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 179.9,
+    "final_height_error_mm": 449.7,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 2.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 179.9,
+    "final_height_error_mm": 461.4,
+    "stood": false
+   },
+   {
+    "requested_mass_kg": 5.0,
+    "rise_time_s": 4.0,
+    "sit_hold_peak_fraction_of_limit": 1.0,
+    "rise_peak_fraction_of_limit": 1.0,
+    "rise_peak_time_after_start_s": 0.0,
+    "fraction_of_rise_with_a_servo_saturated": 1.0,
+    "max_tilt_deg": 180.0,
+    "final_height_error_mm": 453.6,
+    "stood": false
+   }
+  ]
+ }
+}

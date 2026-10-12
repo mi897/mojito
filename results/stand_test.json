@@ -26,6 +26,12 @@
     3.807,
     3.807
    ],
+   "foot_load_share_percent_FL_FR_RL_RR": [
+    24.1,
+    24.1,
+    25.9,
+    25.9
+   ],
    "max_knee_gap_deg": 2.17,
    "body_height_drop_mm": 11.02
   },
@@ -110,6 +116,12 @@
     4.991,
     4.991
    ],
+   "foot_load_share_percent_FL_FR_RL_RR": [
+    20.4,
+    20.4,
+    29.6,
+    29.6
+   ],
    "max_knee_gap_deg": 2.743,
    "body_height_drop_mm": 6.0
   },
@@ -131,6 +143,12 @@
     3.446,
     4.991,
     4.991
+   ],
+   "foot_load_share_percent_FL_FR_RL_RR": [
+    20.4,
+    20.4,
+    29.6,
+    29.6
    ],
    "max_knee_gap_deg": 2.743,
    "body_height_drop_mm": 6.0
@@ -157,6 +175,12 @@
      2.506,
      2.506
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.5,
+     24.5,
+     25.5,
+     25.5
+    ],
     "max_knee_gap_deg": 1.32,
     "body_height_drop_mm": 7.45,
     "requested_mass_kg": 1.0
@@ -179,6 +203,12 @@
      3.55,
      3.807,
      3.807
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.1,
+     24.1,
+     25.9,
+     25.9
     ],
     "max_knee_gap_deg": 2.17,
     "body_height_drop_mm": 11.02,
@@ -203,6 +233,12 @@
      5.154,
      5.154
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     23.7,
+     23.7,
+     26.3,
+     26.3
+    ],
     "max_knee_gap_deg": 3.083,
     "body_height_drop_mm": 14.72,
     "requested_mass_kg": 2.0
@@ -225,6 +261,12 @@
      6.662,
      8.053,
      8.053
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     22.6,
+     22.6,
+     27.4,
+     27.4
     ],
     "max_knee_gap_deg": 5.194,
     "body_height_drop_mm": 22.67,
@@ -249,6 +291,12 @@
      11.524,
      11.524
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     20.6,
+     20.6,
+     29.4,
+     29.4
+    ],
     "max_knee_gap_deg": 8.089,
     "body_height_drop_mm": 32.24,
     "requested_mass_kg": 4.0
@@ -271,6 +319,12 @@
      11.619,
      10.458,
      10.458
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.3,
+     26.3,
+     23.7,
+     23.7
     ],
     "max_knee_gap_deg": 6.584,
     "body_height_drop_mm": 454.1,
@@ -295,6 +349,12 @@
      11.581,
      11.581
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.4,
+     26.4,
+     23.6,
+     23.6
+    ],
     "max_knee_gap_deg": 7.24,
     "body_height_drop_mm": 456.94,
     "requested_mass_kg": 5.0
@@ -317,6 +377,12 @@
      14.283,
      12.696,
      12.696
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.5,
+     26.5,
+     23.5,
+     23.5
     ],
     "max_knee_gap_deg": 7.887,
     "body_height_drop_mm": 459.74,
@@ -341,6 +407,12 @@
      13.806,
      13.806
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.5,
+     26.5,
+     23.5,
+     23.5
+    ],
     "max_knee_gap_deg": 8.525,
     "body_height_drop_mm": 462.52,
     "requested_mass_kg": 6.0
@@ -364,6 +436,12 @@
      16.017,
      16.017
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.7,
+     26.7,
+     23.3,
+     23.3
+    ],
     "max_knee_gap_deg": 9.774,
     "body_height_drop_mm": 467.98,
     "requested_mass_kg": 7.0
@@ -386,6 +464,12 @@
      21.025,
      18.213,
      18.213
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.8,
+     26.8,
+     23.2,
+     23.2
     ],
     "max_knee_gap_deg": 11.42,
     "body_height_drop_mm": 473.69,
@@ -412,6 +496,12 @@
      2.458,
      2.458
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.9,
+     24.9,
+     25.1,
+     25.1
+    ],
     "max_knee_gap_deg": 0.092,
     "body_height_drop_mm": 4.27,
     "requested_mass_kg": 1.0
@@ -434,6 +524,12 @@
      3.667,
      3.69,
      3.69
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.9,
+     24.9,
+     25.1,
+     25.1
     ],
     "max_knee_gap_deg": 0.017,
     "body_height_drop_mm": 6.1,
@@ -458,6 +554,12 @@
      4.926,
      4.926
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.9,
+     24.9,
+     25.1,
+     25.1
+    ],
     "max_knee_gap_deg": 0.06,
     "body_height_drop_mm": 7.92,
     "requested_mass_kg": 2.0
@@ -480,6 +582,12 @@
      7.31,
      7.405,
      7.405
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.8,
+     24.8,
+     25.2,
+     25.2
     ],
     "max_knee_gap_deg": 0.212,
     "body_height_drop_mm": 11.56,
@@ -504,6 +612,12 @@
      9.898,
      9.898
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.8,
+     24.8,
+     25.2,
+     25.2
+    ],
     "max_knee_gap_deg": 0.366,
     "body_height_drop_mm": 15.21,
     "requested_mass_kg": 4.0
@@ -526,6 +640,12 @@
      10.922,
      11.15,
      11.15
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.7,
+     24.7,
+     25.3,
+     25.3
     ],
     "max_knee_gap_deg": 0.444,
     "body_height_drop_mm": 17.03,
@@ -550,6 +670,12 @@
      12.407,
      12.407
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.7,
+     24.7,
+     25.3,
+     25.3
+    ],
     "max_knee_gap_deg": 0.522,
     "body_height_drop_mm": 18.86,
     "requested_mass_kg": 5.0
@@ -572,6 +698,12 @@
      13.31,
      13.668,
      13.668
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     24.7,
+     24.7,
+     25.3,
+     25.3
     ],
     "max_knee_gap_deg": 0.601,
     "body_height_drop_mm": 20.69,
@@ -596,6 +728,12 @@
      14.586,
      14.586
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     25.2,
+     25.2,
+     24.8,
+     24.8
+    ],
     "max_knee_gap_deg": 1.126,
     "body_height_drop_mm": 448.29,
     "requested_mass_kg": 6.0
@@ -618,6 +756,12 @@
      17.337,
      16.997,
      16.997
+    ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     25.2,
+     25.2,
+     24.8,
+     24.8
     ],
     "max_knee_gap_deg": 1.272,
     "body_height_drop_mm": 451.9,
@@ -642,10 +786,74 @@
      18.702,
      18.702
     ],
+    "foot_load_share_percent_FL_FR_RL_RR": [
+     26.2,
+     26.2,
+     23.8,
+     23.8
+    ],
     "max_knee_gap_deg": 9.863,
     "body_height_drop_mm": 466.37,
     "requested_mass_kg": 8.0
    }
   ]
+ },
+ "crouch_140mm": {
+  "light_legs_1p5kg": {
+   "total_mass_kg": 1.5,
+   "servo_limit_nm": 1.8633,
+   "peak_torque_nm_by_joint_max_over_legs": {
+    "abduction": 0.1996,
+    "hip_pitch": 0.0185,
+    "knee": 0.5191
+   },
+   "peak_torque_fraction_of_limit_last_window": 0.2786,
+   "peak_torque_fraction_of_limit_whole_run": 0.3605,
+   "stood": true,
+   "max_tilt_deg_last_window": 0.2,
+   "saturated": false,
+   "foot_load_n_FL_FR_RL_RR": [
+    3.562,
+    3.562,
+    3.796,
+    3.796
+   ],
+   "foot_load_share_percent_FL_FR_RL_RR": [
+    24.2,
+    24.2,
+    25.8,
+    25.8
+   ],
+   "max_knee_gap_deg": 3.074,
+   "body_height_drop_mm": 14.06
+  },
+  "default_masses": {
+   "total_mass_kg": 1.72,
+   "servo_limit_nm": 1.8633,
+   "peak_torque_nm_by_joint_max_over_legs": {
+    "abduction": 0.1666,
+    "hip_pitch": 0.1438,
+    "knee": 0.6557
+   },
+   "peak_torque_fraction_of_limit_last_window": 0.3519,
+   "peak_torque_fraction_of_limit_whole_run": 0.444,
+   "stood": true,
+   "max_tilt_deg_last_window": 0.8,
+   "saturated": false,
+   "foot_load_n_FL_FR_RL_RR": [
+    3.328,
+    3.328,
+    5.108,
+    5.108
+   ],
+   "foot_load_share_percent_FL_FR_RL_RR": [
+    19.7,
+    19.7,
+    30.3,
+    30.3
+   ],
+   "max_knee_gap_deg": 3.856,
+   "body_height_drop_mm": 9.19
+  }
  }
 }

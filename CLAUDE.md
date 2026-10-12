@@ -47,7 +47,7 @@ mojito/actuators.py    servo model: voltage, latency, resolution, torque-speed l
 mojito/sensors.py      joint-angle sensor and IMU models (NumPy)
 mojito/stand.py        stand test: IK posture held through the servo model in MuJoCo
 robots/                example URDFs + manifests: quadruped, hexapod, planar
-scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test
+scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
@@ -64,6 +64,8 @@ python scripts/calibrate.py                # results/calibration.json
 python scripts/make_demo.py                # results/step_demo.gif, docs/demo.html
 python scripts/torque_envelope.py          # results/torque_envelope.json, static mass bound
 python scripts/stand_test.py               # results/stand_test.json (needs mujoco)
+python scripts/sit_to_stand.py             # results/sit_to_stand.json and .png (needs mujoco)
+python scripts/make_stand_demo.py          # results/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
 python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
 ```

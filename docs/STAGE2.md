@@ -402,6 +402,33 @@ Each is one branch-sized step. Tick them off here as they land.
    collapse mass moved from 4.5 to 6 kg between two gain settings); anything about walking; friction limits and foot slip (not
    measured here). After a collapse the body passes through the floor, because only
    the foot pads collide, so the "height drop" of about 450 mm in the failed runs is not a physical height.
+   **Sit to stand** (`stand.run_sit_to_stand`, `scripts/sit_to_stand.py`, `results/sit_to_stand.json` and `.png`,
+   `scripts/make_stand_demo.py` for the animations). Same model, 5 V, near-weightless legs. Start crouched
+   at 140 mm (the placeholder knee limit of -2.3 rad stops the 150 mm legs at about 130 mm, so this is a deep
+   crouch and not sitting down), hold 1 s, rise to 212.5 mm over 0.5 to 4 s along a minimum-jerk profile, hold 1 s.
+   - Per newton of foot load the crouch needs 25% more knee torque than standing (0.325 against 0.260 N·m per kg of
+     robot at an equal quarter share each, from `statics`), so the crouch is the hardest pose of the rise.
+   - With the command resolution made fine (0.006°), a slow rise peaks at the crouch hold: for 3 kg the 2 s rise
+     peaks at 0.54 of the stall torque and the hold at 0.53; for 4 kg, 0.72 and 0.72. A 0.5 s rise is
+     higher (3 kg: 0.67; 4 kg: 0.87, with the servo at its limit for 67% of the rise, and it still stood).
+   - Servo gains and command resolution matter. With the PCA9685's 0.66° steps and kp 100 N·m/rad, every
+     command step is a 1.15 N·m torque step (62% of stall), so even a 1.5 kg robot shows a rise peak of 0.88 whatever the rise
+     time, against 0.28 with fine resolution. That is a property of the model as built (stiff gain plus coarse
+     command steps), not a measurement of the servo; a real servo's own loop and dead band are not modelled.
+   - Where it stops: with kp 10 it rises with 4 kg in 1 s or longer, but not with 5 kg at any rise time (peak torque at the limit); with kp 100
+     it rises with 4 kg and not with 5 kg (at the limit even in the crouch hold). The static bound for standing is
+     7.18 kg, and these crouch results are below it. I did not trace why kp 10 holds 5 kg in the crouch (0.75 of stall)
+     while kp 100 saturates.
+   - Not shown: a real robot's limit (masses, gains and the servo figures are placeholders), rising from lying down,
+     slip, or the effect of leg mass.
+
+   **Weight distribution** (`results/stand_test.json`). The feet do not share the weight equally. Standing with
+   near-weightless legs: 24.1% on each front foot and 25.9% on each rear foot (front pair 48.3%). With the default
+   placeholder masses: 20.4% front and 29.6% rear (front pair 40.9%); in the 140 mm crouch 19.7% and 30.3%
+   (front pair 39.5%). Left and right match. The mechanism was not traced. Likely contributors: the knees all bend
+   backwards, so the shank and foot masses sit behind the hips and move the centre of mass rearward, and the
+   knee-bend direction makes front and rear legs not mirror images. Only the second of these applies to the near-weightless legs.
+
 4. [ ] **Replay Stage 1 gaits in physics.** Feed the trot and crawl foot
    trajectories through the IK layer into the servo model. Report whether the
    body stays up, foot slip, and peak torque. This tests the known weaknesses
