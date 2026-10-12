@@ -225,7 +225,7 @@ function stopTrace() { state.tracing = false; cancelAnimationFrame(raf); $("trac
 function tick() {
   state.t += 0.02;
   const u = state.t % (2 * Math.PI), swing = Math.sin(u) > 0;
-  state.p = [0.07 * Math.cos(u), state.L[0] + 0.01, -0.17 + (swing ? 0.05 * Math.sin(u) : 0)];
+  state.p = [-0.07 * Math.cos(u), state.L[0] + 0.01, -0.17 + (swing ? 0.05 * Math.sin(u) : 0)];
   render();
   if (state.tracing) raf = requestAnimationFrame(tick);
 }
