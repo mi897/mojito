@@ -27,7 +27,7 @@ def step_path(n, la):
     """A walking step in the side plane: flat stance, raised swing."""
     u = np.linspace(0, 2 * np.pi, n, endpoint=False)
     z = -0.17 + np.where(np.sin(u) > 0, 0.05 * np.sin(u), 0.0)
-    return np.stack([0.07 * np.cos(u), np.full(n, la + 0.01), z], axis=1)
+    return np.stack([-0.07 * np.cos(u), np.full(n, la + 0.01), z], axis=1)
 
 
 def make_gif(net, path, frames=60):
