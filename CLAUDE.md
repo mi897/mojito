@@ -133,6 +133,6 @@ calibrate, make_demo and make_body_demos and update every number quoted in
    Servo"), supply adjustable 5–6.5 V, no position feedback, decided. Later: DC motors
    with position, velocity and current feedback. First robot: external joint-angle
    sensors, in line with the joint axis close to the motor. Open: datasheet figures (5–6.5 V is interpolated from listed 5 and 6.8 V points), sensor type. Servo figures in `docs/STAGE2.md`
-   are unverified retailer numbers.
+   are unverified retailer numbers. Power and electronics: 2S 1500 mAh LiPo, PCA9685 + STM32F103 chosen (regulator needed; battery is above the servo's range); Raspberry Pi undecided (`docs/STAGE2.md`).
 3. Measurement: simulation ground truth for now, external system later. Keep
    ground truth out of policy observations.

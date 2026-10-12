@@ -217,6 +217,53 @@ strength at the peak gait loads. That needs a mass budget (servos 0.72 kg listed
 battery, electronics, frame and sensors are not known yet) and a volume check
 that the battery and electronics fit between the hip servos. See work package 6.
 
+## Power and electronics (first robot)
+
+Chosen by the owner: XW Power Eagle LiPo, 2S, 7.4 V nominal, 1500 mAh, 25C
+continuous (25 A as listed), 90C burst, T-plug, 76 g, 26 × 34 × 72 mm. A PCA9685
+16-channel 12-bit I2C servo driver and an STM32F103C8T6 "Blue Pill" board. A
+Raspberry Pi is undecided (see below).
+
+What follows from those numbers (arithmetic and reasoning, not measurements):
+
+- **The battery cannot feed the servos directly.** A 2S pack reads about 8.4 V
+  full, above the listed 6.8 V servo maximum and the 5–6.5 V range chosen
+  above. The servo rail needs a regulator set to 5–6.5 V. As the pack drops, a
+  plain buck regulator stops holding 6.5 V near the bottom of the pack, so the
+  low-voltage cut-off must be set with that in mind (roughly 7 V for a 6.5 V
+  rail; check the regulator's dropout).
+- **Servo current is the sizing problem.** The listings give 2.6 A stall at
+  6.8 V and 1.8 A at 5 V per servo. Twelve at once, interpolated to 6.5 V, is
+  about 30 A. Servos will not all stall together, so the real peak is lower, but
+  the real figure is unknown until measured. Plan several regulators (for
+  example one per group of legs) rated well above the typical draw, and measure
+  current per rail. A single small regulator will brown out.
+- **Runtime is short.** 1.5 Ah is 11.1 Wh. Taking 80% as usable, 1.2 Ah lasts
+  about 14 minutes at an average 5 A from the battery and about 7 minutes at
+  10 A. The average draw is not known.
+- **Mass and volume are not the problem.** The battery is 76 g and fits easily in
+  the 300 × 150 mm body. Servos (0.72 kg listed) and the frame dominate.
+- **The PCA9685 limits servo resolution.** At 50 Hz one count is 20 ms / 4096 =
+  4.9 µs. The listed 500–2500 µs range is about 410 counts, or about 0.66° per
+  count over 270° (0.44° over 180°). The servo's listed dead band is 3 µs, so the
+  driver is coarser than the servo. The Blue Pill's hardware timers can produce
+  1 µs steps directly. The PCA9685's internal clock accuracy was not in the
+  sources I read; plan a frequency calibration.
+- **Not in the list yet:** an IMU (the only way to measure body orientation on
+  the real robot), current sensing on the servo rails, and a wireless link if no
+  Raspberry Pi is used (the Blue Pill has none).
+- The Blue Pill's STM32F103 has no floating-point unit and 20 KB of RAM, so it
+  suits a real-time servo and sensor loop, not running the leg network or a
+  policy. Its parts are often clones; check the chip.
+
+**Raspberry Pi: undecided.** It would run the existing Python code onboard, log
+data for learning from real interaction, and host ROS. The costs are extra
+mass, a separate clean 5 V supply (the Zero 2 W is listed at about 0.6 W idle and
+nearly 3 W peak, 5 V 2.5 A supply recommended), SD-card care, and Linux timing
+that is not real-time. The proposed split keeps servo timing and sensor reading
+on the microcontroller and puts everything else on the Pi, joined by a simple
+serial protocol, so the Pi can be added or removed without redesign.
+
 ## Work packages
 
 Each is one branch-sized step. Tick them off here as they land.
@@ -278,6 +325,7 @@ do.
    confirm or replace that.
 2. Joint-angle sensor type and resolution (placement is decided: in line with
    the joint axis, close to the motor).
-3. Battery type and capacity, and the electronics (controller, regulator, sensors).
-   They set the mass budget and the volume the body must hold. If the robot must
-   carry more than about 1.5 kg, the legs must be shorter.
+3. Raspberry Pi: include one or not (which model), the servo-rail regulators and
+   their current rating, and an IMU. Battery and the PCA9685/Blue Pill pair are
+   chosen. If the robot must carry more than about 1.5 kg, the legs must be
+   shorter.
