@@ -95,9 +95,19 @@ actual gap becomes at the torque limit.
   model. One thing to check on the real part: whether it reads the servo's
   output shaft (after the gearbox, the link's true angle) or something before the
   gearbox (which would hide gear play). The DS3218's shaft is only accessible on
-  the horn side, so this must be settled when the mount is designed. Sensor
-  type (magnetic or optical, resolution) is not chosen; resolution is a model
-  parameter until then.
+  the horn side, so this must be settled when the mount is designed. **Sensor type
+  (decided):** a custom Hall-effect board, a magnetic sensor reading a magnet on
+  the joint axis. Risks to test early, because the sensor sits next to the
+  motor: the motor's own magnets, a steel horn or screws, and high-current wires
+  can distort the field and bias the reading; the magnet must be centred and at a
+  fixed gap, or the error is a smooth nonlinearity over the turn. Each joint gets
+  a calibration table against known angles. The model's sensor parameters are
+  therefore: resolution, noise, a per-joint offset, a smooth nonlinearity, delay
+  (bus read time), and a bias that may follow motor current. Resolution is open
+  until the chip is chosen (12-bit is 0.088°, 14-bit is 0.022°). Twelve sensors
+  also set the bus: many magnetic encoder chips share one fixed I2C address, so
+  plan SPI with a select line per sensor or an I2C multiplexer; the Blue Pill
+  has two SPI ports and ten ADC channels.
 - **Later robots:** DC motors with position, velocity and current feedback.
   Current is a torque estimate, so the policy could observe effort. Keep the
   policy's observation a named list built from whatever the actuator reports,
@@ -256,13 +266,48 @@ What follows from those numbers (arithmetic and reasoning, not measurements):
   suits a real-time servo and sensor loop, not running the leg network or a
   policy. Its parts are often clones; check the chip.
 
-**Raspberry Pi: undecided.** It would run the existing Python code onboard, log
-data for learning from real interaction, and host ROS. The costs are extra
-mass, a separate clean 5 V supply (the Zero 2 W is listed at about 0.6 W idle and
-nearly 3 W peak, 5 V 2.5 A supply recommended), SD-card care, and Linux timing
-that is not real-time. The proposed split keeps servo timing and sensor reading
-on the microcontroller and puts everything else on the Pi, joined by a simple
-serial protocol, so the Pi can be added or removed without redesign.
+**Raspberry Pi: undecided, and less necessary than first thought.** Decided by
+the owner: learning happens off board, the robot is controlled over the network,
+and logs are saved to a server on a laptop. None of that needs onboard Linux. A
+Pi (or an ESP32, which has Wi-Fi and a floating-point unit and could replace the
+Blue Pill) is still needed as the network-capable part, because the Blue Pill has
+no wireless. Costs of a Pi: extra mass, a separate clean 5 V supply (the Zero 2 W
+is listed at about 0.6 W idle and nearly 3 W peak, 5 V 2.5 A supply
+recommended), SD-card care, and Linux timing that is not real-time. The
+proposed split keeps servo timing and sensor reading on the microcontroller and
+puts the network side on the Pi, joined by a simple serial protocol, so the Pi
+can be added or removed without redesign.
+
+## Network control and logging
+
+Decided: control over the network, learning off board, logs saved on a server
+hosted on a laptop, to be used for training and for updating a world model that
+improves sim-to-real transfer. This is a standard arrangement. Design points:
+
+- **Do not close the control loop over Wi-Fi.** Wi-Fi delay varies by tens of
+  milliseconds. Joint-level timing stays on the microcontroller. The laptop sends
+  slow commands (a gait, a velocity, or short buffered joint trajectories). Closed-form
+  inverse kinematics is small enough that it probably can run on the
+  microcontroller or the Pi; the learned network need not.
+- **Fail safe.** If commands stop arriving for a set time (a few hundred
+  milliseconds, to be tuned), the robot holds or lowers itself, and a low
+  battery voltage does the same.
+- **Log at the source.** Stamp every sample with the microcontroller's own clock,
+  not the arrival time, and number the samples so gaps are visible. Over UDP,
+  packets can be lost, so use TCP for logs, or buffer on the robot and send after.
+- **What to log:** commanded servo positions, measured joint angles, IMU, battery
+  voltage and rail currents, the gait command and state, and the configuration (firmware
+  version, link lengths, supply voltage). Log raw readings, not only derived values.
+  Rough size: 100 bytes per sample at 200 Hz is about 20 kB/s, which Wi-Fi handles
+  easily.
+- **Why this matters for the simulation:** a world model is fitted by comparing
+  logged commanded-versus-measured motion with the simulator's. That is only
+  possible with excitation data (varied commands) and consistent timestamps. It
+  also needs the same joint-sensor model as the simulation, so the sensor
+  parameters above double as what the logs will be used to estimate.
+- Not yet covered: body position in the world. The robot's own sensors give joint
+  angles and body orientation (with an IMU), not where the body is. An external
+  tracking system, if built later, would supply it.
 
 ## Work packages
 
@@ -323,8 +368,9 @@ do.
 1. Datasheet figures for the DS3218 20KG. The model interpolates torque and speed
    between the listed 5 V and 6.8 V points to cover 5–6.5 V; the datasheet would
    confirm or replace that.
-2. Joint-angle sensor type and resolution (placement is decided: in line with
-   the joint axis, close to the motor).
+2. Hall-effect chip and resolution for the custom sensor board (type and
+   placement are decided: in line with the joint axis, close to the motor), and
+   whether the magnet and horn can be kept clear of steel.
 3. Raspberry Pi: include one or not (which model), the servo-rail regulators and
    their current rating, and an IMU. Battery and the PCA9685/Blue Pill pair are
    chosen. If the robot must carry more than about 1.5 kg, the legs must be
