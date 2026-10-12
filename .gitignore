@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .venv/
 results/train_stdout.txt
+MUJOCO_LOG.TXT
