@@ -232,12 +232,31 @@ that the battery and electronics fit between the hip servos. See work package 6.
 Chosen by the owner: XW Power Eagle LiPo, 2S, 7.4 V nominal, 1500 mAh, 25C
 continuous (25 A as listed), 90C burst, T-plug, 76 g, 26 × 34 × 72 mm. A PCA9685
 16-channel 12-bit I2C servo driver and an STM32F103C8T6 "Blue Pill" board were
-the first picks. **Update:** the owner chose an ESP32 as the network-capable
-controller and dropped the Raspberry Pi (too much hassle with the SD card and
-power). Assumed, to be confirmed: the ESP32 replaces the Blue Pill as well, and
-the PCA9685 becomes optional, since the ESP32's own PWM hardware can drive 12
-servos. Hardware specifics such as the Hall chip and magnet are **tabled** and
+the first picks. **Update (decided):** the controller is an ESP32. The Raspberry Pi
+and the Blue Pill are dropped (the Pi: too much hassle with the SD card and power).
+The PCA9685 stays: the ESP32 talks to it over I2C so that more servos are
+controlled with fewer pins. Hardware specifics such as the Hall chip and magnet are **tabled** and
 will be revisited later.
+
+Consequences of keeping the PCA9685 (to check when the hardware is designed):
+
+- **Voltage rating of the board.** Several PCA9685 board listings cap the servo
+  supply pin at 6 V (the chip's own supply is limited to 5.5 V). The servo rail
+  is planned at 5–6.5 V, so 6.5 V exceeds those listings. Either keep the rail at
+  or below the board's rating, or wire the servos' power directly and give the
+  board only signal and logic supply. The rating of the actual board is not
+  known; read its schematic.
+- **Servo power should bypass the board.** Board listings give small per-channel
+  current figures (tens of mA, for signal), and no rating for the power terminal.
+  Servo current (about 2.5 A each at stall) should come straight from the servo
+  regulators, with only the signal wire through the PCA9685.
+- **Resolution** is set by the PCA9685, about 0.66° per count over 270° (see
+  above), coarser than the servo's listed 3 µs dead band.
+- **Update time.** Writing all 12 channels in one I2C transfer is about 50 bytes,
+  which takes roughly 1 ms at 400 kHz (arithmetic, not measured).
+- **Hardware stop.** The board's output-enable pin can be wired to an ESP32 pin
+  to switch all outputs off. What the DS3218 does with no pulses (go limp or
+  hold) is not known and must be tested before it is relied on.
 
 What follows from those numbers (arithmetic and reasoning, not measurements):
 
@@ -278,7 +297,7 @@ ROS can run on the laptop, or micro-ROS on the ESP32 later. The ESP32 is kept on
 its own regulated supply (see the power layout below), joined to the servo rail
 by a common ground only.
 
-**Power layout (recommendation, pending the owner's confirmation):** one battery,
+**Power layout (decided):** one battery,
 two separate regulators. A servo-rail regulator (or several) set to 5–6.5 V and a
 small logic regulator for the ESP32 and sensors. A separate logic battery adds
 mass, a second charger and a second pack to monitor, and still shares a ground, so
@@ -382,7 +401,7 @@ do.
 2. Tabled for later: the Hall-effect chip, resolution, and magnet and horn
    details (type and placement are decided: custom Hall board in line with the
    joint axis, close to the motor).
-3. Confirm the ESP32 replaces the Blue Pill, whether to keep the PCA9685, and the
-   power layout above; then the servo-rail regulators and their current rating,
-   and an IMU. The battery is chosen. If the robot must carry more than about 1.5 kg, the legs must be
+3. The servo-rail regulators and their current rating, the PCA9685 board's actual
+   voltage rating against the 6.5 V rail, and an IMU. Battery, ESP32, PCA9685 and
+   the one-battery power layout are decided. If the robot must carry more than about 1.5 kg, the legs must be
    shorter.

@@ -133,6 +133,6 @@ calibrate, make_demo and make_body_demos and update every number quoted in
    Servo"), supply adjustable 5–6.5 V, no position feedback, decided. Later: DC motors
    with position, velocity and current feedback. First robot: external joint-angle
    sensors, in line with the joint axis close to the motor. Sensors are custom Hall-effect boards. Learning is off board; control and logging go over the network to a laptop server. Open: datasheet figures (5–6.5 V is interpolated from listed 5 and 6.8 V points). Hall chip and magnet details are tabled. Servo figures in `docs/STAGE2.md`
-   are unverified retailer numbers. Power and electronics: 2S 1500 mAh LiPo, regulator needed (battery is above the servo's range). Controller: ESP32, no Raspberry Pi; PCA9685 and Blue Pill to be confirmed (`docs/STAGE2.md`).
+   are unverified retailer numbers. Power and electronics: 2S 1500 mAh LiPo, regulator needed (battery is above the servo's range). Controller: ESP32 driving a PCA9685 over I2C; no Raspberry Pi, no Blue Pill. One battery, separate servo and logic regulators. Open: PCA9685 board voltage rating against the 6.5 V rail (`docs/STAGE2.md`).
 3. Measurement: simulation ground truth for now, external system later. Keep
    ground truth out of policy observations.

@@ -118,6 +118,6 @@ for evaluation and rewards, not as policy input.
 2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG), supply
    adjustable 5–6.5 V, no position feedback; external joint-angle sensors for the
    first robot; DC motors with position, velocity and current feedback later. Still
-   open: datasheet figures (5–6.5 V is interpolated from listed 5 V and 6.8 V points). The Hall chip and magnet details are tabled, and the controller is an ESP32 (no Raspberry Pi). Sensors are custom Hall-effect boards; learning is off board, with control and logging over the network to a laptop.
+   open: datasheet figures (5–6.5 V is interpolated from listed 5 V and 6.8 V points). The Hall chip and magnet details are tabled, and the controller is an ESP32 driving a PCA9685 (no Raspberry Pi), on one battery with separate servo and logic regulators. Sensors are custom Hall-effect boards; learning is off board, with control and logging over the network to a laptop.
 3. Foot position on the real robot: simulation ground truth for now; an external
    measuring system can be built later if needed.
