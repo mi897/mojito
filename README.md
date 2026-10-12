@@ -21,7 +21,7 @@ network produced. The orange rings are where the feet were asked to be.*
 | 0 | One network learns inverse kinematics for a leg, with link lengths as inputs | Done |
 | 1 | Whole body: posture control, trot and crawl, NumPy or PyTorch | Done |
 | – | Robots defined in URDF; the network is generated from it | Done |
-| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model and servo/sensor model built (work packages 0–2 of 8); stand test next |
+| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model and servo/sensor model built (work packages 0–3 of 8); gait replay in physics next |
 | 3 | The real robot: measurement, calibration, per-leg correction | Planned |
 | 4 | The loop: real experience updates the simulator, retrain, redeploy | Planned |
 
@@ -382,6 +382,16 @@ This counts weight on vertical foot loads only. It leaves out leg and servo mass
 (twelve listed servos are 0.72 kg alone), gait dynamics, friction and heat, so it
 is an upper bound, not a mass the robot can walk with. Details and the
 length-to-width result are in `docs/STAGE2.md`.
+
+`python scripts/stand_test.py` (needs MuJoCo) then holds the standing posture in
+physics through the servo model and writes `results/stand_test.json`. With the
+same placeholders, 5 V and servo gains that are also placeholders, a 1.5 kg robot
+with near-weightless legs stands with the servo torques within 0.5% of the static
+calculation when that is given the measured foot loads. The feet carry the weight
+unequally (3.55 N front, 3.81 N rear), so the equal-quarter figure above is up
+to 8% off. The sweep stood up to 4 kg and fell at 4.5 kg with the default gain,
+and stood up to 5.5 kg and fell at 6 kg with a stiffer one: below the 7.18 kg
+static bound either way, and the answer moves with gains that are placeholders.
 
 ## Open questions
 
