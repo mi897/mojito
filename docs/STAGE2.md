@@ -122,6 +122,37 @@ the unverified listed stall torques (1.86 N·m at 5 V, 2.11 N·m at 6.8 V):
 | Crawl, 3 feet, body leaning 25 mm | 5.66 kg | 2.83 kg | 3.21 kg |
 | Trot, 2 diagonal feet | 4.48 kg | 2.24 kg | 2.54 kg |
 
+**How to read the table.** Each cell answers one question: if the robot froze in
+this pose, how heavy could it be before the weakest servo reached the torque
+shown? The cell is that total mass.
+
+*Rows are how many feet carry the weight.* Standing: four legs, about a quarter
+of the weight each (the easiest case). Crawl: three legs, with the body leaning
+away from the lifted foot, so the load is uneven; the busiest leg carries about
+40% of the weight (derived from `results/torque_envelope.json`, not a separate
+output). Trot: two diagonal legs, half each (the hardest case).
+
+*The knee decides.* The foot sits under the hip, so the hip-pitch joint holds
+almost nothing. The knee is offset horizontally from the foot by about 85 mm,
+and it must resist the leg's share of the weight across that lever arm:
+knee torque = share of weight × 9.81 m/s² × mass × 0.085 m.
+
+*Columns are how much torque the servo is allowed to give.* Full stall is the
+listed 1.86 N·m at 5 V, which a servo can hold only briefly. "Half of stall" is
+my assumption for a torque it could hold continuously. 6.8 V gives more torque
+than 5 V, so the allowed mass rises.
+
+*Worked example, trot at 5 V, half of stall.* Knee torque per kg of robot
+= 0.5 × 9.81 × 0.085 ≈ 0.42 N·m. The servo allows 0.93 N·m. 0.93 ÷ 0.42 ≈ 2.2 kg,
+matching the 2.24 kg in the table (the small difference is rounding of the lever
+arm here).
+
+*Reading the result.* These are ceilings from weight on the feet alone, not
+targets. The trot row is the one to watch, because a walking robot passes through
+its harshest poses. Everything listed as left out above (leg and servo mass,
+gait dynamics, friction, heat) lowers the usable mass, and the servo torques are
+unverified listing figures on placeholder leg lengths.
+
 - "Half of stall" is an assumption, not a datasheet value: stall torque is the
   most the servo can give for an instant, and the listings give no continuous
   rating.
