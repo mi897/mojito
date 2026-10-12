@@ -75,7 +75,7 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 
 ## Stage 2 — physics simulation
 
-**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/mjcf.py`, foot positions tested against `mojito/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo, joint-sensor and IMU models, `mojito/actuators.py`, tested against closed-form holding deflection) are done; the stand test is next.
+**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/mjcf.py`, foot positions tested against `mojito/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo model in `mojito/actuators.py`, joint-sensor and IMU models in `mojito/sensors.py`, tested against closed-form holding deflection) are done; the stand test is next.
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
 Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5–6 V,

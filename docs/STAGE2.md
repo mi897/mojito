@@ -367,7 +367,7 @@ Each is one branch-sized step. Tick them off here as they land.
    the world; joint ranges equal the URDF's; a longer shank lowers the foot; and
    a stiffly held stance dropped on the floor ends on four contacts whose normal
    force sums to the weight within 3%.
-2. [x] **Servo and sensor model** (`mojito/actuators.py`, `tests/test_actuators.py`; `mjcf_from_urdf(..., actuated=True)` adds torque motors and a gyro and accelerometer).
+2. [x] **Servo and sensor model** (`mojito/actuators.py` and `mojito/sensors.py`, with `tests/test_actuators.py` and `tests/test_sensors.py`; `mjcf_from_urdf(..., actuated=True)` adds torque motors and a gyro and accelerometer).
    Defaults are the unverified listed figures; kp 10 N·m/rad, kd 0.2, latency 20 ms and the
    sensor and IMU noise values are my placeholders, not measurements. Tests: a servo holding a mass on a
    horizontal arm settles at the root of kp·q = m g L cos q (below the limit), and above the limit sags to
