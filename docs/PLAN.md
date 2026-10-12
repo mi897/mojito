@@ -75,6 +75,13 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 
 ## Stage 2 — physics simulation
 
+**Status: planned, in detail in `docs/STAGE2.md`** (branch `stage-2-mujoco-model`).
+No physical robot exists yet, so the stage opens as a design-exploration tool
+(try dimensions in simulation before fixing the design), with learning after it.
+Actuators are DS3218-class 20 kg·cm hobby servos (listed figures unverified, see
+`docs/STAGE2.md`). Simulation ground truth (foot and base world positions) is used
+for evaluation and rewards, not as policy input.
+
 - MuJoCo model built from the same length parameters, so a leg-length change
   propagates to both the simulator and the IK input.
 - Reinforcement learning for locomotion, with the policy acting in foot space
@@ -101,6 +108,8 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 ## Open questions
 
 1. Real link lengths, abduction offset and joint limits (all placeholders now).
-2. Actuators: hobby servos or torque-controlled motors? This decides how much
-   of Stage 2 is about position tracking versus force.
-3. How will foot position be measured on the real robot?
+   No robot exists; dimensions will be chosen by trying designs in simulation.
+2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG). Still open:
+   the supply voltage, and whether the servo reports position back.
+3. Foot position on the real robot: simulation ground truth for now; an external
+   measuring system can be built later if needed.
