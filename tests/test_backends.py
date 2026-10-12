@@ -49,7 +49,7 @@ class TestSwitch(unittest.TestCase):
         net = mojito.make_model(hidden=(16, 16), seed=1, backend="numpy")
         self.assertEqual(net.backend, "numpy")
         rng = np.random.default_rng(0)
-        p, lengths, _ = leg.sample_batch(rng, 256, net.cfg)
+        p, lengths, _ = leg.sample_batch(rng, 256, net.config)
         first = net.train_step(p, lengths, 1e-3)
         for _ in range(50):
             last = net.train_step(p, lengths, 1e-3)
@@ -74,7 +74,7 @@ class TestTorchMatchesNumpy(unittest.TestCase):
         self.rng = np.random.default_rng(5)
         self.np_net = mojito.make_model(hidden=(16, 16), seed=4, backend="numpy")
         self.t_net = mojito.make_model(hidden=(16, 16), seed=4, backend="torch", dtype=torch.float64)
-        self.p, self.lengths, self.q = leg.sample_batch(self.rng, 64, self.np_net.cfg)
+        self.p, self.lengths, self.q = leg.sample_batch(self.rng, 64, self.np_net.config)
 
     def test_forward_kinematics_agree(self):
         from mojito.torch_model import forward_kinematics
@@ -84,8 +84,8 @@ class TestTorchMatchesNumpy(unittest.TestCase):
 
     def test_same_seed_gives_same_predictions(self):
         np.testing.assert_allclose(self.t_net.predict(self.p, self.lengths), self.np_net.predict(self.p, self.lengths), atol=1e-10)
-        one = self.t_net.predict(self.p[0], self.np_net.cfg.nominal)  # unbatched, shared lengths
-        np.testing.assert_allclose(one, self.np_net.predict(self.p[0], self.np_net.cfg.nominal), atol=1e-10)
+        one = self.t_net.predict(self.p[0], self.np_net.config.nominal)  # unbatched, shared lengths
+        np.testing.assert_allclose(one, self.np_net.predict(self.p[0], self.np_net.config.nominal), atol=1e-10)
 
     def test_autograd_matches_hand_derived_gradients(self):
         loss_n, grads_n = self.np_net.loss_and_grads(self.p, self.lengths)
@@ -96,7 +96,7 @@ class TestTorchMatchesNumpy(unittest.TestCase):
 
     def test_training_follows_the_same_path(self):
         for _ in range(20):
-            p, lengths, _ = leg.sample_batch(self.rng, 128, self.np_net.cfg)
+            p, lengths, _ = leg.sample_batch(self.rng, 128, self.np_net.config)
             ln = self.np_net.train_step(p, lengths, 1e-3)
             lt = self.t_net.train_step(p, lengths, 1e-3)
             self.assertAlmostEqual(ln, lt, places=8)
@@ -117,7 +117,7 @@ class TestTorchMatchesNumpy(unittest.TestCase):
     def test_trained_weights_run_under_torch_in_float32(self):
         n = mojito.load_model(WEIGHTS, backend="numpy")
         t = mojito.load_model(WEIGHTS, backend="torch")  # default float32
-        p, lengths, _ = leg.sample_batch(self.rng, 2000, n.cfg)
+        p, lengths, _ = leg.sample_batch(self.rng, 2000, n.config)
         np.testing.assert_allclose(t.predict(p, lengths), n.predict(p, lengths), atol=1e-4)
         err = np.linalg.norm(leg.forward(t.predict(p, lengths), lengths) - p, axis=1)
         self.assertLess(np.median(err), 0.5e-3)

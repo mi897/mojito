@@ -29,14 +29,14 @@ def _open(lengths, height, body_length, body_width, masses, timestep):
     import mujoco
 
     robot = body.Robot(body.AnalyticSolver(), lengths=lengths, body_length=body_length, body_width=body_width)
-    q0 = robot.solve(robot.stance(height))
+    initial_joint_angles = robot.solve(robot.stance(height))
     model = robots.quadruped_urdf(body_length, body_width, lengths=lengths)
     start_z = height + mjcf.FOOT_RADIUS  # the pad centre is the foot tip; its lowest point is one radius lower
     m = mujoco.MjModel.from_xml_string(
         mjcf.mjcf_from_urdf(model, masses=masses, height=start_z, timestep=timestep, actuated=True))
     d = mujoco.MjData(m)
     names = per_leg_names()
-    mjcf.set_pose(m, d, names, q0.ravel(), base_pos=(0.0, 0.0, start_z))
+    mjcf.set_pose(m, d, names, initial_joint_angles.ravel(), base_pos=(0.0, 0.0, start_z))
     jid = [mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n) for n in names]
     qadr, dadr = m.jnt_qposadr[jid], m.jnt_dofadr[jid]
     aid = [mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_ACTUATOR, n) for n in names]
@@ -73,7 +73,7 @@ def run_stand(lengths=(0.05, 0.15, 0.15), height=0.2125, body_length=0.30, body_
         d.ctrl[aid] = tau
         mujoco.mj_step(m, d)
         run_peak = max(run_peak, float(np.abs(tau).max()))
-        trace.append(float(np.abs(tau).max()) / sv.p.stall_torque)
+        trace.append(float(np.abs(tau).max()) / sv.params.stall_torque)
         if record_every and k % record_every == 0:
             frames.append(_snapshot(d))
         if k >= steps - win:
@@ -92,7 +92,7 @@ def run_stand(lengths=(0.05, 0.15, 0.15), height=0.2125, body_length=0.30, body_
             load_log.append(loads)
     tau = np.array(tau_log).reshape(-1, 4, 3)
     q = np.array(q_log).reshape(-1, 4, 3)
-    limit = sv.p.stall_torque
+    limit = sv.params.stall_torque
     mass = float(m.body_subtreemass[1])
     return {
         "total_mass_kg": mass,
@@ -142,7 +142,7 @@ def run_sit_to_stand(sit_height=0.14, stand_height=0.2125, rise_time=2.0, settle
         raise ValueError(f"sit height {sit_height} m is outside the joint limits")
     sv = actuators.Servo(servo or actuators.ServoParams())
     sv.reset()
-    limit = sv.p.stall_torque
+    limit = sv.params.stall_torque
     t_end = settle + rise_time + hold
     steps = int(round(t_end / timestep))
     cache = {}

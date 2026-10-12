@@ -34,7 +34,7 @@ def main():
     ap.add_argument("--hidden", type=int, nargs="+", default=[128, 128, 128])
     ap.add_argument("--steps", type=int, default=40000)
     ap.add_argument("--batch", type=int, default=2048)
-    ap.add_argument("--lr", type=float, default=2e-3)
+    ap.add_argument("--lr", "--learning-rate", dest="learning_rate", type=float, default=2e-3, help="peak learning rate")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="weights/ik_leg.npz")
     ap.add_argument("--log", default="results/training_log.json")
@@ -48,26 +48,26 @@ def main():
         print(robot.summary(), flush=True)
         if args.group is None and len(robot.groups) != 1:
             ap.error(f"the URDF has {len(robot.groups)} model groups {list(robot.groups)}; choose one with --group")
-        cfg = robot.groups[args.group or next(iter(robot.groups))].canonical
+        config = robot.groups[args.group or next(iter(robot.groups))].canonical
         if args.tolerance is not None:
-            cfg = cfg.with_normalisation(cfg.nominal, args.tolerance, cfg.reach)
+            config = config.with_normalisation(config.nominal, args.tolerance, config.reach)
     else:
-        cfg = leg.LegConfig(np.array([args.abduction, args.upper, args.lower]), None,
-                            0.10 if args.tolerance is None else args.tolerance)
+        config = leg.LegConfig(np.array([args.abduction, args.upper, args.lower]), None,
+                               0.10 if args.tolerance is None else args.tolerance)
     kwargs = dict(device=args.device) if mojito.backend.resolve(args.backend) == "torch" else {}
-    net = mojito.make_model(cfg, args.hidden, seed=args.seed, backend=args.backend, **kwargs)
+    net = mojito.make_model(config, args.hidden, seed=args.seed, backend=args.backend, **kwargs)
     print(f"backend: {net.backend}", flush=True)
     rng = np.random.default_rng(args.seed)
-    val_p, val_len, _ = leg.sample_batch(np.random.default_rng(10_000 + args.seed), 20000, cfg)
+    val_p, val_len, _ = leg.sample_batch(np.random.default_rng(10_000 + args.seed), 20000, config)
 
     log, t0 = [], time.time()
     for step in range(1, args.steps + 1):
-        lr = 1e-5 + 0.5 * (args.lr - 1e-5) * (1 + np.cos(np.pi * step / args.steps))
-        p, lengths, _ = leg.sample_batch(rng, args.batch, cfg)
-        net.train_step(p, lengths, lr)
+        learning_rate = 1e-5 + 0.5 * (args.learning_rate - 1e-5) * (1 + np.cos(np.pi * step / args.steps))
+        p, lengths, _ = leg.sample_batch(rng, args.batch, config)
+        net.train_step(p, lengths, learning_rate)
 
         if step % 500 == 0 or step == 1:
-            err = np.linalg.norm(cfg.forward(net.predict(val_p, val_len), val_len) - val_p, axis=1) * 1000
+            err = np.linalg.norm(config.forward(net.predict(val_p, val_len), val_len) - val_p, axis=1) * 1000
             row = dict(step=step, median_mm=float(np.median(err)), p95_mm=float(np.percentile(err, 95)),
                        max_mm=float(err.max()), seconds=time.time() - t0)
             log.append(row)

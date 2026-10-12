@@ -99,19 +99,19 @@ def _diff(a, b, path="") -> list:
 class Mirror:
     """How a limb relates to the canonical limb of its group.
 
-    FK_this(sign_q * q, params) == flip_p * FK_canonical(q, params)
+    FK_this(sign_q * joint_angles, link_lengths) == flip_p * FK_canonical(joint_angles, link_lengths)
     """
 
     flip_p: tuple = (1.0, -1.0, 1.0)
     sign_q: tuple = (-1.0, 1.0, 1.0)
 
-    def target(self, p):
+    def target(self, target_position):
         """Map a target for this limb into the canonical limb's frame (and back)."""
-        return np.asarray(p, dtype=float) * np.asarray(self.flip_p)
+        return np.asarray(target_position, dtype=float) * np.asarray(self.flip_p)
 
-    def angles(self, q):
+    def angles(self, joint_angles):
         """Map canonical joint values to this limb's convention (and back)."""
-        return np.asarray(q, dtype=float) * np.asarray(self.sign_q)
+        return np.asarray(joint_angles, dtype=float) * np.asarray(self.sign_q)
 
 
 # ----------------------------------------------------------------- one limb
@@ -123,7 +123,7 @@ class LimbSpec:
     chain: Chain
     limits: np.ndarray  # (dof, 2)
     joint_types: tuple  # "revolute" / "prismatic" per joint
-    joint_names: tuple  # URDF joint names, in q order
+    joint_names: tuple  # URDF joint names, in joint_angles order
     nominal: np.ndarray  # (n_params,) link lengths [m], as read from the URDF
     param_joints: tuple  # URDF joint whose origin translation each parameter scales
     length_tolerance: float = 0.10
@@ -143,17 +143,17 @@ class LimbSpec:
 
     mirror = None  # LegConfig compatibility; a limb's mirror is a property of its group member
 
-    def forward(self, q, params):
-        return kinematics.fk(self.chain, q, params)
+    def forward(self, joint_angles, link_lengths):
+        return kinematics.fk(self.chain, joint_angles, link_lengths)
 
-    def jacobian(self, q, params):
-        return kinematics.jacobian(self.chain, q, params)
+    def jacobian(self, joint_angles, link_lengths):
+        return kinematics.jacobian(self.chain, joint_angles, link_lengths)
 
-    def points(self, q, params):
-        return kinematics.points(self.chain, q, params)
+    def points(self, joint_angles, link_lengths):
+        return kinematics.points(self.chain, joint_angles, link_lengths)
 
-    def numeric_ik(self, p, params, **kw):
-        return kinematics.numeric_ik(self.chain, self.limits, p, params, **kw)
+    def numeric_ik(self, target_position, link_lengths, **solver_options):
+        return kinematics.numeric_ik(self.chain, self.limits, target_position, link_lengths, **solver_options)
 
     # ---- identity ----
     def structure(self, exact: bool = False) -> dict:

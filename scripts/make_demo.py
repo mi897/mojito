@@ -31,13 +31,13 @@ def step_path(n, la):
 
 
 def make_gif(net, path, frames=60):
-    cfg = net.cfg
-    scales = [-cfg.length_tolerance, 0.0, cfg.length_tolerance]
-    target = step_path(frames, cfg.nominal[0])
+    config = net.config
+    scales = [-config.length_tolerance, 0.0, config.length_tolerance]
+    target = step_path(frames, config.nominal[0])
     fig, axes = plt.subplots(1, 3, figsize=(9, 3.6), facecolor=SURFACE)
     artists = []
     for ax, s in zip(axes, scales):
-        L = cfg.nominal * np.array([1.0, 1 + s, 1 + s])
+        L = config.nominal * np.array([1.0, 1 + s, 1 + s])
         q = net.predict(target, L)
         pts = leg.joint_positions(q, L) * 1000
         err = np.linalg.norm(pts[:, 3] / 1000 - target, axis=1) * 1000
@@ -81,7 +81,7 @@ def main():
                     help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
     args = ap.parse_args()
     net = mojito.load_model(args.weights, backend=args.backend)
-    if not leg.is_leg(net.cfg):
+    if not leg.is_leg(net.config):
         raise SystemExit("make_demo.py draws the 3-joint leg; these weights are for a different limb.")
     os.makedirs("results", exist_ok=True)
     make_gif(net, "results/step_demo.gif")

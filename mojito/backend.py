@@ -61,9 +61,9 @@ def model_class(name: str | None = None):
     return TorchIKNet
 
 
-def make_model(cfg=None, hidden=(128, 128, 128), seed=0, backend=None, **kwargs):
+def make_model(config=None, hidden=(128, 128, 128), seed=0, backend=None, **kwargs):
     """A new, untrained network. Both backends start from identical weights for a given seed."""
-    return model_class(backend)(cfg, hidden, seed=seed, **kwargs)
+    return model_class(backend)(config, hidden, seed=seed, **kwargs)
 
 
 def load_model(path, backend=None, **kwargs):
