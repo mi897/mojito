@@ -18,7 +18,7 @@ the model is trusted.
 | Question | Answer | Consequence |
 |---|---|---|
 | Real dimensions | None yet; to be chosen from simulation | Dimensions are sweep parameters, never constants. The URDF generator in `mojito/robots.py` stays the single source. |
-| Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 5–6.5 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
+| Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 5–6 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
 | Actuators, later robots | DC motors reporting position, velocity and current | The actuator is an interface: command in, torque out, plus a list of what it reports. Swapping servos for motors must not change the policy code. |
 | Joint feedback | The servo reports nothing. The first robot gets external joint-angle sensors fed back to the system | Simulation reports a **measured** angle (noise, quantisation, delay, offset), never the true one, as the policy's joint observation. |
 | Measurement | Simulation ground truth for evaluation and rewards; external measuring system later | Policies must not observe anything the real robot could not measure. |
@@ -70,10 +70,10 @@ Conversion used: 1 kg·cm = 0.0980665 N·m. So 19 kg·cm = 1.86 N·m and
 - Joint velocity limit from the no-load speed, also a parameter.
 - Command latency and a servo position resolution (dead band) as parameters.
 - Torque and speed are functions of supply voltage. The owner keeps the supply
-  within 5–6.5 V, which sits inside the listed 5–6.8 V points, so no
+  within 5–6 V, which sits inside the listed 5–6.8 V points, so no
   extrapolation is needed. The listings give two points only (5 V and 6.8 V);
   between them the model uses a straight line, which is an assumption (it gives
-  21.1 kg·cm, 2.07 N·m, at 6.5 V). Outside 5–6.5 V the model refuses to run.
+  20.4 kg·cm, 2.00 N·m, at 6 V). Outside 5–6 V the model refuses to run.
 - Variant: the title "DS3218 20KG Digital Metal Servo" reads as the standard
   part, so the PRO figures are not used.
 
@@ -131,14 +131,14 @@ landing impacts, friction limits, and heat. So it is an **upper bound on the
 total mass a stance can hold, not a mass you can walk with.**
 
 Largest total mass whose weight keeps every joint under the torque shown, using
-the unverified listed stall torques (1.86 N·m at 5 V, and 2.07 N·m at 6.5 V by
+the unverified listed stall torques (1.86 N·m at 5 V, and 2.00 N·m at 6 V by
 straight-line interpolation between the listed 5 V and 6.8 V points):
 
-| Stance | 5 V, full stall torque | 5 V, half of stall | 6.5 V, half of stall |
+| Stance | 5 V, full stall torque | 5 V, half of stall | 6 V, half of stall |
 |---|---|---|---|
-| Standing, 4 feet | 7.18 kg | 3.59 kg | 3.98 kg |
-| Crawl, 3 feet, body leaning 25 mm | 4.31 kg | 2.15 kg | 2.39 kg |
-| Trot, 2 diagonal feet | 3.59 kg | 1.79 kg | 1.99 kg |
+| Standing, 4 feet | 7.18 kg | 3.59 kg | 3.85 kg |
+| Crawl, 3 feet, body leaning 25 mm | 4.31 kg | 2.15 kg | 2.31 kg |
+| Trot, 2 diagonal feet | 3.59 kg | 1.79 kg | 1.92 kg |
 
 **How to read the table.** Each cell answers one question: if the robot froze in
 this pose, how heavy could it be before the weakest servo reached the torque
@@ -157,7 +157,7 @@ knee torque = share of weight × 9.81 m/s² × mass × 0.106 m.
 
 *Columns are how much torque the servo is allowed to give.* Full stall is the
 listed 1.86 N·m at 5 V, which a servo can hold only briefly. "Half of stall" is
-my assumption for a torque it could hold continuously. 6.5 V gives more torque
+my assumption for a torque it could hold continuously. 6 V gives more torque
 than 5 V, so the allowed mass rises.
 
 *Worked example, trot at 5 V, half of stall.* Knee torque per kg of robot
@@ -192,9 +192,9 @@ unverified listing figures on placeholder leg lengths.
 **Working target, a recommendation rather than a result:** treat 1.5 kg as an
 upper limit for the first robot with the design placeholders, and aim below it.
 At 1.5 kg the trot knee needs about 0.78 N·m, 42% of the 5 V stall figure and
-84% of the half-of-stall ceiling at 5 V (75% at 6.5 V). That is thinner than it
+84% of the half-of-stall ceiling at 5 V (78% at 6 V). That is thinner than it
 looked with the 120 mm legs, and the static bound ignores gait peaks. Running
-nearer 6.5 V helps. The stand test and gait replay in the work packages below are
+nearer 6 V helps a little (about 7% more torque than at 5 V). The stand test and gait replay in the work packages below are
 what turn this into a real answer.
 
 ## Sizing against the servo
@@ -242,8 +242,10 @@ Consequences of keeping the PCA9685 (to check when the hardware is designed):
 
 - **Voltage rating of the board.** Several PCA9685 board listings cap the servo
   supply pin at 6 V (the chip's own supply is limited to 5.5 V). The servo rail
-  is planned at 5–6.5 V, so 6.5 V exceeds those listings. Either keep the rail at
-  or below the board's rating, or wire the servos' power directly and give the
+  is now capped at 6 V, which matches those listings exactly, with no margin:
+  regulator tolerance and load transients add on top, so set the regulator a
+  little below 6 V. The actual board's rating is unknown. Either keep the rail at
+  or below it, or wire the servos' power directly and give the
   board only signal and logic supply. The rating of the actual board is not
   known; read its schematic.
 - **Servo power should bypass the board.** Board listings give small per-channel
@@ -261,14 +263,14 @@ Consequences of keeping the PCA9685 (to check when the hardware is designed):
 What follows from those numbers (arithmetic and reasoning, not measurements):
 
 - **The battery cannot feed the servos directly.** A 2S pack reads about 8.4 V
-  full, above the listed 6.8 V servo maximum and the 5–6.5 V range chosen
-  above. The servo rail needs a regulator set to 5–6.5 V. As the pack drops, a
-  plain buck regulator stops holding 6.5 V near the bottom of the pack, so the
-  low-voltage cut-off must be set with that in mind (roughly 7 V for a 6.5 V
+  full, above the listed 6.8 V servo maximum and the 5–6 V range chosen
+  above. The servo rail needs a regulator set to 5–6 V. As the pack drops, a
+  plain buck regulator stops holding 6 V near the bottom of the pack, so the
+  low-voltage cut-off must be set with that in mind (roughly 6.5–7 V for a 6 V
   rail; check the regulator's dropout).
 - **Servo current is the sizing problem.** The listings give 2.6 A stall at
-  6.8 V and 1.8 A at 5 V per servo. Twelve at once, interpolated to 6.5 V, is
-  about 30 A. Servos will not all stall together, so the real peak is lower, but
+  6.8 V and 1.8 A at 5 V per servo. Twelve at once, interpolated to 6 V (2.2 A each), is
+  about 27 A. Servos will not all stall together, so the real peak is lower, but
   the real figure is unknown until measured. Plan several regulators (for
   example one per group of legs) rated well above the typical draw, and measure
   current per rail. A single small regulator will brown out.
@@ -283,12 +285,21 @@ What follows from those numbers (arithmetic and reasoning, not measurements):
   driver is coarser than the servo. The Blue Pill's hardware timers can produce
   1 µs steps directly. The PCA9685's internal clock accuracy was not in the
   sources I read; plan a frequency calibration.
-- **Not in the list yet:** an IMU (the only way to measure body orientation on
-  the real robot), current sensing on the servo rails, and a wireless link if no
-  Raspberry Pi is used (the Blue Pill has none).
-- The Blue Pill's STM32F103 has no floating-point unit and 20 KB of RAM, so it
-  suits a real-time servo and sensor loop, not running the leg network or a
-  policy. Its parts are often clones; check the chip.
+- **IMU (added, model not chosen):** connects directly to the ESP32. It is the
+  only way to measure body orientation on the real robot. Points to settle when
+  the part is chosen: I2C or SPI (the PCA9685 shares an I2C bus, and a bus write to
+  all 12 servos takes about 1 ms, so a fast IMU may prefer SPI or its own bus),
+  its sample rate (a few hundred Hz is plenty for the policy), and mounting
+  (servo vibration reaches it, so mount it rigidly near the body centre or
+  damped, and keep it clear of the Hall sensors' magnets). Simulation side: the
+  policy may observe body angular rate and the gravity direction in the body
+  frame, which an IMU can supply; give them gyro noise, a bias that drifts, and
+  accelerometer noise as parameters. The sensor's mass is negligible against the
+  budget.
+- **Still not in the list:** current sensing on the servo rails.
+- Note on the older plan: the Blue Pill's STM32F103 had no floating-point unit and
+  20 KB of RAM. The ESP32 has a floating-point unit and Wi-Fi, so it can also run
+  the closed-form inverse kinematics and short gait loops.
 
 **Raspberry Pi: dropped.** Learning is off board, control is over the network, and
 logs go to a laptop, so onboard Linux is not needed. An ESP32 has Wi-Fi and a
@@ -298,7 +309,7 @@ its own regulated supply (see the power layout below), joined to the servo rail
 by a common ground only.
 
 **Power layout (decided):** one battery,
-two separate regulators. A servo-rail regulator (or several) set to 5–6.5 V and a
+two separate regulators. A servo-rail regulator (or several) set to 5–6 V and a
 small logic regulator for the ESP32 and sensors. A separate logic battery adds
 mass, a second charger and a second pack to monitor, and still shares a ground, so
 it isolates less than it seems. Details: the logic regulator input gets its own
@@ -351,9 +362,9 @@ Each is one branch-sized step. Tick them off here as they land.
    `mojito/kinematics.py` to numerical precision, for random lengths and angles
    (left and right legs, and several body poses).
 2. [ ] **Servo and sensor model.** Torque and speed limits as functions of
-   voltage (5–6.5 V, straight line between the listed 5 V and 6.8 V points), latency,
-   resolution, and a joint-angle sensor with noise, quantisation, delay and
-   offset, behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
+   voltage (5–6 V, straight line between the listed 5 V and 6.8 V points), latency,
+   resolution, a joint-angle sensor with noise, quantisation, delay and
+   offset, and an IMU (gyro and accelerometer noise, drifting bias), behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
    below the limit, and saturate when it is above.
 3. [ ] **Stand test.** Hold the Stage 1 standing posture from the IK layer
@@ -396,12 +407,12 @@ do.
 ## Open items for the owner
 
 1. Datasheet figures for the DS3218 20KG. The model interpolates torque and speed
-   between the listed 5 V and 6.8 V points to cover 5–6.5 V; the datasheet would
+   between the listed 5 V and 6.8 V points to cover 5–6 V; the datasheet would
    confirm or replace that.
 2. Tabled for later: the Hall-effect chip, resolution, and magnet and horn
    details (type and placement are decided: custom Hall board in line with the
    joint axis, close to the motor).
 3. The servo-rail regulators and their current rating, the PCA9685 board's actual
-   voltage rating against the 6.5 V rail, and an IMU. Battery, ESP32, PCA9685 and
+   voltage rating against the 6 V rail, and the IMU model and bus. Battery, ESP32, PCA9685 and
    the one-battery power layout are decided. If the robot must carry more than about 1.5 kg, the legs must be
    shorter.
