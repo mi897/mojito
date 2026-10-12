@@ -122,9 +122,9 @@ class TorchIKNet(IKNetBase):
     def train_step(self, target_position, lengths, learning_rate: float) -> float:
         """One Adam update on a batch. Returns the loss before the update."""
         if self._opt is None:
-            self._opt = torch.optim.Adam(self.net.parameters(), learning_rate=learning_rate)
+            self._opt = torch.optim.Adam(self.net.parameters(), lr=learning_rate)
         for group in self._opt.param_groups:
-            group["learning_rate"] = learning_rate
+            group["lr"] = learning_rate
         self._opt.zero_grad()
         loss = self.loss(self._tensor(target_position), self._tensor(lengths))
         loss.backward()
