@@ -8,8 +8,8 @@ Every figure in `ServoParams` is an unverified retailer number for the
 be replaced by a datasheet or a measurement, never as the robot's.
 
 Interface (what a later DC-motor model must also provide):
-    reset(n)                      forget history for n joints
-    step(target, q, qd, dt)       commanded joint targets and true state -> joint torques
+    reset(n_joints)                                         forget history for n_joints joints
+    step(target_angles, joint_angles, joint_velocities, dt)  commanded joint targets and true state -> joint torques
     reports                       names of the signals the actuator itself feeds back
 A hobby servo reports nothing, so `reports` is empty; a motor with current
 sensing would list ("position", "velocity", "current").
@@ -25,8 +25,9 @@ KGCM = 0.0980665  # N·m per kg·cm
 V_MIN, V_MAX = 5.0, 6.0  # supply range the owner keeps to; outside it the model refuses to run
 
 
-def _lerp(v, v0, y0, v1, y1):
-    return y0 + (y1 - y0) * (v - v0) / (v1 - v0)
+def _lerp(x, x0, y0, x1, y1):
+    """Straight line through (x0, y0) and (x1, y1), evaluated at x: y0 + (y1 - y0) (x - x0) / (x1 - x0)."""
+    return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
 
 
 @dataclass
@@ -68,37 +69,41 @@ class Servo:
     reports: tuple = ()
 
     def __init__(self, params: ServoParams | None = None):
-        self.p = params or ServoParams()
+        self.params = params or ServoParams()
         self._queue: deque = deque()
-        self._t = 0.0
+        self._time = 0.0
         self._held = None
 
-    def reset(self, n: int = 12) -> None:
+    def reset(self, n_joints: int = 12) -> None:
         self._queue.clear()
-        self._t = 0.0
+        self._time = 0.0
         self._held = None
 
-    def quantise(self, target):
-        r = self.p.resolution
-        return self.p.centre + np.round((np.asarray(target, float) - self.p.centre) / r) * r
+    def quantise(self, target_angles):
+        """Snap `target_angles` to the nearest multiple of the resolution, counted from `centre`:
+        centre + round((target_angles - centre) / resolution) * resolution."""
+        step = self.params.resolution
+        return self.params.centre + np.round((np.asarray(target_angles, float) - self.params.centre) / step) * step
 
-    def step(self, target, q, qd, dt: float) -> np.ndarray:
-        p = self.p
-        self._queue.append((self._t + p.latency, self.quantise(target)))
+    def step(self, target_angles, joint_angles, joint_velocities, dt: float) -> np.ndarray:
+        params = self.params
+        self._queue.append((self._time + params.latency, self.quantise(target_angles)))
         seen = None
-        while self._queue and self._queue[0][0] <= self._t + 1e-12:
+        while self._queue and self._queue[0][0] <= self._time + 1e-12:
             seen = self._queue.popleft()[1]
         if seen is not None:
             self._held = seen
         elif self._held is None:  # nothing has arrived yet: hold where the joint is
-            self._held = self.quantise(q)
-        self._t += dt
-        q, qd = np.asarray(q, float), np.asarray(qd, float)
-        tau = p.kp * (self._held - q) - p.kd * qd
-        speed = np.abs(qd) / p.noload_speed
-        tmax = p.stall_torque
-        # torque pushing along the motion is cut by the torque-speed line; opposing torque (braking) is not
-        along = np.sign(tau) == np.sign(qd)
-        limit = np.where(along, tmax * np.clip(1.0 - speed, 0.0, 1.0), tmax)
-        self.last_saturated = np.abs(tau) >= limit
-        return np.clip(tau, -limit, limit)
+            self._held = self.quantise(joint_angles)
+        self._time += dt
+        joint_angles, joint_velocities = np.asarray(joint_angles, float), np.asarray(joint_velocities, float)
+        # PD law on the delayed, quantised target:  torque = kp (target - angle) - kd velocity
+        torque = params.kp * (self._held - joint_angles) - params.kd * joint_velocities
+        speed_fraction = np.abs(joint_velocities) / params.noload_speed  # 0 at rest, 1 at the no-load speed
+        stall_torque = params.stall_torque
+        # Torque-speed line: available torque = stall_torque (1 - |joint velocity| / noload_speed), floored at zero.
+        # It limits torque pushing along the motion; opposing torque (braking) is not reduced.
+        along_motion = np.sign(torque) == np.sign(joint_velocities)
+        limit = np.where(along_motion, stall_torque * np.clip(1.0 - speed_fraction, 0.0, 1.0), stall_torque)
+        self.last_saturated = np.abs(torque) >= limit
+        return np.clip(torque, -limit, limit)

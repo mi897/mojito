@@ -41,9 +41,9 @@ def reconcile(file_cfg, spec: LimbSpec, where: str = "weights") -> LimbSpec:
         if not np.allclose(spec.limits, file_cfg.limits, atol=1e-9):
             diffs.append(f"joint limits: {file_cfg.limits.tolist()} in weights vs {spec.limits.tolist()} in URDF")
         rng = np.random.default_rng(0)
-        q = rng.uniform(file_cfg.limits[:, 0], file_cfg.limits[:, 1], size=(32, 3))
+        joint_angles = rng.uniform(file_cfg.limits[:, 0], file_cfg.limits[:, 1], size=(32, 3))
         L = file_cfg.nominal * (1 + rng.uniform(-0.1, 0.1, size=(32, 3)))
-        if not np.allclose(spec.forward(q, L), leg.forward(q, L), atol=1e-9):
+        if not np.allclose(spec.forward(joint_angles, L), leg.forward(joint_angles, L), atol=1e-9):
             diffs.append("forward kinematics of the URDF limb differs from the leg model the weights were trained on")
     if diffs:
         raise SpecMismatch(f"{where} do not match the URDF limb {spec.name!r}:\n  " + "\n  ".join(diffs))
@@ -53,32 +53,33 @@ def reconcile(file_cfg, spec: LimbSpec, where: str = "weights") -> LimbSpec:
 class IKNetBase:
     """What every backend shares: configuration, mirroring, and the weight file format.
 
-    A subclass provides predict(p, lengths), train_step(p, lengths, lr),
+    A subclass provides predict(target_position, lengths), train_step(target_position, lengths, learning_rate),
     state() and _set_weights(W, b). Weights travel as NumPy arrays with W[i]
     shaped (inputs, outputs), whatever the backend stores internally.
     """
 
     backend = None
 
-    def __init__(self, cfg=None, hidden=(128, 128, 128)):
-        self.cfg = cfg or leg.LegConfig()
+    def __init__(self, config=None, hidden=(128, 128, 128)):
+        self.config = config or leg.LegConfig()
         self.hidden = tuple(hidden)
-        self.in_dim = 3 + self.cfg.n_params
-        self.out_dim = self.cfg.dof
-        lim = self.cfg.limits
-        self.q_mid = lim.mean(axis=1)
-        self.q_half = 0.5 * (lim[:, 1] - lim[:, 0])
+        self.in_dim = 3 + self.config.n_params
+        self.out_dim = self.config.dof
+        limits = self.config.limits
+        # Output squashing: joint_angles = joint_mid + joint_half_range * tanh(z) always lies inside the limits.
+        self.joint_mid = limits.mean(axis=1)  # centre of each joint's range
+        self.joint_half_range = 0.5 * (limits[:, 1] - limits[:, 0])  # half-width of each joint's range
 
-    def predict_leg(self, p, lengths, right: bool = False, mirror=None):
+    def predict_leg(self, target_position, lengths, right: bool = False, mirror=None):
         """As `predict`, for either side of the robot.
 
         `mirror` is the spec.Mirror relating the limb to this network's canonical
         limb; by default the left/right leg mirror.
         """
         if not right:
-            return self.predict(p, lengths)
-        mirror = mirror or self.cfg.mirror
-        return mirror.angles(self.predict(mirror.target(p), lengths))
+            return self.predict(target_position, lengths)
+        mirror = mirror or self.config.mirror
+        return mirror.angles(self.predict(mirror.target(target_position), lengths))
 
     def weights(self):
         """(list of W, list of b) as NumPy arrays."""
@@ -87,10 +88,10 @@ class IKNetBase:
         return [d[f"W{i}"] for i in range(n)], [d[f"b{i}"] for i in range(n)]
 
     def _config_state(self) -> dict:
-        d = dict(nominal=self.cfg.nominal, limits=self.cfg.limits,
-                 length_tolerance=np.array(self.cfg.length_tolerance))
-        if isinstance(self.cfg, LimbSpec):
-            d["spec"] = np.array(json.dumps(self.cfg.to_dict()))
+        d = dict(nominal=self.config.nominal, limits=self.config.limits,
+                 length_tolerance=np.array(self.config.length_tolerance))
+        if isinstance(self.config, LimbSpec):
+            d["spec"] = np.array(json.dumps(self.config.to_dict()))
         return d
 
     def save(self, path):
@@ -105,13 +106,13 @@ class IKNetBase:
         d = np.load(path)
         n_layers = sum(1 for k in d.files if k.startswith("W"))
         if "spec" in d.files:
-            cfg = LimbSpec.from_dict(json.loads(str(d["spec"])))
+            config = LimbSpec.from_dict(json.loads(str(d["spec"])))
         else:  # weights from before limbs were described by URDFs
-            cfg = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
+            config = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
         if spec is not None:
-            cfg = reconcile(cfg, spec, str(path))
+            config = reconcile(config, spec, str(path))
         hidden = tuple(d[f"W{i}"].shape[1] for i in range(n_layers - 1))
-        net = cls(cfg, hidden, **kwargs)
+        net = cls(config, hidden, **kwargs)
         net._set_weights([d[f"W{i}"] for i in range(n_layers)], [d[f"b{i}"] for i in range(n_layers)])
         return net
 
@@ -123,11 +124,11 @@ class IKNetBase:
             {
                 "W": [r(w) for w in W],
                 "b": [r(x) for x in b],
-                "nominal": r(self.cfg.nominal),
-                "limits": r(self.cfg.limits),
-                "tolerance": self.cfg.length_tolerance,
-                "reach": self.cfg.reach,
-                **({"spec": self.cfg.to_dict()} if isinstance(self.cfg, LimbSpec) else {}),
+                "nominal": r(self.config.nominal),
+                "limits": r(self.config.limits),
+                "tolerance": self.config.length_tolerance,
+                "reach": self.config.reach,
+                **({"spec": self.config.to_dict()} if isinstance(self.config, LimbSpec) else {}),
             },
             separators=(",", ":"),
         )
@@ -138,8 +139,8 @@ class IKNet(IKNetBase):
 
     backend = "numpy"
 
-    def __init__(self, cfg=None, hidden=(128, 128, 128), seed=0):
-        super().__init__(cfg, hidden)
+    def __init__(self, config=None, hidden=(128, 128, 128), seed=0):
+        super().__init__(config, hidden)
         rng = np.random.default_rng(seed)
         sizes = (self.in_dim,) + self.hidden + (self.out_dim,)
         self.W = [
@@ -159,53 +160,64 @@ class IKNet(IKNetBase):
     def params(self):
         return self.W + self.b
 
-    def features(self, p, lengths):
-        """Dimensionless inputs, each roughly in [-1, 1]."""
-        p = np.asarray(p, dtype=float) / self.cfg.reach
-        dev = (np.asarray(lengths, dtype=float) / self.cfg.nominal - 1.0) / self.cfg.length_tolerance
-        return np.concatenate([p, np.broadcast_to(dev, p.shape[:-1] + dev.shape[-1:])], axis=-1)
+    def features(self, target_position, lengths):
+        """Dimensionless inputs, each roughly in [-1, 1].
+
+        position / reach, and each length's fractional deviation from nominal
+        divided by the tolerance: (length / nominal - 1) / tolerance.
+        """
+        position = np.asarray(target_position, dtype=float) / self.config.reach
+        deviation = (np.asarray(lengths, dtype=float) / self.config.nominal - 1.0) / self.config.length_tolerance
+        deviation = np.broadcast_to(deviation, position.shape[:-1] + deviation.shape[-1:])
+        return np.concatenate([position, deviation], axis=-1)
 
     def _forward(self, x):
-        acts = [x]
-        for W, b in zip(self.W[:-1], self.b[:-1]):
-            acts.append(np.tanh(acts[-1] @ W + b))
-        t = np.tanh(acts[-1] @ self.W[-1] + self.b[-1])
-        return self.q_mid + self.q_half * t, acts, t
+        """Run the network. Returns (joint values, activations of each layer input, output tanh)."""
+        activations = [x]
+        for weight, bias in zip(self.W[:-1], self.b[:-1]):
+            activations.append(np.tanh(activations[-1] @ weight + bias))
+        squashed = np.tanh(activations[-1] @ self.W[-1] + self.b[-1])  # in (-1, 1)
+        return self.joint_mid + self.joint_half_range * squashed, activations, squashed
 
-    def predict(self, p, lengths):
-        """Joint values for targets in the canonical limb frame. p: (..., 3), lengths: (..., n_params)."""
-        return self._forward(self.features(p, lengths))[0]
+    def predict(self, target_position, lengths):
+        """Joint values for targets in the canonical limb frame. target_position: (..., 3), lengths: (..., n_params)."""
+        return self._forward(self.features(target_position, lengths))[0]
 
-    def loss_and_grads(self, p, lengths):
+    def loss_and_grads(self, target_position, lengths):
         """Mean squared foot-position error (in units of leg reach) and its gradient.
 
         The loss compares where the predicted angles put the foot with where it
         was asked to go. It never looks at the angles that generated the target.
         """
-        n = p.shape[0]
-        q, acts, t = self._forward(self.features(p, lengths))
-        err = (self.cfg.forward(q, lengths) - p) / self.cfg.reach
-        loss = float(np.mean(np.sum(err * err, axis=1)))
+        batch = target_position.shape[0]
+        joint_angles, activations, squashed = self._forward(self.features(target_position, lengths))
+        error = (self.config.forward(joint_angles, lengths) - target_position) / self.config.reach  # foot error in units of reach
+        loss = float(np.mean(np.sum(error * error, axis=1)))  # L = mean over batch of |error|^2
 
-        # Back through forward kinematics: dL/dq = J^T dL/dp.
-        J = self.cfg.jacobian(q, lengths)
-        dq = np.einsum("nij,ni->nj", J, err) * (2.0 / (n * self.cfg.reach))
-        delta = dq * self.q_half * (1.0 - t * t)
+        # Back through forward kinematics: dL/dq = J^T dL/dfoot, where the foot position
+        # enters the loss through error = (foot - target_position) / reach, so dL/dfoot = 2 error / (batch * reach).
+        jac = self.config.jacobian(joint_angles, lengths)
+        grad_q = np.einsum("nij,ni->nj", jac, error) * (2.0 / (batch * self.config.reach))
+        # Through joint_angles = joint_mid + joint_half_range tanh(z): dq/dz = joint_half_range (1 - tanh^2).
+        delta = grad_q * self.joint_half_range * (1.0 - squashed * squashed)
 
-        gW, gb = [None] * len(self.W), [None] * len(self.b)
+        # delta is dL/d(pre-activation) of the layer being processed. Weight gradient =
+        # (layer input)^T delta; bias gradient = delta summed over the batch; and
+        # propagating back through W then tanh multiplies by (1 - activation^2).
+        grad_W, grad_b = [None] * len(self.W), [None] * len(self.b)
         for i in reversed(range(len(self.W))):
-            gW[i] = acts[i].T @ delta
-            gb[i] = delta.sum(axis=0)
+            grad_W[i] = activations[i].T @ delta
+            grad_b[i] = delta.sum(axis=0)
             if i:
-                delta = (delta @ self.W[i].T) * (1.0 - acts[i] ** 2)
-        return loss, gW + gb
+                delta = (delta @ self.W[i].T) * (1.0 - activations[i] ** 2)
+        return loss, grad_W + grad_b
 
-    def train_step(self, p, lengths, lr: float) -> float:
+    def train_step(self, target_position, lengths, learning_rate: float) -> float:
         """One Adam update on a batch. Returns the loss before the update."""
         if self._opt is None:
-            self._opt = Adam(self.params, lr=lr)
-        loss, grads = self.loss_and_grads(p, lengths)
-        self._opt.step(grads, lr)
+            self._opt = Adam(self.params, learning_rate=learning_rate)
+        loss, grads = self.loss_and_grads(target_position, lengths)
+        self._opt.step(grads, learning_rate)
         return loss
 
     def state(self) -> dict:
@@ -216,19 +228,30 @@ class IKNet(IKNetBase):
 
 
 class Adam:
-    def __init__(self, params, lr=1e-3, b1=0.9, b2=0.999, eps=1e-8):
-        self.params, self.lr, self.b1, self.b2, self.eps = params, lr, b1, b2, eps
-        self.m = [np.zeros_like(p) for p in params]
-        self.v = [np.zeros_like(p) for p in params]
-        self.t = 0
+    """Adam optimiser (Kingma and Ba, 2015), updating the parameter arrays in place.
 
-    def step(self, grads, lr=None):
-        lr = self.lr if lr is None else lr
-        self.t += 1
-        c1, c2 = 1 - self.b1**self.t, 1 - self.b2**self.t
-        for p, g, m, v in zip(self.params, grads, self.m, self.v):
-            m *= self.b1
-            m += (1 - self.b1) * g
-            v *= self.b2
-            v += (1 - self.b2) * g * g
-            p -= lr * (m / c1) / (np.sqrt(v / c2) + self.eps)
+    For each parameter with gradient g, at step t:
+        m = beta1 m + (1 - beta1) g              moving average of the gradient
+        v = beta2 v + (1 - beta2) g^2            moving average of the squared gradient
+        m_hat = m / (1 - beta1^t)                bias correction for the zero start
+        v_hat = v / (1 - beta2^t)
+        param -= learning_rate m_hat / (sqrt(v_hat) + eps)
+    """
+
+    def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8):
+        self.params, self.learning_rate, self.beta1, self.beta2, self.eps = params, learning_rate, beta1, beta2, eps
+        self.first_moment = [np.zeros_like(param) for param in params]  # m
+        self.second_moment = [np.zeros_like(param) for param in params]  # v
+        self.step_count = 0  # t
+
+    def step(self, grads, learning_rate=None):
+        learning_rate = self.learning_rate if learning_rate is None else learning_rate
+        self.step_count += 1
+        correction1 = 1 - self.beta1**self.step_count
+        correction2 = 1 - self.beta2**self.step_count
+        for param, grad, m, v in zip(self.params, grads, self.first_moment, self.second_moment):
+            m *= self.beta1
+            m += (1 - self.beta1) * grad
+            v *= self.beta2
+            v += (1 - self.beta2) * grad * grad
+            param -= learning_rate * (m / correction1) / (np.sqrt(v / correction2) + self.eps)

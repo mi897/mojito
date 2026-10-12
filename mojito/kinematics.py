@@ -10,8 +10,8 @@ from. NumPy arrays give NumPy results; torch tensors give differentiable
 torch results. Only `sin`, `cos`, `stack` and `@` are used.
 
 Conventions (identical to mojito.leg, which tests use as an oracle):
-    q       (..., dof)       joint values, in the chain's joint order
-    params  (..., n_params)  link lengths; broadcast against q
+    joint_values   (..., dof)       joint values (angles for revolute, distances for prismatic), in the chain's joint order
+    link_lengths   (..., n_params)  link lengths; broadcast against joint_values
     result  (..., 3)         tip position in the limb frame
 The limb frame is the frame of the first joint (the "shoulder").
 """
@@ -27,10 +27,10 @@ class Chain:
     """Constant description of a serial chain. All arrays are plain NumPy."""
 
     dirs: np.ndarray  # (E, 3) unit direction of each element's translation (zeros if none)
-    param_index: tuple  # (E,) index into params of the length scaling this translation, or -1
+    param_index: tuple  # (E,) index into link_lengths of the length scaling this translation, or -1
     rot: np.ndarray  # (E, 3, 3) fixed rotation applied after the translation
     has_rot: tuple  # (E,) False where rot is the identity, to skip the multiply
-    joint_index: tuple  # (E,) index into q if this element carries a joint, else -1
+    joint_index: tuple  # (E,) index into joint_values if this element carries a joint, else -1
     axes: np.ndarray  # (E, 3) unit joint axis in the element frame (zeros if no joint)
     prismatic: tuple  # (E,) joint slides instead of rotating
 
@@ -56,14 +56,15 @@ def _lib(x):
     return np
 
 
-def _const(xp, ref, a):
-    """A constant array in the same library, dtype and device as `ref`."""
+def _const(xp, reference, values):
+    """A constant array in the same library, dtype and device as `reference`."""
     if xp is np:
-        return np.asarray(a, dtype=float)
-    return xp.as_tensor(np.asarray(a, dtype=float), dtype=ref.dtype, device=ref.device)
+        return np.asarray(values, dtype=float)
+    return xp.as_tensor(np.asarray(values, dtype=float), dtype=reference.dtype, device=reference.device)
 
 
 def _cross(a, b, xp):
+    """Cross product a x b along the last axis."""
     return xp.stack(
         [a[..., 1] * b[..., 2] - a[..., 2] * b[..., 1],
          a[..., 2] * b[..., 0] - a[..., 0] * b[..., 2],
@@ -72,90 +73,114 @@ def _cross(a, b, xp):
     )
 
 
-def _axis_rotation(xp, ref, axis, angle):
-    """Rodrigues rotation about a constant unit axis. angle: (...,) -> (..., 3, 3)."""
-    ax = np.asarray(axis, dtype=float)
-    K = np.array([[0, -ax[2], ax[1]], [ax[2], 0, -ax[0]], [-ax[1], ax[0], 0]])
-    A = np.outer(ax, ax)
-    I, K, A = (_const(xp, ref, m) for m in (np.eye(3), K, A))
-    c, s = xp.cos(angle)[..., None, None], xp.sin(angle)[..., None, None]
-    return c * I + s * K + (1.0 - c) * A
+def _axis_rotation(xp, reference, axis, angle):
+    """Rodrigues rotation about a constant unit axis. angle: (...,) -> (..., 3, 3).
+
+    R = cos(a) I + sin(a) [axis]x + (1 - cos(a)) axis axis^T,
+    where [axis]x is the matrix that performs the cross product with `axis`.
+    """
+    axis = np.asarray(axis, dtype=float)
+    cross_matrix = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    outer = np.outer(axis, axis)
+    identity, cross_matrix, outer = (_const(xp, reference, m) for m in (np.eye(3), cross_matrix, outer))
+    cos_angle, sin_angle = xp.cos(angle)[..., None, None], xp.sin(angle)[..., None, None]
+    return cos_angle * identity + sin_angle * cross_matrix + (1.0 - cos_angle) * outer
 
 
 # ----------------------------------------------------------------- kinematics
-def _walk(chain: Chain, q, params):
-    """Run the chain once. Returns the tip and, per joint, its position and world axis."""
-    xp = _lib(q)
-    q = q if _is_torch(q) else np.asarray(q, dtype=float)
-    params = params if _is_torch(params) else np.asarray(params, dtype=float)
-    batch = q.shape[:-1]
-    R = xp.broadcast_to(_const(xp, q, np.eye(3)), batch + (3, 3))
-    t = xp.zeros(batch + (3,), dtype=q.dtype, **({"device": q.device} if xp is not np else {}))
-    origins, world_axes = [None] * chain.dof, [None] * chain.dof
-    for e in range(len(chain.param_index)):
-        pi = chain.param_index[e]
-        if pi >= 0:
-            step = params[..., pi, None] * _const(xp, q, chain.dirs[e])
-            t = t + (R @ step[..., None])[..., 0]
-        if chain.has_rot[e]:
-            R = R @ _const(xp, q, chain.rot[e])
-        j = chain.joint_index[e]
-        if j >= 0:
-            axis = _const(xp, q, chain.axes[e])
-            a_world = R @ axis
-            origins[j], world_axes[j] = t, a_world
-            if chain.prismatic[e]:
-                t = t + a_world * q[..., j, None]
+def _walk(chain: Chain, joint_values, link_lengths):
+    """Run the chain once. Returns the tip and, per joint, its position and world axis.
+
+    Keeps a running frame (position, rotation). Each element first translates
+    along its direction (rotated into the world by the frame so far), then
+    applies its fixed rotation, then its joint: a revolute joint rotates the
+    frame about its axis, a prismatic one slides the position along it.
+    """
+    xp = _lib(joint_values)
+    joint_values = joint_values if _is_torch(joint_values) else np.asarray(joint_values, dtype=float)
+    link_lengths = link_lengths if _is_torch(link_lengths) else np.asarray(link_lengths, dtype=float)
+    batch = joint_values.shape[:-1]
+    rotation = xp.broadcast_to(_const(xp, joint_values, np.eye(3)), batch + (3, 3))  # frame orientation so far
+    position = xp.zeros(batch + (3,), dtype=joint_values.dtype, **({"device": joint_values.device} if xp is not np else {}))
+    joint_origins, joint_world_axes = [None] * chain.dof, [None] * chain.dof
+    for element in range(len(chain.param_index)):
+        length_index = chain.param_index[element]
+        if length_index >= 0:
+            offset = link_lengths[..., length_index, None] * _const(xp, joint_values, chain.dirs[element])
+            position = position + (rotation @ offset[..., None])[..., 0]
+        if chain.has_rot[element]:
+            rotation = rotation @ _const(xp, joint_values, chain.rot[element])
+        joint = chain.joint_index[element]
+        if joint >= 0:
+            axis_in_world = rotation @ _const(xp, joint_values, chain.axes[element])
+            joint_origins[joint], joint_world_axes[joint] = position, axis_in_world
+            if chain.prismatic[element]:
+                position = position + axis_in_world * joint_values[..., joint, None]
             else:
-                R = R @ _axis_rotation(xp, q, chain.axes[e], q[..., j])
-    return t, origins, world_axes
+                rotation = rotation @ _axis_rotation(xp, joint_values, chain.axes[element], joint_values[..., joint])
+    return position, joint_origins, joint_world_axes
 
 
-def fk(chain: Chain, q, params):
-    """Tip position for joint values q. q: (..., dof), params: (..., n_params)."""
-    return _walk(chain, q, params)[0]
+def fk(chain: Chain, joint_values, link_lengths):
+    """Tip position for the given joint values. joint_values: (..., dof), link_lengths: (..., n_params)."""
+    return _walk(chain, joint_values, link_lengths)[0]
 
 
-def points(chain: Chain, q, params):
+def points(chain: Chain, joint_values, link_lengths):
     """Limb origin, each joint's position and the tip, shape (..., dof + 2, 3). For drawing."""
-    tip, origins, _ = _walk(chain, q, params)
-    xp = _lib(q)
-    return xp.stack([xp.zeros_like(tip)] + origins + [tip], -2)
+    tip, joint_origins, _ = _walk(chain, joint_values, link_lengths)
+    xp = _lib(joint_values)
+    return xp.stack([xp.zeros_like(tip)] + joint_origins + [tip], -2)
 
 
-def jacobian(chain: Chain, q, params):
-    """d(tip position)/d(q), shape (..., 3, dof)."""
-    xp = _lib(q)
-    tip, origins, axes = _walk(chain, q, params)
-    prismatic = [None] * chain.dof
-    for e, j in enumerate(chain.joint_index):
-        if j >= 0:
-            prismatic[j] = chain.prismatic[e]
-    cols = [axes[j] if prismatic[j] else _cross(axes[j], tip - origins[j], xp) for j in range(chain.dof)]
-    return xp.stack(cols, -1)
+def jacobian(chain: Chain, joint_values, link_lengths):
+    """d(tip position)/d(joint_values), shape (..., 3, dof).
+
+    Column j is, for a joint with world axis a_j at origin o_j and tip position p:
+        revolute:   a_j x (p - o_j)     (the tip moves at right angles to its lever arm)
+        prismatic:  a_j                 (the tip slides along the axis)
+    """
+    xp = _lib(joint_values)
+    tip, joint_origins, joint_world_axes = _walk(chain, joint_values, link_lengths)
+    is_prismatic = [None] * chain.dof
+    for element, joint in enumerate(chain.joint_index):
+        if joint >= 0:
+            is_prismatic[joint] = chain.prismatic[element]
+    columns = [
+        joint_world_axes[j] if is_prismatic[j] else _cross(joint_world_axes[j], tip - joint_origins[j], xp)
+        for j in range(chain.dof)
+    ]
+    return xp.stack(columns, -1)
 
 
 # ----------------------------------------------------------------- numeric IK (NumPy)
-def numeric_ik(chain: Chain, limits, p, params, q0=None, iters: int = 100, damping: float = 1e-2,
-               tol: float = 1e-9):
+def numeric_ik(chain: Chain, limits, target_position, link_lengths, initial_joint_values=None,
+               max_iterations: int = 100, damping: float = 1e-2, tolerance: float = 1e-9):
     """Damped-least-squares Newton IK for a batch of targets (NumPy only).
 
-    A local solver: it returns the solution nearest `q0` (default: the middle
+    A local solver: it returns the solution nearest `initial_joint_values` (default: the middle
     of the joint ranges), clipped to the limits. Use it as a reference for
     chains with no closed form, not as a fast or global solver.
+
+    Each iteration solves for the joint step that moves the tip toward the target:
+        step = J^T (J J^T + damping^2 I)^-1 error,    error = target - fk(joint_values)
+    The damping term keeps the step finite near singular poses.
     """
-    p = np.asarray(p, dtype=float)
+    target_position = np.asarray(target_position, dtype=float)
     limits = np.asarray(limits, dtype=float)
-    lo, hi = limits[:, 0], limits[:, 1]
-    q = np.broadcast_to(limits.mean(axis=1) if q0 is None else np.asarray(q0, dtype=float),
-                        p.shape[:-1] + (chain.dof,)).copy()
-    eye = np.eye(3)
-    for _ in range(iters):
-        err = p - fk(chain, q, params)
-        if np.max(np.abs(err), initial=0.0) < tol:
+    lower, upper = limits[:, 0], limits[:, 1]
+    joint_values = np.broadcast_to(
+        limits.mean(axis=1) if initial_joint_values is None else np.asarray(initial_joint_values, dtype=float),
+        target_position.shape[:-1] + (chain.dof,),
+    ).copy()
+    identity = np.eye(3)
+    for _ in range(max_iterations):
+        error = target_position - fk(chain, joint_values, link_lengths)
+        if np.max(np.abs(error), initial=0.0) < tolerance:
             break
-        J = jacobian(chain, q, params)
-        JJt = J @ np.swapaxes(J, -1, -2) + (damping**2) * eye
-        dq = np.swapaxes(J, -1, -2) @ np.linalg.solve(JJt, err[..., None])
-        q = np.clip(q + dq[..., 0], lo, hi)
-    return q
+        jac = jacobian(chain, joint_values, link_lengths)
+        jac_t = np.swapaxes(jac, -1, -2)
+        damped_gram = jac @ jac_t + (damping**2) * identity
+        joint_step = jac_t @ np.linalg.solve(damped_gram, error[..., None])
+        joint_values = np.clip(joint_values + joint_step[..., 0], lower, upper)
+    return joint_values

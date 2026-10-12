@@ -33,57 +33,84 @@ TROT = Gait("trot", period=0.5, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0))
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)
 
 
-def _planar_flow(tau, v, omega):
-    """Rotation angle and translation of a ground point seen from the body, tau seconds before it reaches its mid-stance position."""
-    ang = omega * tau
-    small = np.abs(omega) < 1e-9
-    w = np.where(small, 1.0, omega)
-    a = np.where(small, tau, np.sin(ang) / w)  # integral of cos
-    b = np.where(small, 0.0, (1.0 - np.cos(ang)) / w)  # integral of sin
-    shift = np.stack([a * v[0] - b * v[1], b * v[0] + a * v[1]], axis=-1)
-    return ang, shift
+def _planar_flow(time_offset, velocity, yaw_rate):
+    """Heading angle and displacement accumulated over `time_offset` seconds of constant planar motion.
+
+    The body moves with body-frame velocity (vx, vy) and yaw rate w, so after
+    time T its heading is  angle = w T  and its velocity turns with it. The
+    displacement is the integral of the rotated velocity:
+
+        shift = integral from 0 to T of R(w s) (vx, vy) ds
+              = ( sin(wT)/w * vx - (1 - cos(wT))/w * vy,
+                  (1 - cos(wT))/w * vx + sin(wT)/w * vy )
+
+    For w -> 0 the two integrals tend to T and 0 (straight-line motion), which
+    is what the `small` branch uses to avoid dividing by zero.
+    Returns (angle, shift) with shift shaped (..., 2). `time_offset` may be negative.
+    """
+    angle = yaw_rate * time_offset
+    small = np.abs(yaw_rate) < 1e-9
+    safe_rate = np.where(small, 1.0, yaw_rate)  # placeholder so the unused branch does not divide by zero
+    int_cos = np.where(small, time_offset, np.sin(angle) / safe_rate)  # integral of cos(w s) ds
+    int_sin = np.where(small, 0.0, (1.0 - np.cos(angle)) / safe_rate)  # integral of sin(w s) ds
+    shift = np.stack(
+        [int_cos * velocity[0] - int_sin * velocity[1], int_sin * velocity[0] + int_cos * velocity[1]], axis=-1
+    )
+    return angle, shift
 
 
-def _stance_point(home, tau, v, omega):
-    """Body-frame position of a grounded foot that sits at `home` when tau = 0."""
-    ang, shift = _planar_flow(tau, v, omega)
-    c, s = np.cos(ang), np.sin(ang)
-    x = c * home[..., 0] - s * home[..., 1] + shift[..., 0]
-    y = s * home[..., 0] + c * home[..., 1] + shift[..., 1]
+def _stance_point(home, time_offset, velocity, yaw_rate):
+    """Body-frame position of a grounded foot that sits at `home` when time_offset = 0.
+
+    A planar rotation by the flow angle plus the flow displacement:
+        [x, y] = R(angle) [home_x, home_y] + shift
+    The height z is unchanged.
+    """
+    angle, shift = _planar_flow(time_offset, velocity, yaw_rate)
+    cos_a, sin_a = np.cos(angle), np.sin(angle)
+    x = cos_a * home[..., 0] - sin_a * home[..., 1] + shift[..., 0]
+    y = sin_a * home[..., 0] + cos_a * home[..., 1] + shift[..., 1]
     return np.stack([x, y, np.broadcast_to(home[..., 2], x.shape)], axis=-1)
 
 
-def foot_targets(gait: Gait, t, home, velocity=(0.0, 0.0), yaw_rate=0.0):
+def foot_targets(gait: Gait, times, home, velocity=(0.0, 0.0), yaw_rate=0.0):
     """Foot targets in the body frame.
 
-    t         scalar or (T,) times in seconds
+    times     scalar or (T,) times in seconds
     home      (4, 3) neutral foot positions (see Robot.stance)
     returns   feet (T, 4, 3), contact (T, 4) booleans, phase-in-swing (T, 4)
     """
-    t = np.atleast_1d(np.asarray(t, float))[:, None]  # (T, 1)
-    v = np.asarray(velocity, float)
+    times = np.atleast_1d(np.asarray(times, float))[:, None]  # (T, 1)
+    velocity = np.asarray(velocity, float)
     home = np.asarray(home, float)[None]  # (1, 4, 3)
-    phase = (t / gait.period - np.asarray(gait.offsets)[None]) % 1.0  # (T, 4)
+    # Fraction of the cycle each leg has completed since its stance began, in [0, 1).
+    phase = (times / gait.period - np.asarray(gait.offsets)[None]) % 1.0  # (T, 4)
     contact = phase < gait.duty
-    t_stance = gait.duty * gait.period
+    stance_duration = gait.duty * gait.period  # seconds
 
-    # Stance: s runs 0 -> 1, the foot passes `home` at s = 0.5.
-    s = np.where(contact, phase / gait.duty, 0.0)
-    stance = _stance_point(home, (0.5 - s) * t_stance, v, yaw_rate)
+    # Stance: progress runs 0 -> 1 and the foot passes `home` at progress = 0.5,
+    # so the time until it reaches home is (0.5 - progress) * stance_duration.
+    stance_progress = np.where(contact, phase / gait.duty, 0.0)
+    stance = _stance_point(home, (0.5 - stance_progress) * stance_duration, velocity, yaw_rate)
 
-    # Swing: from where stance ended to where the next one starts.
-    u = np.where(contact, 0.0, (phase - gait.duty) / (1.0 - gait.duty))
-    start = _stance_point(home, np.full_like(u, -0.5 * t_stance), v, yaw_rate)
-    end = _stance_point(home, np.full_like(u, 0.5 * t_stance), v, yaw_rate)
-    blend = (u - np.sin(2 * np.pi * u) / (2 * np.pi))[..., None]  # starts and ends at rest
-    swing = start + (end - start) * blend
-    swing[..., 2] += gait.lift * np.sin(np.pi * u) ** 2
+    # Swing: from where stance ended to where the next one starts. swing_progress
+    # runs 0 -> 1 over the swing. Stance ends half a stance after home and the
+    # next begins half a stance before it.
+    swing_progress = np.where(contact, 0.0, (phase - gait.duty) / (1.0 - gait.duty))
+    swing_start = _stance_point(home, np.full_like(swing_progress, -0.5 * stance_duration), velocity, yaw_rate)
+    swing_end = _stance_point(home, np.full_like(swing_progress, 0.5 * stance_duration), velocity, yaw_rate)
+    # Blend u - sin(2 pi u)/(2 pi): its slope 1 - cos(2 pi u) is zero at u = 0 and 1,
+    # so the foot leaves and lands with zero horizontal speed.
+    blend = (swing_progress - np.sin(2 * np.pi * swing_progress) / (2 * np.pi))[..., None]
+    swing = swing_start + (swing_end - swing_start) * blend
+    # Lift: sin^2(pi u) is 0 at both ends with zero slope, peak `lift` mid-swing.
+    swing[..., 2] += gait.lift * np.sin(np.pi * swing_progress) ** 2
 
     feet = np.where(contact[..., None], stance, swing)
-    return feet, contact, u
+    return feet, contact, swing_progress
 
 
-def body_sway(gait: Gait, t, home):
+def body_sway(gait: Gait, times, home):
     """Horizontal body shift (T, 3) that leans away from the leg in the air.
 
     Only for gaits that lift one foot at a time (gait.sway > 0 and no
@@ -91,8 +118,8 @@ def body_sway(gait: Gait, t, home):
     leg's swing and blends smoothly to the next leg's lean while all four feet
     are down, so the body is already across before a foot leaves the ground.
     """
-    t = np.atleast_1d(np.asarray(t, float))
-    out = np.zeros((t.shape[0], 3))
+    times = np.atleast_1d(np.asarray(times, float))
+    out = np.zeros((times.shape[0], 3))
     swing_len = 1.0 - gait.duty
     starts = (np.asarray(gait.offsets) + gait.duty) % 1.0  # phase at which each leg lifts
     order = np.argsort(starts)
@@ -100,25 +127,26 @@ def body_sway(gait: Gait, t, home):
     if gait.sway == 0.0 or np.any(gaps < -1e-9):
         return out
     lean = -np.sign(np.asarray(home, float)[:, :2]) * gait.sway  # (4, 2) target per swinging leg
-    phase = (t / gait.period) % 1.0
-    for k, i in enumerate(order):
-        nxt = order[(k + 1) % 4]
-        since = (phase - starts[i]) % 1.0  # phase since leg i lifted
-        hold = since < swing_len
-        move = (~hold) & (since < swing_len + gaps[k])
-        out[hold, :2] = lean[i]
+    phase = (times / gait.period) % 1.0
+    for k, leg_index in enumerate(order):
+        next_leg = order[(k + 1) % 4]
+        since_lift = (phase - starts[leg_index]) % 1.0  # cycle fraction since this leg lifted
+        holding = since_lift < swing_len
+        moving = (~holding) & (since_lift < swing_len + gaps[k])
+        out[holding, :2] = lean[leg_index]
         if gaps[k] > 1e-9:
-            x = (since[move] - swing_len) / gaps[k]
-            w = (x * x * (3 - 2 * x))[:, None]
-            out[move, :2] = lean[i] * (1 - w) + lean[nxt] * w
+            progress = (since_lift[moving] - swing_len) / gaps[k]  # 0 -> 1 across the gap
+            # Smoothstep 3x^2 - 2x^3: zero slope at both ends, so the body starts and stops leaning gently.
+            weight = (progress * progress * (3 - 2 * progress))[:, None]
+            out[moving, :2] = lean[leg_index] * (1 - weight) + lean[next_leg] * weight
     return out
 
 
-def body_path(t, velocity=(0.0, 0.0), yaw_rate=0.0):
+def body_path(times, velocity=(0.0, 0.0), yaw_rate=0.0):
     """World position (T, 3) and yaw (T,) of a body that starts at the origin."""
-    t = np.atleast_1d(np.asarray(t, float))
-    ang, shift = _planar_flow(t, np.asarray(velocity, float), yaw_rate)
-    return np.concatenate([shift, np.zeros((t.shape[0], 1))], axis=1), ang
+    times = np.atleast_1d(np.asarray(times, float))
+    angle, shift = _planar_flow(times, np.asarray(velocity, float), yaw_rate)
+    return np.concatenate([shift, np.zeros((times.shape[0], 1))], axis=1), angle
 
 
 def stability_margin(feet_xy, contact, point_xy):
@@ -128,22 +156,27 @@ def stability_margin(feet_xy, contact, point_xy):
     than three feet down the support is a line, and the result is minus the
     distance to it. Feet must be given in FL, FR, RL, RR order.
     """
-    order = [0, 1, 3, 2]  # walk around the body
-    out = np.empty(feet_xy.shape[0])
+    walk_order = [0, 1, 3, 2]  # FL, FR, RR, RL: around the body, clockwise seen from above
+    margin = np.empty(feet_xy.shape[0])
     for i in range(feet_xy.shape[0]):
-        pts = np.array([feet_xy[i, k] for k in order if contact[i, k]])
-        c = point_xy[i]
-        if len(pts) < 3:
-            a, b = pts[0], pts[-1]
-            ab = b - a
-            u = np.clip(np.dot(c - a, ab) / max(np.dot(ab, ab), 1e-12), 0, 1)
-            out[i] = -np.linalg.norm(c - (a + u * ab))
+        grounded = np.array([feet_xy[i, k] for k in walk_order if contact[i, k]])
+        point = point_xy[i]
+        if len(grounded) < 3:
+            # Support is a point or a segment from a to b. Closest point on it is
+            # start + f (end - start) with f = (point - start).(end - start) / |end - start|^2, clamped to [0, 1].
+            start, end = grounded[0], grounded[-1]
+            edge = end - start
+            fraction = np.clip(np.dot(point - start, edge) / max(np.dot(edge, edge), 1e-12), 0, 1)
+            margin[i] = -np.linalg.norm(point - (start + fraction * edge))
             continue
-        d = []
-        for j in range(len(pts)):
-            a, b = pts[j], pts[(j + 1) % len(pts)]
-            e = b - a
-            d.append((e[0] * (c[1] - a[1]) - e[1] * (c[0] - a[0])) / np.linalg.norm(e))
+        signed_distances = []
+        for j in range(len(grounded)):
+            start, end = grounded[j], grounded[(j + 1) % len(grounded)]
+            edge = end - start
+            # 2-D cross product edge x (point - start), divided by |edge|, is the
+            # signed distance from the edge's line to the point.
+            cross = edge[0] * (point[1] - start[1]) - edge[1] * (point[0] - start[0])
+            signed_distances.append(cross / np.linalg.norm(edge))
         # Feet are visited clockwise seen from above, so inside means every cross product is negative.
-        out[i] = (-np.array(d)).min()
-    return out
+        margin[i] = (-np.array(signed_distances)).min()
+    return margin

@@ -5,7 +5,8 @@ simulation, then refinement from real interaction. First robot: a quadruped
 with 12 degrees of freedom, 3 per leg (abduction, hip pitch, knee), grippy
 pads for feet.
 
-Read `docs/PLAN.md` for the staged roadmap and what is done, and
+Read `docs/NAMING.md` before naming anything (variables, arguments, functions) or
+writing code that implements an equation. Read `docs/PLAN.md` for the staged roadmap and what is done, and
 `docs/STAGE2.md` for the current stage (MuJoCo, servo model, work packages). Read `README.md`
 for results and usage. Keep both current when the work changes them.
 
@@ -51,6 +52,7 @@ scripts/               train, evaluate, calibrate, make_demo, make_body_demos, t
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
+docs/NAMING.md         naming and equation-commenting conventions
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
 ```
 
@@ -99,7 +101,8 @@ else NumPy.
   upper, lower (other URDF limbs have as many as the spec says), so a batch can
   hold different legs. `Robot.lengths` is `(4, 3)` and may be changed at any
   time. Keep it that way: training on varied lengths depends on it.
-- **Joint angles:** `q = (abduction, hip pitch, knee)`. The knee bends one way
+- **Joint angles:** `joint_angles = (abduction, hip pitch, knee)` (written `q` in
+  maths and older docs). The knee bends one way
   only and stops short of straight (`leg.JOINT_LIMITS`), which makes IK
   unique. Changing the limits changes the problem; retrain and re-evaluate.
 - **The training loss is foot position through forward kinematics**, never

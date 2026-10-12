@@ -133,7 +133,7 @@ class TestKinematics(unittest.TestCase):
         limb = limb_of(random_chain_urdf(self.rng, 4, fixed_rot=False))
         q_true = self.rng.uniform(-0.5, 0.5, size=(200, 4))
         p = limb.forward(q_true, limb.nominal)
-        q = limb.numeric_ik(p, limb.nominal, iters=200)
+        q = limb.numeric_ik(p, limb.nominal, max_iterations=200)
         err = np.linalg.norm(limb.forward(q, limb.nominal) - p, axis=1)
         self.assertGreater(np.mean(err < 1e-6), 0.9)
 
@@ -141,7 +141,7 @@ class TestKinematics(unittest.TestCase):
         limb = specmod.build_limb(robots.leg_urdf(), "body", "L_foot")
         rng = np.random.default_rng(5)
         p, L, q_true = leg.sample_batch(rng, 300, leg.LegConfig())
-        q = limb.numeric_ik(p, L, iters=100)
+        q = limb.numeric_ik(p, L, max_iterations=100)
         self.assertGreater(np.mean(np.linalg.norm(limb.forward(q, L) - p, axis=1) < 1e-6), 0.95)
 
     @unittest.skipUnless(HAS_TORCH, "PyTorch not installed")
@@ -346,9 +346,9 @@ class TestWeightsAlignment(unittest.TestCase):
     def test_legacy_weights_load_against_a_matching_urdf_and_predict_identically(self):
         plain = IKNet.load(WEIGHTS)
         checked = IKNet.load(WEIGHTS, spec=self.limb)
-        p, L, _ = leg.sample_batch(np.random.default_rng(0), 500, plain.cfg)
+        p, L, _ = leg.sample_batch(np.random.default_rng(0), 500, plain.config)
         np.testing.assert_allclose(checked.predict(p, L), plain.predict(p, L), atol=1e-12)
-        self.assertIsInstance(checked.cfg, specmod.LimbSpec)
+        self.assertIsInstance(checked.config, specmod.LimbSpec)
 
     def test_legacy_weights_reject_a_different_leg(self):
         m = robots.leg_urdf()
@@ -370,7 +370,7 @@ class TestWeightsAlignment(unittest.TestCase):
             path = os.path.join(d, "w.npz")
             net.save(path)
             back = IKNet.load(path)  # no URDF needed: the file is self-describing
-            self.assertEqual(back.cfg.signature, self.limb.signature)
+            self.assertEqual(back.config.signature, self.limb.signature)
             IKNet.load(path, spec=self.limb)
             # lengths changed in the URDF are fine: they are inputs, not structure
             IKNet.load(path, spec=specmod.build_limb(robots.leg_urdf(lengths=(0.05, 0.13, 0.11)), "body", "L_foot"))
@@ -393,7 +393,7 @@ class NumericSolver:
         self.limb = limb
 
     def predict(self, p, params):
-        return self.limb.numeric_ik(p, params, iters=200)
+        return self.limb.numeric_ik(p, params, max_iterations=200)
 
 
 class TestURDFRobot(unittest.TestCase):

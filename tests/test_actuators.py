@@ -78,7 +78,7 @@ class TestServoHoldingMass(unittest.TestCase):
         for _ in range(steps):
             d.ctrl[0] = servo.step([0.0], d.qpos[:1], d.qvel[:1], mod.opt.timestep)[0]
             mujoco.mj_step(mod, d)
-        return d.qpos[0], d.ctrl[0], servo.p
+        return d.qpos[0], d.ctrl[0], servo.params
 
     def test_settles_at_closed_form_deflection_below_the_limit(self):
         m, L = 0.5, 0.12  # 0.59 N·m of load against 1.86 N·m

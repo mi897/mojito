@@ -116,7 +116,7 @@ def joint_order(model: URDFModel) -> list:
     return [j.name for j in model.joints.values() if j.movable]
 
 
-def set_pose(mj_model, data, joint_names, q, base_pos=(0.0, 0.0, 0.0), base_rotation=None) -> None:
+def set_pose(mj_model, data, joint_names, joint_angles, base_pos=(0.0, 0.0, 0.0), base_rotation=None) -> None:
     """Put the base at base_pos with a body-to-world rotation matrix and set joint angles, then run kinematics."""
     import mujoco
 
@@ -124,7 +124,7 @@ def set_pose(mj_model, data, joint_names, q, base_pos=(0.0, 0.0, 0.0), base_rota
     quat = np.zeros(4)
     mujoco.mju_mat2Quat(quat, np.eye(3).ravel() if base_rotation is None else np.asarray(base_rotation, float).ravel())
     data.qpos[3:7] = quat
-    for name, value in zip(joint_names, q):
+    for name, value in zip(joint_names, joint_angles):
         jid = mujoco.mj_name2id(mj_model, mujoco.mjtObj.mjOBJ_JOINT, name)
         if jid < 0:
             raise URDFError(f"joint {name!r} is not in the MuJoCo model")
