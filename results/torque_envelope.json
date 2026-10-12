@@ -1,0 +1,102 @@
+{
+ "what": "static joint torque per unit body weight, vertical foot loads only; no leg or servo mass, no motion, no friction limit",
+ "lengths_m": [
+  0.04,
+  0.12,
+  0.12
+ ],
+ "stand_height_m": 0.17,
+ "body_length_m": 0.24,
+ "body_width_m": 0.1,
+ "servo_stall_nm_unverified": {
+  "5.0 V": 1.863,
+  "6.8 V": 2.108
+ },
+ "derates": [
+  1.0,
+  0.5
+ ],
+ "crawl_min_foot_load_fraction": 0.24305555555555547,
+ "torque_per_weight_m": {
+  "stand_4_feet": {
+   "abduction": 0.01,
+   "hip_pitch": 0.0,
+   "knee": 0.02117634293262177
+  },
+  "trot_2_feet": {
+   "abduction": 0.02,
+   "hip_pitch": 0.0,
+   "knee": 0.04235268586524354
+  },
+  "crawl_3_feet": {
+   "abduction": 0.015833333333333335,
+   "hip_pitch": 0.0,
+   "knee": 0.033529209643317806
+  }
+ },
+ "max_total_mass_kg": {
+  "stand_4_feet": {
+   "5.0 V derate 1.0": 8.97,
+   "5.0 V derate 0.5": 4.48,
+   "6.8 V derate 1.0": 10.15,
+   "6.8 V derate 0.5": 5.07
+  },
+  "trot_2_feet": {
+   "5.0 V derate 1.0": 4.48,
+   "5.0 V derate 0.5": 2.24,
+   "6.8 V derate 1.0": 5.07,
+   "6.8 V derate 0.5": 2.54
+  },
+  "crawl_3_feet": {
+   "5.0 V derate 1.0": 5.66,
+   "5.0 V derate 0.5": 2.83,
+   "6.8 V derate 1.0": 6.41,
+   "6.8 V derate 0.5": 3.21
+  }
+ },
+ "max_mass_kg_by_leg_scale_5V_derate_0.5": {
+  "0.75": {
+   "stand_4_feet": 5.98,
+   "trot_2_feet": 2.99,
+   "crawl_3_feet": 3.78
+  },
+  "1.0": {
+   "stand_4_feet": 4.48,
+   "trot_2_feet": 2.24,
+   "crawl_3_feet": 2.83
+  },
+  "1.25": {
+   "stand_4_feet": 3.59,
+   "trot_2_feet": 1.79,
+   "crawl_3_feet": 2.27
+  },
+  "1.5": {
+   "stand_4_feet": 2.99,
+   "trot_2_feet": 1.49,
+   "crawl_3_feet": 1.89
+  },
+  "2.0": {
+   "stand_4_feet": 2.24,
+   "trot_2_feet": 1.12,
+   "crawl_3_feet": 1.39
+  }
+ },
+ "body_length_over_width_effect": {
+  "1.0": {
+   "crawl_max_mass_kg": 2.88,
+   "crawl_min_foot_load_fraction": 0.25
+  },
+  "1.5": {
+   "crawl_max_mass_kg": 3.1,
+   "crawl_min_foot_load_fraction": 0.306
+  },
+  "2.0": {
+   "crawl_max_mass_kg": 2.99,
+   "crawl_min_foot_load_fraction": 0.264
+  },
+  "2.4": {
+   "crawl_max_mass_kg": 2.83,
+   "crawl_min_foot_load_fraction": 0.243
+  }
+ }
+}

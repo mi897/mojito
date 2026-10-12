@@ -370,6 +370,18 @@ committed so this page renders. Regenerate them rather than editing by hand.
   the closed-form IK, or a property such as "grounded feet do not move".
 - Numbers quoted here must come from a run, and must say what was measured.
 
+## How heavy can it be?
+
+`python scripts/torque_envelope.py` writes `results/torque_envelope.json`: the
+static joint torque needed to hold the body in a stance, and the largest total
+mass a servo can hold. For the placeholder leg (40, 120, 120 mm links, 170 mm
+stand height) and the unverified listed stall torque of 1.86 N·m at 5 V, at half
+of stall: 4.48 kg standing on four feet, 2.83 kg in the crawl, 2.24 kg in the trot.
+This counts weight on vertical foot loads only. It leaves out leg and servo mass
+(twelve listed servos are 0.72 kg alone), gait dynamics, friction and heat, so it
+is an upper bound, not a mass the robot can walk with. Details and the
+length-to-width result are in `docs/STAGE2.md`.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.
@@ -378,8 +390,10 @@ These decide what Stage 2 and 3 look like.
    No robot exists yet; the plan is to try dimensions in simulation first
    (`docs/STAGE2.md`).
 2. Actuators: decided as 20 kg·cm hobby servos (listed as "DSServo DS3218 20KG
-   Digital Metal Servo"). Still open: the supply voltage and whether the servo
-   reports position.
+   Digital Metal Servo"), supply adjustable 4.8–7 V, no position feedback. The first
+   robot gets external joint-angle sensors; DC motors with position, velocity and
+   current feedback come later. Still open: servo data at 7 V (listings stop at
+   6.8 V) and the angle sensor type.
    The torque and speed figures in `docs/STAGE2.md` come from retailer
    listings and are unverified.
 3. How foot or body position will be measured on the real robot. Simulation

@@ -1,6 +1,8 @@
 # Stage 2 — physics simulation (MuJoCo)
 
-Branch: `stage-2-mujoco-model`. Status: **planned, nothing built yet.**
+Status: **planned; the first number (a static mass bound, below) is done.**
+Earlier branch `stage-2-mujoco-model` (PR #9) added this plan; the mass bound is on
+`stage-2-design-envelope`.
 `docs/PLAN.md` has the roadmap; this file holds the detail for this stage.
 
 ## Why this stage exists
@@ -16,8 +18,11 @@ the model is trusted.
 | Question | Answer | Consequence |
 |---|---|---|
 | Real dimensions | None yet; to be chosen from simulation | Dimensions are sweep parameters, never constants. The URDF generator in `mojito/robots.py` stays the single source. |
-| Actuators | DS3218-class 20 kg·cm digital hobby servos | Model each joint as a torque-limited, speed-limited position servo with a delay. See "Servo model". |
-| Measurement | Simulation ground truth for now; an external measuring system may come later | Policies must not observe anything the real robot could not measure. |
+| Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 4.8–7 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
+| Actuators, later robots | DC motors reporting position, velocity and current | The actuator is an interface: command in, torque out, plus a list of what it reports. Swapping servos for motors must not change the policy code. |
+| Joint feedback | The servo reports nothing. The first robot gets external joint-angle sensors fed back to the system | Simulation reports a **measured** angle (noise, quantisation, delay, offset), never the true one, as the policy's joint observation. |
+| Measurement | Simulation ground truth for evaluation and rewards; external measuring system later | Policies must not observe anything the real robot could not measure. |
+| Body shape | Longer than wide, about 2:1 | Read as 2:1 shoulder spacing (the body frame's definition), so the overall frame is a little larger. Treated as a design-sweep parameter. |
 
 ## Foot and base positions in simulation
 
@@ -64,28 +69,96 @@ Conversion used: 1 kg·cm = 0.0980665 N·m. So 19 kg·cm = 1.86 N·m and
   sustained loads should not assume the best case.
 - Joint velocity limit from the no-load speed, also a parameter.
 - Command latency and a servo position resolution (dead band) as parameters.
-- The supply voltage, and whether the real part is the MG or the PRO, change
-  these numbers. They are inputs, not constants, and a sweep over them is part
-  of the plan.
+- Torque and speed are functions of supply voltage, adjustable from 4.8 to
+  7 V. The listings give two points only (5 V and 6.8 V). Between them use a
+  straight line. **7 V is above the listed 6.8 V maximum and 4.8 V is below the
+  lowest listed point; there is no data for either**, so the model clamps to the
+  nearest listed value and flags the run. Running at 7 V may exceed the
+  servo's rating (heat, wear, damage); that is the owner's call and should be
+  checked against the datasheet first.
+- Variant: the title "DS3218 20KG Digital Metal Servo" reads as the standard
+  part, so the PRO figures are not used.
 
 **What this means for the design.** The position the servo is commanded to is
-not necessarily the position it reaches. If the servo reports nothing back,
-the real robot knows its pose only by assuming commanded equals actual, which
-fails under load. That matters for Stage 3, and the simulation should be able
-to show how large the commanded-versus-actual gap becomes at the torque limit.
+not necessarily the position it reaches. The servo reports nothing back, so
+without extra sensors the robot would assume commanded equals actual, which
+fails under load. The simulation should show how large the commanded-versus-
+actual gap becomes at the torque limit.
+
+## Joint sensing and the actuator interface
+
+- **First robot:** an external angle sensor on each joint (type not chosen;
+  encoders or potentiometers are the usual options). Model it as true angle
+  plus offset, noise, quantisation and delay, all parameters. The policy sees
+  this measured angle. The sensor placement (before or after any gear play)
+  matters and is open.
+- **Later robots:** DC motors with position, velocity and current feedback.
+  Current is a torque estimate, so the policy could observe effort. Keep the
+  policy's observation a named list built from whatever the actuator reports,
+  so a motor model can replace the servo model without edits elsewhere.
+- A servo with a built-in position loop and a motor under torque control are
+  different control problems (position tracking versus force). The interface
+  should allow both; only the servo one is built first.
+
+## How heavy can it be? (static bound)
+
+`scripts/torque_envelope.py` (maths in `mojito/statics.py`, test in
+`tests/test_statics.py`) computes the joint torque needed to hold the body's
+weight in three stances, with the placeholder leg (40, 120, 120 mm) standing
+170 mm high, feet under the hips, and the placeholder body (240 × 100 mm
+shoulder spacing). The output is `results/torque_envelope.json`.
+
+What it computes: vertical foot loads only, from weight. What it leaves out:
+the mass of the legs and of the servos hanging on them, gait dynamics and
+landing impacts, friction limits, and heat. So it is an **upper bound on the
+total mass a stance can hold, not a mass you can walk with.**
+
+Largest total mass whose weight keeps every joint under the torque shown, using
+the unverified listed stall torques (1.86 N·m at 5 V, 2.11 N·m at 6.8 V):
+
+| Stance | 5 V, full stall torque | 5 V, half of stall | 6.8 V, half of stall |
+|---|---|---|---|
+| Standing, 4 feet | 8.97 kg | 4.48 kg | 5.07 kg |
+| Crawl, 3 feet, body leaning 25 mm | 5.66 kg | 2.83 kg | 3.21 kg |
+| Trot, 2 diagonal feet | 4.48 kg | 2.24 kg | 2.54 kg |
+
+- "Half of stall" is an assumption, not a datasheet value: stall torque is the
+  most the servo can give for an instant, and the listings give no continuous
+  rating.
+- In every stance the knee is the limiting joint; with the foot under the hip
+  the hip-pitch joint carries no static torque. This is specific to that
+  stance, and walking moves the foot off the hip.
+- The mass scales inversely with leg length: scaling every link and the stand
+  height by 1.5 cuts the 5 V, half-stall limits to 2.99, 1.89 and 1.49 kg
+  (standing, crawl, trot). Longer legs mean a lighter robot.
+- **Body ratio:** at the same width, changing length over width from 1 to 2.4
+  moves the crawl limit between 2.83 and 3.10 kg, within about 10%, and not in
+  one direction. The ratio does not limit the static torque. It matters for
+  tipping and pitch, which this calculation does not cover.
+- **Servo mass counts.** Twelve servos at 60 g (listed) are 0.72 kg before the
+  frame, battery, electronics and sensors.
+
+**Working target, a recommendation rather than a result:** aim for a total mass
+of about 1.5 kg for the first robot with these placeholder legs. At that mass
+the trot knee needs about 0.62 N·m, one third of the 5 V stall figure. That
+leaves room for gait peaks, which the static bound ignores. The stand test and
+gait replay in the work packages below are what turn this into a real answer.
 
 ## Work packages
 
 Each is one branch-sized step. Tick them off here as they land.
 
+0. [x] **Static mass bound.** `scripts/torque_envelope.py`, as above.
 1. [ ] **MJCF from the URDF.** Generate a MuJoCo model from the same
    parameters as `robots/quadruped.urdf`, with foot and body-frame sites, a
    floor with friction, and placeholder inertias derived from the dimensions.
    Test: with the model in a fixed pose, foot positions from MuJoCo equal
    `mojito/kinematics.py` to numerical precision, for random lengths and angles
    (left and right legs, and several body poses).
-2. [ ] **Servo model.** Torque limit, speed limit, latency, resolution, as
-   parameters. Test against a closed form: a servo holding a known mass at a
+2. [ ] **Servo and sensor model.** Torque and speed limits as functions of
+   voltage (4.8–7 V, clamped outside the listed 5–6.8 V points), latency,
+   resolution, and a joint-angle sensor with noise, quantisation, delay and
+   offset, behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
    below the limit, and saturate when it is above.
 3. [ ] **Stand test.** Hold the Stage 1 standing posture from the IK layer
@@ -122,9 +195,8 @@ do.
 
 ## Open items for the owner
 
-1. Supply voltage, and the datasheet figures for the DS3218 20KG (listing title
-   suggests the standard variant, not the PRO). Please check the datasheet or the box.
-2. Does the servo report its position back? If not, say so; it changes what the
-   policy may observe.
-3. A rough target for total mass and body size, so the sweep has a sensible
-   range.
+1. Datasheet figures for the DS3218 20KG, especially torque and speed at 7 V and
+   whether 7 V is within the servo's rating. The listings stop at 6.8 V.
+2. Joint-angle sensor type and where it sits on the joint.
+3. Whether the 1.5 kg working target is acceptable, or whether the robot must
+   carry a heavier battery or payload (then the legs must be shorter).

@@ -78,8 +78,12 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 **Status: planned, in detail in `docs/STAGE2.md`** (branch `stage-2-mujoco-model`).
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
-Actuators are DS3218-class 20 kg·cm hobby servos (listed figures unverified, see
-`docs/STAGE2.md`). Simulation ground truth (foot and base world positions) is used
+Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 4.8–7 V,
+listed figures unverified, no position feedback), with external joint-angle sensors on
+the first robot and DC motors with position, velocity and current feedback later (see
+`docs/STAGE2.md`). A first static bound on total mass is done: with the placeholder
+legs, about 2.2–2.8 kg at most in trot and crawl at 5 V and half of stall torque,
+before leg and servo mass and gait dynamics; working target 1.5 kg. Simulation ground truth (foot and base world positions) is used
 for evaluation and rewards, not as policy input.
 
 - MuJoCo model built from the same length parameters, so a leg-length change
@@ -109,7 +113,9 @@ for evaluation and rewards, not as policy input.
 
 1. Real link lengths, abduction offset and joint limits (all placeholders now).
    No robot exists; dimensions will be chosen by trying designs in simulation.
-2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG). Still open:
-   the supply voltage, and whether the servo reports position back.
+2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG), supply
+   adjustable 4.8–7 V, no position feedback; external joint-angle sensors for the
+   first robot; DC motors with position, velocity and current feedback later. Still
+   open: servo data at 7 V (listings stop at 6.8 V), and the angle sensor type.
 3. Foot position on the real robot: simulation ground truth for now; an external
    measuring system can be built later if needed.
