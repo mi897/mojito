@@ -1,6 +1,6 @@
 # Stage 2 — physics simulation (MuJoCo)
 
-Status: **in progress; work packages 0 to 3 are done.**
+Status: **in progress; work packages 0 to 4 are done.**
 Earlier branch `stage-2-mujoco-model` (PR #9) added this plan; the mass bound is on
 `stage-2-design-envelope`.
 `docs/PLAN.md` has the roadmap; this file holds the detail for this stage.
@@ -429,11 +429,30 @@ Each is one branch-sized step. Tick them off here as they land.
    backwards, so the shank and foot masses sit behind the hips and move the centre of mass rearward, and the
    knee-bend direction makes front and rear legs not mirror images. Only the second of these applies to the near-weightless legs.
 
-4. [ ] **Replay Stage 1 gaits in physics.** Feed the trot and crawl foot
-   trajectories through the IK layer into the servo model. Report whether the
-   body stays up, foot slip, and peak torque. This tests the known weaknesses
-   from Stage 1: the trot's reliance on dynamic balance and the quick crawl
-   lean.
+4. [x] **Replay Stage 1 gaits in physics** (`mojito/gait_replay.py`, `scripts/gait_replay.py`, `tests/test_gait_replay.py`, `results/gait_replay.json`).
+   The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
+   closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
+   then 4 trot cycles (0.5 s period) or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
+   PCA9685 command resolution, floor and pad friction as in `mjcf.py`. Measured velocity is the body displacement over
+   the walking phase. A foot is planted if it carries more than 0.5 N in two consecutive 2 ms steps; slip is its
+   horizontal movement per step.
+   - *Stays up.* All 9 runs finished upright: tilt at most 5.0°, body origin no lower than 206.5 mm, against 218.6 mm after the initial stand.
+   - *It does not walk at the commanded speed.* Trot, commanded 0 / 0.05 / 0.15 / 0.30 m/s: measured -0.038 / -0.011 / +0.041 /
+     +0.111 m/s. Crawl, commanded 0 / 0.02 / 0.04 / 0.08: measured -0.011 / +0.009 / +0.028 / +0.063. Marching in
+     place drifts backwards. Trot turning at 1.2 rad/s measured 0.82 rad/s, with 0.04 m/s of backward drift. The cause was not traced.
+     The commanded stance feet stay fixed in the world, so the body should keep up; the joint tracking gap (below) is a suspect, not a finding.
+   - *Slip is small.* Planted feet moved at most 1.75 mm in a 2 ms step (trot 0.30 m/s), 0.59 to 0.98 mm at the other trot speeds
+     and 0.62 to 1.6 mm in the crawl; means 0.05 to 0.16 mm per step. Friction was never the limit here, so this says nothing about slippery floors.
+   - *Torque.* Peak |torque| as a fraction of the 1.86 N·m stall limit: trot 0.65 to 0.82 (0.85 turning); crawl 0.94 to 0.99, with
+     the servos at their limit for 1.3% to 4.9% of the walking time. Standing with these masses peaks at 0.28 (knee). The crawl
+     peaks higher on the servos than the trot; the reason was not traced.
+   - *Joint tracking.* Largest gap between commanded and actual joint angle during walking: 10 to 16°.
+   - *Feet down.* Fewest feet carrying more than 0.5 N: 2 in every run, including the crawl, which Stage 1 designed to keep 3 down.
+     Whether this is a brief unloading or a sustained lift was not examined. Mean feet down: trot 2.6, crawl 3.3.
+   - *Heavy robot.* At 8 kg (legs near zero) the trot saturates the servos for more than 20% of the walking time and the run does not count as walked (test).
+   Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
+   other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
+   of each case, no randomisation.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.

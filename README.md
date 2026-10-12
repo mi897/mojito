@@ -401,6 +401,12 @@ the stall torque for 3 kg and 0.72 for 4 kg; 5 kg does not rise. The weight is n
 for near-weightless legs, 20% and 30% with the default placeholder masses.
 The masses, gains and servo figures are placeholders, so these show how the model behaves, not what a built robot can do.
 
+`python scripts/gait_replay.py` (needs MuJoCo) replays the trot and crawl through the servo model with a free body and
+writes `results/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
+5.0°) and planted feet move at most 1.75 mm per 2 ms step. The body does not reach the commanded speed: trot at 0.15 m/s
+measured 0.041 m/s, at 0.30 m/s 0.111 m/s, and marching in place drifted back at 0.038 m/s; crawl at 0.04 m/s measured
+0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; the cause of the speed shortfall was not traced.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.

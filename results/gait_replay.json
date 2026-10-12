@@ -1,0 +1,219 @@
+{
+  "what": "trot and crawl foot trajectories (gaits.py) through closed-form IK and the servo model into the actuated MuJoCo model; the body is free. 1 s stand, 0.5 s blend, then whole gait cycles; velocity and yaw rate are measured over the walking phase. Placeholder dimensions, masses, servo figures and friction.",
+  "lengths_m": [
+    0.05,
+    0.15,
+    0.15
+  ],
+  "stance_height_m": 0.2125,
+  "timestep_s": 0.002,
+  "runs": [
+    {
+      "gait": "trot",
+      "commanded_velocity_m_s": [
+        0.0,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 5.0,
+      "min_body_height_mm": 210.7,
+      "measured_forward_lateral_velocity_m_s": [
+        -0.038,
+        -0.002
+      ],
+      "measured_yaw_rate_rad_s": -0.001,
+      "peak_torque_fraction_of_limit": 0.694,
+      "fraction_of_walking_saturated": 0.0,
+      "max_joint_gap_deg": 10.8,
+      "feet_down_min": 2,
+      "feet_down_mean": 2.67,
+      "slip_max_mm_per_step": 0.59,
+      "slip_mean_mm_per_step": 0.054
+    },
+    {
+      "gait": "trot",
+      "commanded_velocity_m_s": [
+        0.05,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 4.6,
+      "min_body_height_mm": 210.3,
+      "measured_forward_lateral_velocity_m_s": [
+        -0.011,
+        -0.002
+      ],
+      "measured_yaw_rate_rad_s": 0.001,
+      "peak_torque_fraction_of_limit": 0.65,
+      "fraction_of_walking_saturated": 0.0,
+      "max_joint_gap_deg": 10.5,
+      "feet_down_min": 2,
+      "feet_down_mean": 2.66,
+      "slip_max_mm_per_step": 0.68,
+      "slip_mean_mm_per_step": 0.06
+    },
+    {
+      "gait": "trot",
+      "commanded_velocity_m_s": [
+        0.15,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 4.1,
+      "min_body_height_mm": 209.1,
+      "measured_forward_lateral_velocity_m_s": [
+        0.041,
+        -0.001
+      ],
+      "measured_yaw_rate_rad_s": 0.006,
+      "peak_torque_fraction_of_limit": 0.661,
+      "fraction_of_walking_saturated": 0.0,
+      "max_joint_gap_deg": 10.2,
+      "feet_down_min": 2,
+      "feet_down_mean": 2.65,
+      "slip_max_mm_per_step": 0.98,
+      "slip_mean_mm_per_step": 0.093
+    },
+    {
+      "gait": "trot",
+      "commanded_velocity_m_s": [
+        0.3,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 3.3,
+      "min_body_height_mm": 206.5,
+      "measured_forward_lateral_velocity_m_s": [
+        0.111,
+        -0.011
+      ],
+      "measured_yaw_rate_rad_s": -0.02,
+      "peak_torque_fraction_of_limit": 0.815,
+      "fraction_of_walking_saturated": 0.0,
+      "max_joint_gap_deg": 10.6,
+      "feet_down_min": 2,
+      "feet_down_mean": 2.58,
+      "slip_max_mm_per_step": 1.75,
+      "slip_mean_mm_per_step": 0.157
+    },
+    {
+      "gait": "trot",
+      "commanded_velocity_m_s": [
+        0.0,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 1.2,
+      "walked": true,
+      "max_tilt_deg": 4.9,
+      "min_body_height_mm": 209.1,
+      "measured_forward_lateral_velocity_m_s": [
+        -0.043,
+        0.031
+      ],
+      "measured_yaw_rate_rad_s": 0.824,
+      "peak_torque_fraction_of_limit": 0.845,
+      "fraction_of_walking_saturated": 0.057,
+      "max_joint_gap_deg": 12.0,
+      "feet_down_min": 2,
+      "feet_down_mean": 2.57,
+      "slip_max_mm_per_step": 1.31,
+      "slip_mean_mm_per_step": 0.095
+    },
+    {
+      "gait": "crawl",
+      "commanded_velocity_m_s": [
+        0.0,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 4.4,
+      "min_body_height_mm": 208.1,
+      "measured_forward_lateral_velocity_m_s": [
+        -0.011,
+        0.0
+      ],
+      "measured_yaw_rate_rad_s": 0.014,
+      "peak_torque_fraction_of_limit": 0.953,
+      "fraction_of_walking_saturated": 0.013,
+      "max_joint_gap_deg": 11.8,
+      "feet_down_min": 2,
+      "feet_down_mean": 3.35,
+      "slip_max_mm_per_step": 0.69,
+      "slip_mean_mm_per_step": 0.055
+    },
+    {
+      "gait": "crawl",
+      "commanded_velocity_m_s": [
+        0.02,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 4.3,
+      "min_body_height_mm": 207.3,
+      "measured_forward_lateral_velocity_m_s": [
+        0.009,
+        -0.001
+      ],
+      "measured_yaw_rate_rad_s": 0.01,
+      "peak_torque_fraction_of_limit": 0.991,
+      "fraction_of_walking_saturated": 0.041,
+      "max_joint_gap_deg": 13.3,
+      "feet_down_min": 2,
+      "feet_down_mean": 3.35,
+      "slip_max_mm_per_step": 0.62,
+      "slip_mean_mm_per_step": 0.065
+    },
+    {
+      "gait": "crawl",
+      "commanded_velocity_m_s": [
+        0.04,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 3.5,
+      "min_body_height_mm": 206.9,
+      "measured_forward_lateral_velocity_m_s": [
+        0.028,
+        -0.003
+      ],
+      "measured_yaw_rate_rad_s": 0.005,
+      "peak_torque_fraction_of_limit": 0.986,
+      "fraction_of_walking_saturated": 0.045,
+      "max_joint_gap_deg": 14.5,
+      "feet_down_min": 2,
+      "feet_down_mean": 3.26,
+      "slip_max_mm_per_step": 0.79,
+      "slip_mean_mm_per_step": 0.072
+    },
+    {
+      "gait": "crawl",
+      "commanded_velocity_m_s": [
+        0.08,
+        0.0
+      ],
+      "commanded_yaw_rate_rad_s": 0.0,
+      "walked": true,
+      "max_tilt_deg": 4.2,
+      "min_body_height_mm": 206.9,
+      "measured_forward_lateral_velocity_m_s": [
+        0.063,
+        -0.002
+      ],
+      "measured_yaw_rate_rad_s": 0.008,
+      "peak_torque_fraction_of_limit": 0.935,
+      "fraction_of_walking_saturated": 0.049,
+      "max_joint_gap_deg": 15.8,
+      "feet_down_min": 2,
+      "feet_down_mean": 3.34,
+      "slip_max_mm_per_step": 1.6,
+      "slip_mean_mm_per_step": 0.091
+    }
+  ]
+}
