@@ -393,6 +393,14 @@ to 8% off. The sweep stood up to 4 kg and fell at 4.5 kg with the default gain,
 and stood up to 5.5 kg and fell at 6 kg with a stiffer one: below the 7.18 kg
 static bound either way, and the answer moves with gains that are placeholders.
 
+`python scripts/sit_to_stand.py` rises from a 140 mm crouch to the 212.5 mm stand over 0.5 to 4 s and
+writes `results/sit_to_stand.json` and `.png`; `python scripts/make_stand_demo.py` writes the animations
+`results/stand_demo.gif` and `results/sit_to_stand_demo.gif`. The crouch is the hardest pose (25% more knee
+torque per newton than standing). With fine command resolution a 2 s rise peaks where the crouch hold does, 0.54 of
+the stall torque for 3 kg and 0.72 for 4 kg; 5 kg does not rise. The weight is not shared equally: 24% on each front foot and 26% on each rear foot
+for near-weightless legs, 20% and 30% with the default placeholder masses.
+The masses, gains and servo figures are placeholders, so these show how the model behaves, not what a built robot can do.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.

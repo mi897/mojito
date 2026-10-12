@@ -34,6 +34,7 @@ def summary(r):
         "stood": r["stood"], "max_tilt_deg_last_window": round(r["tilt_deg"], 1),
         "saturated": r["saturated"],
         "foot_load_n_FL_FR_RL_RR": [round(float(x), 3) for x in r["foot_load_n"]],
+        "foot_load_share_percent_FL_FR_RL_RR": [round(100 * float(x) / r["weight_n"], 1) for x in r["foot_load_n"]],
         "max_knee_gap_deg": round(float(np.degrees(np.abs(r["gap_rad"][:, 2]).max())), 3),
         "body_height_drop_mm": round(1000 * r["body_height_drop_m"], 2),
     }
@@ -77,6 +78,10 @@ def main():
             s["requested_mass_kg"] = mass
             rows.append(s)
         out["mass_sweep_5v_light_legs"][f"kp {kp} N.m/rad, kd {kd}"] = rows
+
+    # 4. Weight distribution at the crouch used by the sit-to-stand test (140 mm), light legs and default masses.
+    out["crouch_140mm"] = {"light_legs_1p5kg": summary(stand.run_stand(masses=light(1.5), height=0.14, duration=2.0)),
+                           "default_masses": summary(stand.run_stand(height=0.14, duration=2.0))}
 
     path = os.path.join(os.path.dirname(__file__), "..", "results", "stand_test.json")
     with open(path, "w") as f:
