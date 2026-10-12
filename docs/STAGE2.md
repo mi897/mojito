@@ -1,6 +1,6 @@
 # Stage 2 — physics simulation (MuJoCo)
 
-Status: **in progress; work packages 0, 1 and 2 are done.**
+Status: **in progress; work packages 0 to 3 are done.**
 Earlier branch `stage-2-mujoco-model` (PR #9) added this plan; the mass bound is on
 `stage-2-design-envelope`.
 `docs/PLAN.md` has the roadmap; this file holds the detail for this stage.
@@ -377,9 +377,31 @@ Each is one branch-sized step. Tick them off here as they land.
    offset, and an IMU (gyro and accelerometer noise, drifting bias), behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
    below the limit, and saturate when it is above.
-3. [ ] **Stand test.** Hold the Stage 1 standing posture from the IK layer
-   under gravity. Report per joint torque against the limit. Test the torque
-   estimate against the static calculation for a symmetric stance.
+3. [x] **Stand test** (`mojito/stand.py`, `scripts/stand_test.py`, `tests/test_stand.py`, `results/stand_test.json`).
+   The IK standing posture (design placeholders: 50, 150, 150 mm legs, 212.5 mm, 300 × 150 mm) is commanded
+   through the servo model into the actuated MuJoCo model; the last 0.5 s of a 3 s run is reported.
+   What was measured, all at 5 V with the unverified listed stall torque (1.86 N·m) and placeholder
+   servo gains (kp 10 N·m/rad, kd 0.2):
+   - *Against the static calculation (1.5 kg, leg mass near zero).* Foot loads sum to the weight. The servo
+     torques match `statics.joint_torques` evaluated at the measured foot loads and joint angles to within
+     0.5% (abduction and knee; hip pitch differs by about 0.002 N·m, which was not explained). The
+     feet do **not** share the weight equally: 3.55 N front, 3.81 N rear per foot, because the knees bend one way. The
+     equal-quarter prediction of `torque_envelope.py` is therefore off by up to 8%: knee 0.390 N·m
+     (front) and 0.421 N·m (rear) measured, 0.3895 N·m predicted.
+   - *Default placeholder masses (1.72 kg total: servos, links, body).* Knee torque peaks at 0.52 N·m, 28% of the 5 V
+     limit (26% of the 6 V limit, 2.00 N·m); front feet carry 3.4 N each and rear feet 5.0 N each. Largest
+     knee gap between commanded and actual: 2.7°. The body ends 6 mm below the height the feet touch the floor at the start.
+   - *Mass sweep, leg mass near zero, 5 V.* With kp 10 the robot stands up to 4 kg (whole-run peak 88% of the
+     limit, knee gap 8°, body 32 mm lower) and falls over at 4.5 kg, with a peak torque
+     that reached the limit. With kp 100 (kd 1) it stands up to 5.5 kg and collapses at 6 kg. The static bound
+     from `torque_envelope.py` is 7.18 kg at full stall torque. Both runs fail below it.
+   - *Why it fails early.* At 6 kg (kp 100) the knees saturate in the first
+     0.2 s and the legs buckle. The settling overshoot and the uneven foot loads put the rear knees above the equal-quarter
+     figure. I looked at this one run; the other collapse masses are measured but their mechanism was not traced.
+   Not shown: how heavy a real robot can be (kp, kd, latency, masses and the servo figures are all placeholders, and the
+   collapse mass moved from 4.5 to 6 kg between two gain settings); anything about walking; friction limits and foot slip (not
+   measured here). After a collapse the body passes through the floor, because only
+   the foot pads collide, so the "height drop" of about 450 mm in the failed runs is not a physical height.
 4. [ ] **Replay Stage 1 gaits in physics.** Feed the trot and crawl foot
    trajectories through the IK layer into the servo model. Report whether the
    body stays up, foot slip, and peak torque. This tests the known weaknesses
