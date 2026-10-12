@@ -42,6 +42,7 @@ mojito/backend.py      backend switch: make_model, load_model, set_backend
 mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot, URDFRobot)
 mojito/gaits.py        trot and crawl foot trajectories, crawl lean, stability margin
 mojito/statics.py      static joint torques from foot loads (mass bound)
+mojito/mjcf.py         MuJoCo model generated from a URDF (optional dependency: mujoco)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
 scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope
 tests/                 unittest suites (no pytest dependency)
@@ -118,7 +119,7 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 
 ## Environment notes
 
-- Dependencies: NumPy, SciPy, Matplotlib, Pillow. PyTorch is optional.
+- Dependencies: NumPy, SciPy, Matplotlib, Pillow. PyTorch and MuJoCo are optional (their tests skip if absent).
 - Some cloud sessions cannot install packages. If PyTorch cannot be installed,
   do not claim the PyTorch path was run locally: push the branch and read the
   result of the `tests` GitHub Actions workflow, which runs both backends.
