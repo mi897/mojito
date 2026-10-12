@@ -44,12 +44,14 @@ def _role(link: str, root: str) -> str:
 
 
 def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
-                   height: float = 0.0, timestep: float = 0.002) -> str:
+                   height: float = 0.0, timestep: float = 0.002, actuated: bool = False) -> str:
     """MJCF text for a floating-base robot described by `model`.
 
     body_size  (length, width, height) of the box drawn for the root link.
     masses     overrides for DEFAULT_MASSES.
     height     starting height of the root link above the floor [m].
+    actuated   add a torque motor per movable joint (ctrl = N·m, driven by `actuators.Servo`) and a
+               gyro and accelerometer at body_origin (sensors "gyro", "accel").
     """
     m = {**DEFAULT_MASSES, **(masses or {})}
     root = model.root()
@@ -99,6 +101,13 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
             build(el, k.child, k)
 
     build(wb, root, None)
+    if actuated:
+        act = ET.SubElement(mj, "actuator")
+        for name in joint_order(model):
+            ET.SubElement(act, "motor", name=name, joint=name, gear="1")
+        sens = ET.SubElement(mj, "sensor")
+        ET.SubElement(sens, "gyro", name="gyro", site="body_origin")
+        ET.SubElement(sens, "accelerometer", name="accel", site="body_origin")
     return ET.tostring(mj, encoding="unicode")
 
 

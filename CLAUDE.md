@@ -43,6 +43,7 @@ mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot, 
 mojito/gaits.py        trot and crawl foot trajectories, crawl lean, stability margin
 mojito/statics.py      static joint torques from foot loads (mass bound)
 mojito/mjcf.py         MuJoCo model generated from a URDF (optional dependency: mujoco)
+mojito/actuators.py    servo (voltage, latency, resolution), joint-angle sensor and IMU models (NumPy)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
 scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope
 tests/                 unittest suites (no pytest dependency)

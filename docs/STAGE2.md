@@ -1,6 +1,6 @@
 # Stage 2 — physics simulation (MuJoCo)
 
-Status: **planned; the first number (a static mass bound, below) is done.**
+Status: **in progress; work packages 0, 1 and 2 are done.**
 Earlier branch `stage-2-mujoco-model` (PR #9) added this plan; the mass bound is on
 `stage-2-design-envelope`.
 `docs/PLAN.md` has the roadmap; this file holds the detail for this stage.
@@ -367,7 +367,11 @@ Each is one branch-sized step. Tick them off here as they land.
    the world; joint ranges equal the URDF's; a longer shank lowers the foot; and
    a stiffly held stance dropped on the floor ends on four contacts whose normal
    force sums to the weight within 3%.
-2. [ ] **Servo and sensor model.** Torque and speed limits as functions of
+2. [x] **Servo and sensor model** (`mojito/actuators.py`, `tests/test_actuators.py`; `mjcf_from_urdf(..., actuated=True)` adds torque motors and a gyro and accelerometer).
+   Defaults are the unverified listed figures; kp 10 N·m/rad, kd 0.2, latency 20 ms and the
+   sensor and IMU noise values are my placeholders, not measurements. Tests: a servo holding a mass on a
+   horizontal arm settles at the root of kp·q = m g L cos q (below the limit), and above the limit sags to
+   cos q = stall/(m g L), where the torque equals the stall value. Spec as planned: Torque and speed limits as functions of
    voltage (5–6 V, straight line between the listed 5 V and 6.8 V points), latency,
    resolution, a joint-angle sensor with noise, quantisation, delay and
    offset, and an IMU (gyro and accelerometer noise, drifting bias), behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
