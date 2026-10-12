@@ -78,8 +78,14 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 **Status: planned, in detail in `docs/STAGE2.md`** (branch `stage-2-mujoco-model`).
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
-Actuators are DS3218-class 20 kg·cm hobby servos (listed figures unverified, see
-`docs/STAGE2.md`). Simulation ground truth (foot and base world positions) is used
+Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5–6 V,
+listed figures unverified, no position feedback), with external joint-angle sensors on
+the first robot and DC motors with position, velocity and current feedback later (see
+`docs/STAGE2.md`). A first static bound on total mass is done: with the placeholder
+design placeholders (150 mm links, 1.25× the Stage 0–1 ones so the servos are not
+oversized), about 1.8–2.2 kg at most in trot and crawl at 5 V and half of stall
+torque, before leg and servo mass and gait dynamics; 1.5 kg is an upper limit.
+Stage 0–1 keeps its 120 mm placeholders until a design is chosen. Simulation ground truth (foot and base world positions) is used
 for evaluation and rewards, not as policy input.
 
 - MuJoCo model built from the same length parameters, so a leg-length change
@@ -109,7 +115,9 @@ for evaluation and rewards, not as policy input.
 
 1. Real link lengths, abduction offset and joint limits (all placeholders now).
    No robot exists; dimensions will be chosen by trying designs in simulation.
-2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG). Still open:
-   the supply voltage, and whether the servo reports position back.
+2. Actuators: decided as 20 kg·cm hobby servos (DSServo DS3218 20KG), supply
+   adjustable 5–6 V, no position feedback; external joint-angle sensors for the
+   first robot; DC motors with position, velocity and current feedback later. Still
+   open: datasheet figures (5–6 V is interpolated from listed 5 V and 6.8 V points). The Hall chip and magnet details are tabled, and the controller is an ESP32 driving a PCA9685 (no Raspberry Pi), on one battery with separate servo and logic regulators. Sensors are custom Hall-effect boards; learning is off board, with control and logging over the network to a laptop.
 3. Foot position on the real robot: simulation ground truth for now; an external
    measuring system can be built later if needed.

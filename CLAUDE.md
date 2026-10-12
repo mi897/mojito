@@ -41,12 +41,13 @@ mojito/torch_model.py  IK network, PyTorch backend
 mojito/backend.py      backend switch: make_model, load_model, set_backend
 mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot, URDFRobot)
 mojito/gaits.py        trot and crawl foot trajectories, crawl lean, stability margin
+mojito/statics.py      static joint torques from foot loads (mass bound)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
-scripts/               train, evaluate, calibrate, make_demo, make_body_demos
+scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
-docs/PLAN.md           roadmap;  docs/demo.html  interactive leg demo (generated)
+docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
 ```
 
 ## Commands
@@ -57,6 +58,7 @@ python scripts/train.py                    # 40000 steps (about 12 min on 2 CPU 
 python scripts/evaluate.py                 # results/metrics.json and plots
 python scripts/calibrate.py                # results/calibration.json
 python scripts/make_demo.py                # results/step_demo.gif, docs/demo.html
+python scripts/torque_envelope.py          # results/torque_envelope.json, static mass bound
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
 python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
 ```
@@ -128,7 +130,9 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 1. Real link lengths, abduction offset, body dimensions and joint limits. No
    robot exists; dimensions are to be explored in simulation (`docs/STAGE2.md`).
 2. Actuators: 20 kg·cm hobby servos ("DSServo DS3218 20KG Digital Metal
-   Servo"), decided. Open: supply voltage, whether position is reported. Servo figures in
-   `docs/STAGE2.md` are unverified retailer numbers.
+   Servo"), supply adjustable 5–6 V, no position feedback, decided. Later: DC motors
+   with position, velocity and current feedback. First robot: external joint-angle
+   sensors, in line with the joint axis close to the motor. Sensors are custom Hall-effect boards. Learning is off board; control and logging go over the network to a laptop server. Open: datasheet figures (5–6 V is interpolated from listed 5 and 6.8 V points). Hall chip and magnet details are tabled. Servo figures in `docs/STAGE2.md`
+   are unverified retailer numbers. Power and electronics: 2S 1500 mAh LiPo, regulator needed (battery is above the servo's range). Controller: ESP32 driving a PCA9685 over I2C, with an IMU wired directly to the ESP32 (model not chosen); no Raspberry Pi, no Blue Pill. One battery, separate servo and logic regulators. Open: PCA9685 board voltage rating against the 6 V rail (`docs/STAGE2.md`).
 3. Measurement: simulation ground truth for now, external system later. Keep
    ground truth out of policy observations.

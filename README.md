@@ -370,6 +370,19 @@ committed so this page renders. Regenerate them rather than editing by hand.
   the closed-form IK, or a property such as "grounded feet do not move".
 - Numbers quoted here must come from a run, and must say what was measured.
 
+## How heavy can it be?
+
+`python scripts/torque_envelope.py` writes `results/torque_envelope.json`: the
+static joint torque needed to hold the body in a stance, and the largest total
+mass a servo can hold. For the Stage 2 design placeholders (50, 150, 150 mm
+links, 212.5 mm stand height, 300 × 150 mm shoulder spacing; larger than the
+Stage 0–1 ones above) and the unverified listed stall torque of 1.86 N·m at 5 V, at
+half of stall: 3.59 kg standing on four feet, 2.15 kg in the crawl, 1.79 kg in the trot.
+This counts weight on vertical foot loads only. It leaves out leg and servo mass
+(twelve listed servos are 0.72 kg alone), gait dynamics, friction and heat, so it
+is an upper bound, not a mass the robot can walk with. Details and the
+length-to-width result are in `docs/STAGE2.md`.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.
@@ -378,8 +391,10 @@ These decide what Stage 2 and 3 look like.
    No robot exists yet; the plan is to try dimensions in simulation first
    (`docs/STAGE2.md`).
 2. Actuators: decided as 20 kg·cm hobby servos (listed as "DSServo DS3218 20KG
-   Digital Metal Servo"). Still open: the supply voltage and whether the servo
-   reports position.
+   Digital Metal Servo"), supply adjustable 5–6 V, no position feedback. The first
+   robot gets external joint-angle sensors; DC motors with position, velocity and
+   current feedback come later. The sensors sit in line with each joint axis, close to the motor. The sensors are custom Hall-effect boards. Still open: the datasheet figures (the 5–6 V
+   range is interpolated from listed 5 V and 6.8 V points). The Hall chip and magnet details are tabled. The controller is an ESP32 driving a PCA9685, with an IMU wired to the ESP32 (no Raspberry Pi); one battery with separate servo and logic regulators.
    The torque and speed figures in `docs/STAGE2.md` come from retailer
    listings and are unverified.
 3. How foot or body position will be measured on the real robot. Simulation
