@@ -355,12 +355,18 @@ improves sim-to-real transfer. This is a standard arrangement. Design points:
 Each is one branch-sized step. Tick them off here as they land.
 
 0. [x] **Static mass bound.** `scripts/torque_envelope.py`, as above.
-1. [ ] **MJCF from the URDF.** Generate a MuJoCo model from the same
-   parameters as `robots/quadruped.urdf`, with foot and body-frame sites, a
-   floor with friction, and placeholder inertias derived from the dimensions.
-   Test: with the model in a fixed pose, foot positions from MuJoCo equal
-   `mojito/kinematics.py` to numerical precision, for random lengths and angles
-   (left and right legs, and several body poses).
+1. [x] **MJCF from the URDF.** `mojito/mjcf.py` generates a MuJoCo model from a
+   `URDFModel` (so a leg-length change reaches both the IK input and the
+   simulator), with a floating base, joint limits from the URDF, a site at each
+   foot tip and at the body-frame origin, a floor with friction, and capsule
+   geometry with placeholder masses (`DEFAULT_MASSES`, about 1.5 kg total, not the robot's).
+   Only the foot pads and the floor collide. No actuators yet (work package 2).
+   Tests (`tests/test_mjcf.py`): foot positions from MuJoCo equal
+   `body.Robot.feet` to 1e-9 m for 25 random draws of per-leg lengths, body size,
+   joint angles (left and right legs) and base pose, both in the body frame and in
+   the world; joint ranges equal the URDF's; a longer shank lowers the foot; and
+   a stiffly held stance dropped on the floor ends on four contacts whose normal
+   force sums to the weight within 3%.
 2. [ ] **Servo and sensor model.** Torque and speed limits as functions of
    voltage (5–6 V, straight line between the listed 5 V and 6.8 V points), latency,
    resolution, a joint-angle sensor with noise, quantisation, delay and
