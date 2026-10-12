@@ -5,7 +5,8 @@ simulation, then refinement from real interaction. First robot: a quadruped
 with 12 degrees of freedom, 3 per leg (abduction, hip pitch, knee), grippy
 pads for feet.
 
-Read `docs/PLAN.md` for the staged roadmap and what is done. Read `README.md`
+Read `docs/PLAN.md` for the staged roadmap and what is done, and
+`docs/STAGE2.md` for the current stage (MuJoCo, servo model, work packages). Read `README.md`
 for results and usage. Keep both current when the work changes them.
 
 ## Working rules
@@ -124,6 +125,10 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 
 ## Open questions for the owner
 
-1. Real link lengths, abduction offset, body dimensions and joint limits.
-2. Actuators: hobby servos or torque-controlled motors.
-3. How foot or body position will be measured on the real robot.
+1. Real link lengths, abduction offset, body dimensions and joint limits. No
+   robot exists; dimensions are to be explored in simulation (`docs/STAGE2.md`).
+2. Actuators: 20 kg·cm hobby servos ("DSServo DS3218 20KG Digital Metal
+   Servo"), decided. Open: supply voltage, whether position is reported. Servo figures in
+   `docs/STAGE2.md` are unverified retailer numbers.
+3. Measurement: simulation ground truth for now, external system later. Keep
+   ground truth out of policy observations.

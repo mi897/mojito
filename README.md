@@ -375,6 +375,13 @@ committed so this page renders. Regenerate them rather than editing by hand.
 These decide what Stage 2 and 3 look like.
 
 1. The real link lengths, abduction offset, body dimensions and joint limits.
-2. Actuators: hobby servos or torque-controlled motors.
-3. How foot or body position will be measured on the real robot. Everything
+   No robot exists yet; the plan is to try dimensions in simulation first
+   (`docs/STAGE2.md`).
+2. Actuators: decided as 20 kg·cm hobby servos (listed as "DSServo DS3218 20KG
+   Digital Metal Servo"). Still open: the supply voltage and whether the servo
+   reports position.
+   The torque and speed figures in `docs/STAGE2.md` come from retailer
+   listings and are unverified.
+3. How foot or body position will be measured on the real robot. Simulation
+   ground truth is used for now; an external system can come later. Everything
    learned from real interaction depends on this.
