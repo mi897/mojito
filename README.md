@@ -403,9 +403,9 @@ The masses, gains and servo figures are placeholders, so these show how the mode
 
 `python scripts/gait_replay.py` (needs MuJoCo) replays the trot and crawl through the servo model with a free body and
 writes `results/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
-5.0°) and planted feet move at most 1.75 mm per 2 ms step. The body does not reach the commanded speed: trot at 0.15 m/s
+5.0°). The body does not reach the commanded speed: trot at 0.15 m/s
 measured 0.041 m/s, at 0.30 m/s 0.111 m/s, and marching in place drifted back at 0.038 m/s; crawl at 0.04 m/s measured
-0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; the cause of the speed shortfall was not traced.
+0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; `scripts/gait_speed_diagnosis.py` traces the shortfall to two causes: the soft servos (kp 10; the crawl reaches its 0.04 m/s at kp 100) and, in the trot, rear feet that still carry weight when commanded to swing (see `docs/STAGE2.md`). Animations: `results/trot_replay.gif`, `results/crawl_replay.gif`.
 
 ## Open questions
 

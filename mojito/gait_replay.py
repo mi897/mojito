@@ -62,7 +62,7 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
     step_ok = True
 
     cache = {}
-    log = {k: [] for k in ("t", "origin", "yaw", "tilt", "tau", "loads", "feet", "sat", "gap")}
+    log = {k: [] for k in ("t", "origin", "yaw", "tilt", "tau", "loads", "feet", "sat", "gap", "feet_body", "command", "rotation")}
     frames = []
     for k in range(steps):
         t = k * timestep
@@ -92,9 +92,14 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
         log["loads"].append(loads)
         log["feet"].append(feet_world)
         log["sat"].append(sv.last_saturated.any())
+        log["feet_body"].append((feet_world - origin.xpos) @ rotation)  # R^T (foot - origin), body frame
+        log["command"].append(targets.copy())
+        log["rotation"].append(rotation.copy())
         log["gap"].append(np.abs(d.qpos[qadr] - joint_targets))
         if record_every and k % record_every == 0:
-            frames.append(stand._snapshot(d))
+            frame = stand._snapshot(d)
+            frame["loads"] = loads.copy()  # normal force on each pad, FL FR RL RR
+            frames.append(frame)
 
     t = np.array(log["t"])
     origin = np.array(log["origin"])
@@ -135,6 +140,8 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
         "slip_mean_mm_per_step": float(1000 * slip_walking.mean()) if slip_walking.size else 0.0,
         "slip_planted_steps": int(slip_walking.size),
         "timestep_s": timestep,
+        "feet_body_actual_m": np.array(log["feet_body"]), "feet_body_command_m": np.array(log["command"]),
+        "rotation": np.array(log["rotation"]),
         "time_s": t, "origin_m": origin, "yaw_rad": yaw, "tilt_deg": tilt, "torque_nm": tau, "foot_load_n": loads,
         "frames": frames,
     }

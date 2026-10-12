@@ -1,0 +1,169 @@
+{
+  "what": "Why the replayed gait is slower than commanded. 'ask' is the body speed the loaded feet's commanded motion would give if they stayed planted and rigid (see this script's docstring). Placeholder dimensions, masses (1.72 kg), servo figures and friction; one run per entry.",
+  "trot": {
+    "baseline (kp 10, kd 0.2, latency 20 ms, PCA9685 steps)": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.038,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.219,
+        "max_tilt_deg": 5.0,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.041,
+        "load_weighted_ask_m_s": 0.103,
+        "load_share_on_feet_commanded_to_swing": 0.237,
+        "max_tilt_deg": 4.1,
+        "walked": true
+      }
+    ],
+    "latency 0": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.038,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.222,
+        "max_tilt_deg": 5.0,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.042,
+        "load_weighted_ask_m_s": 0.101,
+        "load_share_on_feet_commanded_to_swing": 0.232,
+        "max_tilt_deg": 4.1,
+        "walked": true
+      }
+    ],
+    "fine command resolution": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.038,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.222,
+        "max_tilt_deg": 4.9,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.038,
+        "load_weighted_ask_m_s": 0.104,
+        "load_share_on_feet_commanded_to_swing": 0.235,
+        "max_tilt_deg": 3.9,
+        "walked": true
+      }
+    ],
+    "kp 100, kd 1": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.005,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.141,
+        "max_tilt_deg": 4.2,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.095,
+        "load_weighted_ask_m_s": 0.116,
+        "load_share_on_feet_commanded_to_swing": 0.175,
+        "max_tilt_deg": 6.1,
+        "walked": true
+      }
+    ],
+    "ideal servo (kp 100, kd 1, latency 0, fine, 10x stall torque)": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.005,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.164,
+        "max_tilt_deg": 3.4,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.088,
+        "load_weighted_ask_m_s": 0.095,
+        "load_share_on_feet_commanded_to_swing": 0.235,
+        "max_tilt_deg": 6.0,
+        "walked": true
+      }
+    ],
+    "swing height 60 mm": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.048,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.161,
+        "max_tilt_deg": 7.8,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.079,
+        "load_weighted_ask_m_s": 0.12,
+        "load_share_on_feet_commanded_to_swing": 0.174,
+        "max_tilt_deg": 8.3,
+        "walked": true
+      }
+    ],
+    "ideal servo, swing height 60 mm": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.024,
+        "load_weighted_ask_m_s": -0.0,
+        "load_share_on_feet_commanded_to_swing": 0.262,
+        "max_tilt_deg": 8.3,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.15,
+        "measured_m_s": 0.079,
+        "load_weighted_ask_m_s": 0.093,
+        "load_share_on_feet_commanded_to_swing": 0.277,
+        "max_tilt_deg": 10.0,
+        "walked": true
+      }
+    ]
+  },
+  "crawl": {
+    "baseline (kp 10, kd 0.2, latency 20 ms, PCA9685 steps)": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": -0.011,
+        "load_weighted_ask_m_s": 0.002,
+        "load_share_on_feet_commanded_to_swing": 0.031,
+        "max_tilt_deg": 4.4,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.04,
+        "measured_m_s": 0.028,
+        "load_weighted_ask_m_s": 0.04,
+        "load_share_on_feet_commanded_to_swing": 0.046,
+        "max_tilt_deg": 3.5,
+        "walked": true
+      }
+    ],
+    "kp 100, kd 1": [
+      {
+        "commanded_m_s": 0.0,
+        "measured_m_s": 0.002,
+        "load_weighted_ask_m_s": 0.002,
+        "load_share_on_feet_commanded_to_swing": 0.027,
+        "max_tilt_deg": 3.4,
+        "walked": true
+      },
+      {
+        "commanded_m_s": 0.04,
+        "measured_m_s": 0.04,
+        "load_weighted_ask_m_s": 0.042,
+        "load_share_on_feet_commanded_to_swing": 0.006,
+        "max_tilt_deg": 1.5,
+        "walked": true
+      }
+    ]
+  }
+}

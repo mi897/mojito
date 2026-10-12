@@ -4,7 +4,7 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from mojito import gait_replay, gaits  # noqa: E402
+from mojito import actuators, gait_replay, gaits  # noqa: E402
 
 try:
     import mujoco  # noqa: F401
@@ -47,6 +47,14 @@ class TestGaitReplay(unittest.TestCase):
         for r in (self.trot, self.crawl):
             self.assertGreater(r["peak_torque_fraction_of_limit"], 0.1)
             self.assertLessEqual(r["peak_torque_fraction_whole_run"], 1.0 + 1e-6)
+
+    def test_stiffer_servo_closes_the_crawl_speed_gap(self):
+        # docs/STAGE2.md, "Why the body falls short": in the crawl the commanded motion asks for the commanded speed,
+        # so the shortfall at kp 10 is the servo not following; kp 100 follows it
+        stiff = actuators.ServoParams(kp=100.0, kd=1.0)
+        r = gait_replay.run_gait(gaits.CRAWL, (0.04, 0.0), cycles=1, servo=stiff)
+        self.assertAlmostEqual(r["measured_velocity_m_s"][0], 0.04, delta=0.01)
+        self.assertGreater(r["measured_velocity_m_s"][0], self.crawl["measured_velocity_m_s"][0] + 0.005)
 
     def test_a_much_heavier_robot_saturates_the_servos(self):
         r = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=2, masses=light(8.0))

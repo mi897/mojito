@@ -439,10 +439,11 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Stays up.* All 9 runs finished upright: tilt at most 5.0°, body origin no lower than 206.5 mm, against 218.6 mm after the initial stand.
    - *It does not walk at the commanded speed.* Trot, commanded 0 / 0.05 / 0.15 / 0.30 m/s: measured -0.038 / -0.011 / +0.041 /
      +0.111 m/s. Crawl, commanded 0 / 0.02 / 0.04 / 0.08: measured -0.011 / +0.009 / +0.028 / +0.063. Marching in
-     place drifts backwards. Trot turning at 1.2 rad/s measured 0.82 rad/s, with 0.04 m/s of backward drift. The cause was not traced.
-     The commanded stance feet stay fixed in the world, so the body should keep up; the joint tracking gap (below) is a suspect, not a finding.
-   - *Slip is small.* Planted feet moved at most 1.75 mm in a 2 ms step (trot 0.30 m/s), 0.59 to 0.98 mm at the other trot speeds
-     and 0.62 to 1.6 mm in the crawl; means 0.05 to 0.16 mm per step. Friction was never the limit here, so this says nothing about slippery floors.
+     place drifts backwards. Trot turning at 1.2 rad/s measured 0.82 rad/s, with 0.04 m/s of backward drift. Cause: see "Why the body falls short" below.
+   - *Slip.* The foot tip (sphere centre) of a foot carrying more than 0.5 N moved at most 1.75 mm in a 2 ms step (0.9 m/s; trot
+     0.30 m/s), 0.59 to 0.98 mm at the other trot speeds and 0.62 to 1.6 mm in the crawl; means 0.05 to 0.16 mm per step (0.03 to
+     0.08 m/s). I did not separate sliding from the sphere rolling or from touchdown and lift-off, so this does **not**
+     show that friction was no limit.
    - *Torque.* Peak |torque| as a fraction of the 1.86 N·m stall limit: trot 0.65 to 0.82 (0.85 turning); crawl 0.94 to 0.99, with
      the servos at their limit for 1.3% to 4.9% of the walking time. Standing with these masses peaks at 0.28 (knee). The crawl
      peaks higher on the servos than the trot; the reason was not traced.
@@ -450,6 +451,37 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Feet down.* Fewest feet carrying more than 0.5 N: 2 in every run, including the crawl, which Stage 1 designed to keep 3 down.
      Whether this is a brief unloading or a sustained lift was not examined. Mean feet down: trot 2.6, crawl 3.3.
    - *Heavy robot.* At 8 kg (legs near zero) the trot saturates the servos for more than 20% of the walking time and the run does not count as walked (test).
+   Animations: `scripts/make_gait_replay_demo.py` writes `results/trot_replay.gif` and `results/crawl_replay.gif` (side view of the
+   left legs, filled foot = loaded, dashed line = where the body would be at the commanded speed).
+
+   **Why the body falls short** (`scripts/gait_speed_diagnosis.py`, `results/gait_speed_diagnosis.json`; same model, one run
+   per entry). A planted foot is fixed in the world, so one whose commanded body-frame velocity is v asks the body to move at -v.
+   `ask` is that, averaged over the loaded feet weighted by normal force. Trot at 0.15 m/s:
+
+   | variant | measured m/s | ask m/s | load on feet commanded to swing |
+   |---|---|---|---|
+   | baseline (kp 10, 20 ms latency, PCA9685 steps) | 0.041 | 0.103 | 24% |
+   | latency 0 | 0.042 | 0.101 | 23% |
+   | fine command resolution | 0.038 | 0.104 | 23% |
+   | kp 100, kd 1 | 0.095 | 0.116 | 17% |
+   | ideal servo (kp 100, kd 1, no latency, fine, 10x torque) | 0.088 | 0.095 | 23% |
+   | swing height 60 mm | 0.079 | 0.120 | 17% |
+
+   Two causes, measured separately:
+   1. *The servos are soft (kp 10).* The ask is 0.103 and the body makes 0.041. With kp 100 the body makes 0.095 and with the
+      ideal servo 0.088 (ask 0.095). Latency and command resolution made no difference (0.042, 0.038). Marching in place
+      (command 0) drifts back at 0.038 m/s at kp 10 and 0.005 at kp 100, so that drift is softness too. In the crawl, which keeps nearly all
+      load on the feet it commands to stand, the ask is 0.040 for a 0.04 command; the body makes 0.028 at kp 10 and
+      0.040 at kp 100. So the whole crawl shortfall is the servo not following.
+   2. *Feet that should be in the air still carry weight, and they push the body backward.* In the trot, 24% of the load is on feet commanded to
+      swing, so the ask is 0.103 instead of 0.15, and no servo setting fixes that (ideal servo: ask 0.095). The rear
+      feet are the cause: with the commanded foot less than 8 mm above its stance height the rear foot was loaded in every step I looked at (172 of 172
+      steps; front foot 40% of 172), and 88% between 8 and 15 mm. The loaded rear feet sit 12 mm higher in the body frame than commanded (front 6 mm): the legs sag with the weight, so a 30 mm swing (19 mm actually achieved)
+      does not clear the ground for the first and last part of the swing.
+   A taller swing (60 mm) raised the trot to 0.079 but also raised the tilt to 8.3° (4.1° at 30 mm) and with the ideal servo it did not help (0.079), so I did not establish a
+   fix. 100 mm gave 0.186 (ideal servo) with 21° tilt: not a result I trust. Not tested: friction, body mass distribution, gait timing, or how the
+   weight split (20% front, 30% rear for the default masses) feeds into this. The sag figures are the measured *mean* over loaded stance steps in one trot run.
+
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
    of each case, no randomisation.
