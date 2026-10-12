@@ -394,7 +394,7 @@ These decide what Stage 2 and 3 look like.
    Digital Metal Servo"), supply adjustable 5–6.5 V, no position feedback. The first
    robot gets external joint-angle sensors; DC motors with position, velocity and
    current feedback come later. The sensors sit in line with each joint axis, close to the motor. The sensors are custom Hall-effect boards. Still open: the datasheet figures (the 5–6.5 V
-   range is interpolated from listed 5 V and 6.8 V points) and the Hall chip and resolution.
+   range is interpolated from listed 5 V and 6.8 V points). The Hall chip and magnet details are tabled. The controller is an ESP32 (no Raspberry Pi).
    The torque and speed figures in `docs/STAGE2.md` come from retailer
    listings and are unverified.
 3. How foot or body position will be measured on the real robot. Simulation

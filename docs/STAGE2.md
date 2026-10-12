@@ -231,8 +231,13 @@ that the battery and electronics fit between the hip servos. See work package 6.
 
 Chosen by the owner: XW Power Eagle LiPo, 2S, 7.4 V nominal, 1500 mAh, 25C
 continuous (25 A as listed), 90C burst, T-plug, 76 g, 26 × 34 × 72 mm. A PCA9685
-16-channel 12-bit I2C servo driver and an STM32F103C8T6 "Blue Pill" board. A
-Raspberry Pi is undecided (see below).
+16-channel 12-bit I2C servo driver and an STM32F103C8T6 "Blue Pill" board were
+the first picks. **Update:** the owner chose an ESP32 as the network-capable
+controller and dropped the Raspberry Pi (too much hassle with the SD card and
+power). Assumed, to be confirmed: the ESP32 replaces the Blue Pill as well, and
+the PCA9685 becomes optional, since the ESP32's own PWM hardware can drive 12
+servos. Hardware specifics such as the Hall chip and magnet are **tabled** and
+will be revisited later.
 
 What follows from those numbers (arithmetic and reasoning, not measurements):
 
@@ -266,17 +271,23 @@ What follows from those numbers (arithmetic and reasoning, not measurements):
   suits a real-time servo and sensor loop, not running the leg network or a
   policy. Its parts are often clones; check the chip.
 
-**Raspberry Pi: undecided, and less necessary than first thought.** Decided by
-the owner: learning happens off board, the robot is controlled over the network,
-and logs are saved to a server on a laptop. None of that needs onboard Linux. A
-Pi (or an ESP32, which has Wi-Fi and a floating-point unit and could replace the
-Blue Pill) is still needed as the network-capable part, because the Blue Pill has
-no wireless. Costs of a Pi: extra mass, a separate clean 5 V supply (the Zero 2 W
-is listed at about 0.6 W idle and nearly 3 W peak, 5 V 2.5 A supply
-recommended), SD-card care, and Linux timing that is not real-time. The
-proposed split keeps servo timing and sensor reading on the microcontroller and
-puts the network side on the Pi, joined by a simple serial protocol, so the Pi
-can be added or removed without redesign.
+**Raspberry Pi: dropped.** Learning is off board, control is over the network, and
+logs go to a laptop, so onboard Linux is not needed. An ESP32 has Wi-Fi and a
+floating-point unit. It gives up local storage and an easy route to ROS onboard;
+ROS can run on the laptop, or micro-ROS on the ESP32 later. The ESP32 is kept on
+its own regulated supply (see the power layout below), joined to the servo rail
+by a common ground only.
+
+**Power layout (recommendation, pending the owner's confirmation):** one battery,
+two separate regulators. A servo-rail regulator (or several) set to 5–6.5 V and a
+small logic regulator for the ESP32 and sensors. A separate logic battery adds
+mass, a second charger and a second pack to monitor, and still shares a ground, so
+it isolates less than it seems. Details: the logic regulator input gets its own
+filtering so servo current surges do not disturb it, with bulk capacitance close
+to the ESP32 and close to the servos; a single ground point; a fuse on the servo
+rail; a switch or e-stop on the servo rail alone so the ESP32 can stay on and
+connected with the servos unpowered; and the ESP32 reads battery voltage through a
+divider to trigger a safe stop and protect the pack.
 
 ## Network control and logging
 
@@ -368,10 +379,10 @@ do.
 1. Datasheet figures for the DS3218 20KG. The model interpolates torque and speed
    between the listed 5 V and 6.8 V points to cover 5–6.5 V; the datasheet would
    confirm or replace that.
-2. Hall-effect chip and resolution for the custom sensor board (type and
-   placement are decided: in line with the joint axis, close to the motor), and
-   whether the magnet and horn can be kept clear of steel.
-3. Raspberry Pi: include one or not (which model), the servo-rail regulators and
-   their current rating, and an IMU. Battery and the PCA9685/Blue Pill pair are
-   chosen. If the robot must carry more than about 1.5 kg, the legs must be
+2. Tabled for later: the Hall-effect chip, resolution, and magnet and horn
+   details (type and placement are decided: custom Hall board in line with the
+   joint axis, close to the motor).
+3. Confirm the ESP32 replaces the Blue Pill, whether to keep the PCA9685, and the
+   power layout above; then the servo-rail regulators and their current rating,
+   and an IMU. The battery is chosen. If the robot must carry more than about 1.5 kg, the legs must be
    shorter.
