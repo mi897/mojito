@@ -59,6 +59,17 @@ class TestBody(unittest.TestCase):
 
 
 class TestGaits(unittest.TestCase):
+    def test_sequence_offsets_reproduce_the_crawl_and_validate(self):
+        g = gaits.CRAWL
+        # lift order FR, RL, FL, RR with the first lift at phase 0.1 is the built-in crawl
+        np.testing.assert_allclose(gaits.sequence_offsets((1, 2, 0, 3), g.duty), g.offsets, atol=1e-12)
+        np.testing.assert_allclose(g.swing_starts(), [0.6, 0.1, 0.35, 0.85], atol=1e-12)
+        self.assertAlmostEqual(g.stance_time + g.swing_time, g.period)
+        with self.assertRaises(ValueError):
+            gaits.Gait("bad", period=1.0, duty=1.0, offsets=(0, 0, 0, 0))
+        with self.assertRaises(ValueError):
+            gaits.Gait("bad", period=1.0, duty=0.5, offsets=(0, 0, 0))
+
     def setUp(self):
         self.robot = body.Robot(body.AnalyticSolver())
         self.home = self.robot.stance()

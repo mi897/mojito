@@ -3,6 +3,8 @@ import os
 import sys
 import unittest
 
+import numpy as np
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from mojito import actuators, gait_replay, gaits  # noqa: E402
 
@@ -55,6 +57,14 @@ class TestGaitReplay(unittest.TestCase):
         r = gait_replay.run_gait(gaits.CRAWL, (0.04, 0.0), cycles=1, servo=stiff)
         self.assertAlmostEqual(r["measured_velocity_m_s"][0], 0.04, delta=0.01)
         self.assertGreater(r["measured_velocity_m_s"][0], self.crawl["measured_velocity_m_s"][0] + 0.005)
+
+    def test_commanded_contact_matches_the_gait_timing(self):
+        r = self.trot
+        walking = r["time_s"] >= r["walk_start_s"]
+        np.testing.assert_allclose(r["commanded_contact"][walking].mean(0), gaits.TROT.duty, atol=0.02)
+        # diagonal pairs (FL, RR) and (FR, RL) are in step
+        np.testing.assert_array_equal(r["commanded_contact"][:, 0], r["commanded_contact"][:, 3])
+        np.testing.assert_array_equal(r["commanded_contact"][:, 1], r["commanded_contact"][:, 2])
 
     def test_a_much_heavier_robot_saturates_the_servos(self):
         r = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=2, masses=light(8.0))

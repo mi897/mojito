@@ -482,6 +482,28 @@ Each is one branch-sized step. Tick them off here as they land.
    fix. 100 mm gave 0.186 (ideal servo) with 21° tilt: not a result I trust. Not tested: friction, body mass distribution, gait timing, or how the
    weight split (20% front, 30% rear for the default masses) feeds into this. The sag figures are the measured *mean* over loaded stance steps in one trot run.
 
+   **How the gait timing is set** (`mojito/gaits.py`, `Gait`). Four numbers, all per cycle:
+   - `period`: seconds per cycle. Trot 0.5 s, crawl 2.0 s.
+   - `duty`: the fraction of the cycle a foot is on the ground. Trot 0.5, crawl 0.85. So stance lasts `duty * period` (`Gait.stance_time`)
+     and swing `(1 - duty) * period` (`Gait.swing_time`): trot 0.25 s / 0.25 s, crawl 1.7 s / 0.3 s.
+   - `offsets` (FL, FR, RL, RR): the cycle phase at which each leg *starts its stance*. A leg's phase is `(t / period - offset) mod 1`;
+     it is on the ground while the phase is below `duty` and swinging after that, so it lifts at `(offset + duty) mod 1` (`Gait.swing_starts()`).
+     Trot (0, 0.5, 0.5, 0): FL and RR together, FR and RL half a cycle later. Crawl (0.75, 0.25, 0.5, 0): lifts at phases FR 0.10, RL 0.35,
+     FL 0.60, RR 0.85, spaced a quarter cycle apart; each swing is 0.15 of the cycle, so there is a 0.10 gap with all four down.
+     `gaits.sequence_offsets(order, duty)` makes the offsets for a one-leg-at-a-time order.
+   - `lift` (swing height, m) and `sway` (crawl body lean, m). The lean only acts when no two swings overlap.
+   Where each foot goes follows from these and the commanded velocity: a foot on the ground moves backward in the body frame at the body's
+   velocity, so one stance covers `velocity * stance_time` (trot at 0.15 m/s: 37.5 mm; crawl at 0.04 m/s: 68 mm), and the swing carries the
+   foot forward to where the next stance starts, with a sin² lift. The commanded stance and the measured foot load are drawn together in
+   the timing chart at the bottom of each isometric GIF (`results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif`, from
+   `scripts/make_gait_iso_demos.py`).
+
+   **Trying variations** (`scripts/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
+   and the measured result, and writes `results/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
+   `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
+   Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
+   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). I have not looked into why the pace goes backward.
+
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
    of each case, no randomisation.

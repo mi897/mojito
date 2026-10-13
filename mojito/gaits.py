@@ -25,12 +25,45 @@ class Gait:
     lift: float = 0.03  # swing height in metres
     sway: float = 0.0  # body shift away from the swinging leg, metres (crawl)
 
+    def __post_init__(self):
+        if self.period <= 0 or not 0.0 < self.duty < 1.0 or len(self.offsets) != 4:
+            raise ValueError("a gait needs period > 0, 0 < duty < 1 and four offsets (FL, FR, RL, RR)")
+
+    @property
+    def stance_time(self) -> float:
+        """Seconds each foot is on the ground per cycle: duty * period."""
+        return self.duty * self.period
+
+    @property
+    def swing_time(self) -> float:
+        """Seconds each foot is in the air per cycle: (1 - duty) * period."""
+        return (1.0 - self.duty) * self.period
+
+    def swing_starts(self) -> np.ndarray:
+        """Cycle phase at which each leg (FL, FR, RL, RR) lifts: its stance start plus the duty, mod 1."""
+        return (np.asarray(self.offsets, float) + self.duty) % 1.0
+
 
 # Diagonal pairs move together; two feet down at all times.
 TROT = Gait("trot", period=0.5, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0))
 # One foot in the air at a time, in the order RL, FL, RR, FR.
 # The body leans away from that foot while all four are down.
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)
+
+
+def sequence_offsets(order, duty, first_lift=0.1):
+    """Offsets for a gait in which the legs lift one after another at equal spacing.
+
+    order       the four leg indices (0 FL, 1 FR, 2 RL, 3 RR) in the order they lift
+    first_lift  cycle phase at which the first leg lifts (a common shift only changes where the cycle starts)
+
+    Leg order[k] lifts at phase  first_lift + k/4  and starts its stance a swing later, so its offset
+    (the phase at which stance starts) is  (lift - duty) mod 1.  Checked against CRAWL in tests/test_body.py.
+    """
+    offsets = [0.0] * 4
+    for k, leg in enumerate(order):
+        offsets[leg] = (first_lift + k / 4.0 - duty) % 1.0
+    return tuple(offsets)
 
 
 def _planar_flow(time_offset, velocity, yaw_rate):

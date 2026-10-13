@@ -61,17 +61,18 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
     stand_steps = int(round(stand_time / timestep))
     step_ok = True
 
-    cache = {}
     log = {k: [] for k in ("t", "origin", "yaw", "tilt", "tau", "loads", "feet", "sat", "gap", "feet_body", "command", "rotation")}
     frames = []
+    commanded_contact = []
     for k in range(steps):
         t = k * timestep
         t_gait = max(0.0, t - stand_time)
         blend = float(_smoothstep((t - stand_time) / ramp_time)) if ramp_time > 0 else float(t >= stand_time)
+        feet, contact, _ = gaits.foot_targets(gait, t_gait, home, velocity, yaw_rate)
+        commanded_contact.append(contact[0])
         if blend == 0.0:
             targets = home
         else:
-            feet, _, _ = gaits.foot_targets(gait, t_gait, home, velocity, yaw_rate)
             sway = gaits.body_sway(gait, t_gait, home)
             walking = body.apply_posture(feet, offset=sway)[0]
             targets = home + blend * (walking - home)
@@ -99,6 +100,8 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
         if record_every and k % record_every == 0:
             frame = stand._snapshot(d)
             frame["loads"] = loads.copy()  # normal force on each pad, FL FR RL RR
+            frame["legs3d"] = np.array([[d.body(f"{p}_hip").xpos, d.body(f"{p}_shank").xpos, d.site(f"{p}_foot").xpos]
+                                        for p in body.LEG_NAMES])  # (4, 3, 3): shoulder, knee, foot of each leg
             frames.append(frame)
 
     t = np.array(log["t"])
@@ -140,6 +143,8 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
         "slip_mean_mm_per_step": float(1000 * slip_walking.mean()) if slip_walking.size else 0.0,
         "slip_planted_steps": int(slip_walking.size),
         "timestep_s": timestep,
+        "walk_start_s": stand_time + ramp_time,
+        "commanded_contact": np.array(commanded_contact),
         "feet_body_actual_m": np.array(log["feet_body"]), "feet_body_command_m": np.array(log["command"]),
         "rotation": np.array(log["rotation"]),
         "time_s": t, "origin_m": origin, "yaw_rad": yaw, "tilt_deg": tilt, "torque_nm": tau, "foot_load_n": loads,

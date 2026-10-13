@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 results/train_stdout.txt
 MUJOCO_LOG.TXT
+results/try/
