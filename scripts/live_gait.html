@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mojito live gait</title>
+<style>
+:root{--bg:#fafaf8;--panel:#fff;--ink:#2b2b2b;--muted:#6b6b6b;--line:#dcdcd6;--grid:#d6d6d0;--accent:#2a78d6;--warn:#eb6834;
+--FL:#2a78d6;--FR:#eb6834;--RL:#2aa198;--RR:#8a5cc2;--body:#333}
+@media (prefers-color-scheme:dark){:root{--bg:#161616;--panel:#202020;--ink:#e8e8e4;--muted:#9a9a94;--line:#3a3a38;--grid:#3a3a38;--body:#ddd}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px;max-width:1280px;margin:0 auto}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+h1{font-size:16px;margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+canvas{display:block;width:100%;background:var(--panel);border-radius:8px;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+#view{height:min(62vh,560px)}#timing{height:150px;cursor:default;margin-top:10px}
+.row{display:grid;grid-template-columns:92px 1fr 52px;align-items:center;gap:8px;margin:5px 0}
+.row label{color:var(--muted)}.row output{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%}
+h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:var(--bg);border-radius:8px;padding:6px 8px}.stat b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:12px}
+#warn{color:var(--warn);font-weight:600;min-height:1.4em}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+<section>
+  <div class="card">
+    <h1>Mojito live gait <span class="hint">placeholder dimensions, masses, servo figures and friction</span></h1>
+    <canvas id="view"></canvas>
+    <div class="hint">Drag to rotate, wheel to zoom, double-click to reset the view. Filled foot = carrying weight.</div>
+    <canvas id="timing"></canvas>
+    <div class="hint">Gait timing, last 4 s: thin black bar = commanded stance, coloured bar = foot carrying more than 0.5 N.</div>
+    <div class="stats" id="stats"></div>
+    <div id="warn"></div>
+  </div>
+</section>
+<aside class="card">
+  <div class="btns" id="actions"></div>
+  <div class="btns" id="presets"></div>
+  <div id="controls"></div>
+</aside>
+</main>
+<script>
+const LEGS=['FL','FR','RL','RR'];
+const SPEC=[
+ ['Gait timing',[['period','period s',0.2,4,0.05],['duty','duty',0.1,0.95,0.01],['o0','offset FL',0,1,0.01],['o1','offset FR',0,1,0.01],['o2','offset RL',0,1,0.01],['o3','offset RR',0,1,0.01],['lift','lift m',0,0.1,0.005],['sway','sway m',0,0.06,0.005]]],
+ ['Command',[['vx','forward m/s',-0.5,0.5,0.01],['vy','left m/s',-0.3,0.3,0.01],['yaw_rate','yaw rad/s',-3,3,0.1]]],
+ ['Servo, body, speed',[['kp','kp N·m/rad',1,300,1],['kd','kd',0,5,0.05],['mass','mass kg',0.5,8,0.1],['speed','sim speed x',0.1,2,0.1]]]];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let meta=null,state=null,dragging=null,history=[],sendTimer=null,pending={};
+const view={az:-45,el:35.264,zoom:1,follow:true,start:null};
+
+function send(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})}).catch(()=>{});}
+function queue(change){Object.assign(pending,change);clearTimeout(sendTimer);sendTimer=setTimeout(()=>{send('/params',pending);pending={};},60);}
+
+function build(){
+  const box=document.getElementById('controls');
+  for(const [title,rows] of SPEC){
+    const h=document.createElement('h2');h.textContent=title;box.appendChild(h);
+    for(const [key,label,lo,hi,step] of rows){
+      const row=document.createElement('div');row.className='row';
+      row.innerHTML=`<label for="${key}">${label}</label><input id="${key}" type="range" min="${lo}" max="${hi}" step="${step}"><output id="${key}_v"></output>`;
+      box.appendChild(row);
+      const input=row.querySelector('input');
+      input.addEventListener('pointerdown',()=>dragging=key);
+      input.addEventListener('pointerup',()=>dragging=null);
+      input.addEventListener('input',()=>{
+        const v=parseFloat(input.value);document.getElementById(key+'_v').textContent=fmt(v,step);
+        if(key[0]==='o'&&key.length===2){const o=[0,1,2,3].map(i=>parseFloat(document.getElementById('o'+i).value));queue({offsets:o});}
+        else queue({[key]:v});
+      });
+    }
+  }
+  const actions=document.getElementById('actions');
+  actions.innerHTML='<button id="walk">Walk</button><button id="pause">Pause</button><button id="reset">Reset</button><button id="follow" class="on">Follow</button>';
+  document.getElementById('walk').onclick=()=>send('/params',{walk:!(state&&state.params.walk)});
+  document.getElementById('pause').onclick=()=>send('/params',{paused:!(state&&state.paused)});
+  document.getElementById('reset').onclick=()=>{history=[];view.start=null;send('/reset');};
+  document.getElementById('follow').onclick=e=>{view.follow=!view.follow;e.target.classList.toggle('on',view.follow);view.start=state?state.origin.slice():null;};
+  const presets=document.getElementById('presets');
+  for(const name of Object.keys(meta.presets)){const b=document.createElement('button');b.textContent=name;b.onclick=()=>send('/preset',{name});presets.appendChild(b);}
+}
+function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
+
+function syncControls(){
+  const p=state.params;
+  const set=(k,v)=>{if(dragging===k||pending[k]!==undefined)return;const el=document.getElementById(k);if(el){el.value=v;document.getElementById(k+'_v').textContent=fmt(v,parseFloat(el.step));}};
+  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','kp','kd','mass','speed'])set(k,p[k]);
+  p.offsets.forEach((v,i)=>{if(!(dragging&&dragging[0]==='o'))set('o'+i,v)});
+  document.getElementById('walk').classList.toggle('on',p.walk);document.getElementById('walk').textContent=p.walk?'Stand':'Walk';
+  document.getElementById('pause').classList.toggle('on',state.paused);
+}
+
+// ---- drawing ----
+const vc=document.getElementById('view'),vx=vc.getContext('2d'),tc=document.getElementById('timing'),tx=tc.getContext('2d');
+function fit(c){const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;if(c.width!==Math.round(r.width*d)||c.height!==Math.round(r.height*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);}return d;}
+function project(p,centre,W,H,scale){
+  const az=view.az*Math.PI/180,el=view.el*Math.PI/180;
+  const x=p[0]-centre[0],y=p[1]-centre[1],z=p[2];
+  const cx=Math.cos(az),cy=Math.sin(az);
+  const right=-Math.sin(az)*x+Math.cos(az)*y, depth=cx*x+cy*y;
+  return [W/2+right*scale, H*0.68-(z*Math.cos(el)-depth*Math.sin(el))*scale, depth];
+}
+function drawView(){
+  const d=fit(vc),W=vc.width,H=vc.height;vx.clearRect(0,0,W,H);
+  if(!state)return;
+  const centre=view.follow?state.origin:(view.start||state.origin);
+  const scale=Math.min(W,H*1.25)*0.95*view.zoom/1.0;
+  const P=p=>project(p,centre,W,H,scale);
+  // floor grid, fixed in the world
+  const g=0.1,span=0.5;vx.lineWidth=1*d;vx.strokeStyle=css('--grid');
+  const x0=Math.floor((centre[0]-span)/g)*g,y0=Math.floor((centre[1]-span)/g)*g;
+  vx.beginPath();
+  for(let x=x0;x<=centre[0]+span;x+=g){const a=P([x,centre[1]-span,0]),b=P([x,centre[1]+span,0]);vx.moveTo(a[0],a[1]);vx.lineTo(b[0],b[1]);}
+  for(let y=y0;y<=centre[1]+span;y+=g){const a=P([centre[0]-span,y,0]),b=P([centre[0]+span,y,0]);vx.moveTo(a[0],a[1]);vx.lineTo(b[0],b[1]);}
+  vx.stroke();
+  // body outline from the pose
+  const R=state.rotation,[L,Wd]=state.body_size,o=state.origin;
+  const corner=(sx,sy)=>{const l=[sx*L/2,sy*Wd/2,0];return [o[0]+R[0][0]*l[0]+R[0][1]*l[1],o[1]+R[1][0]*l[0]+R[1][1]*l[1],o[2]+R[2][0]*l[0]+R[2][1]*l[1]];};
+  const items=[];
+  const outline=[[1,1],[1,-1],[-1,-1],[-1,1],[1,1]].map(c=>P(corner(c[0],c[1])));
+  items.push({depth:-1e9,draw:()=>{vx.strokeStyle=css('--body');vx.lineWidth=5*d;vx.lineJoin='round';vx.beginPath();outline.forEach((q,i)=>i?vx.lineTo(q[0],q[1]):vx.moveTo(q[0],q[1]));vx.stroke();}});
+  LEGS.forEach((name,i)=>{
+    const pts=state.legs[i].map(P),foot=state.legs[i][2],shadow=P([foot[0],foot[1],0]),colour=css('--'+name);
+    items.push({depth:pts[2][2],draw:()=>{
+      vx.strokeStyle=colour;vx.lineWidth=4*d;vx.lineCap='round';vx.lineJoin='round';
+      vx.beginPath();pts.forEach((q,k)=>k?vx.lineTo(q[0],q[1]):vx.moveTo(q[0],q[1]));vx.stroke();
+      vx.fillStyle=css('--grid');vx.beginPath();vx.arc(shadow[0],shadow[1],3*d,0,7);vx.fill();
+      vx.beginPath();vx.arc(pts[2][0],pts[2][1],7*d,0,7);vx.fillStyle=state.down[i]?colour:css('--panel');vx.fill();vx.lineWidth=2.5*d;vx.stroke();
+      vx.fillStyle=colour;vx.font=`${11*d}px system-ui`;vx.fillText(name,pts[0][0]+6*d,pts[0][1]-6*d);
+    }});
+  });
+  items.sort((a,b)=>b.depth-a.depth).forEach(it=>it.draw()); // far first
+}
+function drawTiming(){
+  const d=fit(tc),W=tc.width,H=tc.height;tx.clearRect(0,0,W,H);
+  if(!state||!history.length)return;
+  const T=4,t1=state.time,left=34*d,rowH=H/4;
+  tx.font=`${11*d}px system-ui`;
+  LEGS.forEach((name,i)=>{
+    const y=i*rowH;tx.fillStyle=css('--muted');tx.fillText(name,4*d,y+rowH*0.62);
+    for(let k=0;k<history.length-1;k++){
+      const a=history[k],b=history[k+1];if(b.t<t1-T)continue;
+      const xa=left+(a.t-(t1-T))/T*(W-left),xb=left+(b.t-(t1-T))/T*(W-left);
+      if(a.down[i]){tx.fillStyle=css('--'+name);tx.fillRect(Math.max(left,xa),y+rowH*0.38,xb-Math.max(left,xa)+1,rowH*0.46);}
+      if(a.cmd[i]){tx.fillStyle=css('--ink');tx.fillRect(Math.max(left,xa),y+rowH*0.18,xb-Math.max(left,xa)+1,rowH*0.12);}
+    }
+  });
+}
+function drawStats(){
+  const s=state,p=s.params;
+  const items=[['forward m/s',s.measured_velocity[0].toFixed(3)+' ('+p.vx.toFixed(2)+')'],['left m/s',s.measured_velocity[1].toFixed(3)+' ('+p.vy.toFixed(2)+')'],
+   ['tilt °',s.tilt_deg.toFixed(1)],['feet down',s.feet_down],['torque/stall',s.torque_fraction.toFixed(2)+(s.saturated?' sat':'')],['time s',s.time.toFixed(1)],['mass kg',s.total_mass_kg.toFixed(2)],['yaw °',s.yaw_deg.toFixed(0)]];
+  document.getElementById('stats').innerHTML=items.map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+  document.getElementById('warn').textContent=s.fell?'The robot has fallen. Press Reset.':(s.params.walk?'':'Standing. Press Walk.');
+}
+async function poll(){
+  try{
+    const r=await fetch('/state',{cache:'no-store'});state=await r.json();
+    if(!view.start)view.start=state.origin.slice();
+    if(history.length&&state.time<history[history.length-1].t)history=[];
+    history.push({t:state.time,down:state.down,cmd:state.commanded_down});
+    while(history.length&&history[0].t<state.time-4.5)history.shift();
+    syncControls();drawStats();
+  }catch(e){}
+  setTimeout(poll,33);
+}
+function frame(){drawView();drawTiming();requestAnimationFrame(frame);}
+
+// ---- mouse and touch: rotate and zoom ----
+let drag=null;
+vc.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};vc.setPointerCapture(e.pointerId);});
+vc.addEventListener('pointermove',e=>{if(!drag)return;view.az-=(e.clientX-drag.x)*0.4;view.el=Math.max(3,Math.min(88,view.el+(e.clientY-drag.y)*0.3));drag={x:e.clientX,y:e.clientY};});
+vc.addEventListener('pointerup',()=>drag=null);vc.addEventListener('pointercancel',()=>drag=null);
+vc.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(0.4,Math.min(5,view.zoom*Math.exp(-e.deltaY*0.001)));},{passive:false});
+vc.addEventListener('dblclick',()=>{view.az=-45;view.el=35.264;view.zoom=1;});
+
+fetch('/meta').then(r=>r.json()).then(m=>{meta=m;build();poll();frame();});
+</script>
+</body>
+</html>

@@ -498,6 +498,8 @@ Each is one branch-sized step. Tick them off here as they land.
    the timing chart at the bottom of each isometric GIF (`results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif`, from
    `scripts/make_gait_iso_demos.py`).
 
+   **Live explorer** (`scripts/live_gait.py`, `mojito/live_sim.py`, `scripts/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
+
    **Trying variations** (`scripts/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
    and the measured result, and writes `results/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
    `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
