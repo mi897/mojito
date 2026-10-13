@@ -502,7 +502,22 @@ Each is one branch-sized step. Tick them off here as they land.
    and the measured result, and writes `results/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
    `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
    Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
-   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). I have not looked into why the pace goes backward.
+   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). See below for why the pace goes backward.
+
+   **Why the pace goes backward** (`scripts/pace_diagnosis.py`, `results/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
+   - *Established for the base pace.* Only two feet on one side are commanded down, so the support is a line along that side, 125 mm from the
+     centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 13.5°,
+     against 13.7° for `2 atan(lift / track)` with the 30 mm lift and the 0.25 m foot track; with a 60 mm lift it is 25.6°, against 27.9°. The roll does not
+     change with the period (13.4° at 1 s, 13.0° at 2 s). Load sits on the side commanded to swing: the left feet carry 39% while the left legs are
+     commanded down and 61% while the right legs are (for the trot: 53% / 47%). So 65% of the load is on feet commanded to swing (trot 23%).
+     A loaded swing foot moves forward in the body frame, so it pushes the body back: the load-weighted ask is -0.032 m/s and the body made -0.030. The
+     same holds with kp 100 (ask -0.055, measured -0.036) and the ideal servo (ask -0.064, measured -0.049), so it is not the servo softness of the trot.
+     Longer periods shrink the effect (period 2 s: ask -0.010, measured -0.012) because the swing foot then moves forward more slowly.
+   - *Not established.* Where the load is moved off the swing feet the prediction fails. Swing height 60 mm: ask +0.059, measured -0.058
+     (load now on the stance side, 82%, roll 25.6°). Duty 0.7: ask +0.013, measured -0.039. A lateral body shift of 30 mm toward the stance side (a quick
+     test with the crawl-style lean, sign found by trial) drops the swing-foot load to 13% and gives ask +0.084, but the body made -0.036 and rolled 26.7°;
+     60 mm tipped it past 36°. So the swing-foot load explains the base pace, but something else
+     also pushes the body back in these cases, probably tied to the large roll. I did not find it, and I did not find a pace that goes forward.
 
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run

@@ -66,6 +66,23 @@ class TestGaitReplay(unittest.TestCase):
         np.testing.assert_array_equal(r["commanded_contact"][:, 0], r["commanded_contact"][:, 3])
         np.testing.assert_array_equal(r["commanded_contact"][:, 1], r["commanded_contact"][:, 2])
 
+    def test_pace_rolls_onto_its_swing_feet_and_the_roll_matches_the_lift_over_the_track(self):
+        # docs/STAGE2.md, "Why the pace goes backward": two feet on one side leave the body unsupported laterally, so it rolls
+        # until the lifted feet reach the floor: roll range about 2 atan(lift / track), here lift 0.03 m, track about 0.25 m
+        import dataclasses
+
+        pace = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))
+        r = gait_replay.run_gait(pace, (0.1, 0.0), cycles=2)
+        walking = r["time_s"] >= r["walk_start_s"]
+        rotation = r["rotation"]
+        roll = np.degrees(np.arctan2(rotation[:, 2, 1], rotation[:, 2, 2]))[walking]
+        expected = 2 * np.degrees(np.arctan(pace.lift / 0.25))
+        self.assertAlmostEqual(np.ptp(roll), expected, delta=0.2 * expected)
+        loads = r["foot_load_n"][walking]
+        swing = ~r["commanded_contact"][walking]
+        self.assertGreater((loads * swing).sum() / loads.sum(), 0.4)  # trot: about 0.2
+        self.assertLess(r["measured_velocity_m_s"][0], 0.0)  # commanded +0.1 m/s
+
     def test_a_much_heavier_robot_saturates_the_servos(self):
         r = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=2, masses=light(8.0))
         self.assertGreater(r["fraction_of_walking_saturated"], 0.2)
