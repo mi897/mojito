@@ -1,6 +1,6 @@
 # Stage 2 — physics simulation (MuJoCo)
 
-Status: **in progress; work packages 0 to 3 are done.**
+Status: **in progress; work packages 0 to 4 are done.**
 Earlier branch `stage-2-mujoco-model` (PR #9) added this plan; the mass bound is on
 `stage-2-design-envelope`.
 `docs/PLAN.md` has the roadmap; this file holds the detail for this stage.
@@ -429,11 +429,101 @@ Each is one branch-sized step. Tick them off here as they land.
    backwards, so the shank and foot masses sit behind the hips and move the centre of mass rearward, and the
    knee-bend direction makes front and rear legs not mirror images. Only the second of these applies to the near-weightless legs.
 
-4. [ ] **Replay Stage 1 gaits in physics.** Feed the trot and crawl foot
-   trajectories through the IK layer into the servo model. Report whether the
-   body stays up, foot slip, and peak torque. This tests the known weaknesses
-   from Stage 1: the trot's reliance on dynamic balance and the quick crawl
-   lean.
+4. [x] **Replay Stage 1 gaits in physics** (`mojito/gait_replay.py`, `scripts/gait_replay.py`, `tests/test_gait_replay.py`, `results/gait_replay.json`).
+   The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
+   closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
+   then 4 trot cycles (0.5 s period) or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
+   PCA9685 command resolution, floor and pad friction as in `mjcf.py`. Measured velocity is the body displacement over
+   the walking phase. A foot is planted if it carries more than 0.5 N in two consecutive 2 ms steps; slip is its
+   horizontal movement per step.
+   - *Stays up.* All 9 runs finished upright: tilt at most 5.0°, body origin no lower than 206.5 mm, against 218.6 mm after the initial stand.
+   - *It does not walk at the commanded speed.* Trot, commanded 0 / 0.05 / 0.15 / 0.30 m/s: measured -0.038 / -0.011 / +0.041 /
+     +0.111 m/s. Crawl, commanded 0 / 0.02 / 0.04 / 0.08: measured -0.011 / +0.009 / +0.028 / +0.063. Marching in
+     place drifts backwards. Trot turning at 1.2 rad/s measured 0.82 rad/s, with 0.04 m/s of backward drift. Cause: see "Why the body falls short" below.
+   - *Slip.* The foot tip (sphere centre) of a foot carrying more than 0.5 N moved at most 1.75 mm in a 2 ms step (0.9 m/s; trot
+     0.30 m/s), 0.59 to 0.98 mm at the other trot speeds and 0.62 to 1.6 mm in the crawl; means 0.05 to 0.16 mm per step (0.03 to
+     0.08 m/s). I did not separate sliding from the sphere rolling or from touchdown and lift-off, so this does **not**
+     show that friction was no limit.
+   - *Torque.* Peak |torque| as a fraction of the 1.86 N·m stall limit: trot 0.65 to 0.82 (0.85 turning); crawl 0.94 to 0.99, with
+     the servos at their limit for 1.3% to 4.9% of the walking time. Standing with these masses peaks at 0.28 (knee). The crawl
+     peaks higher on the servos than the trot; the reason was not traced.
+   - *Joint tracking.* Largest gap between commanded and actual joint angle during walking: 10 to 16°.
+   - *Feet down.* Fewest feet carrying more than 0.5 N: 2 in every run, including the crawl, which Stage 1 designed to keep 3 down.
+     Whether this is a brief unloading or a sustained lift was not examined. Mean feet down: trot 2.6, crawl 3.3.
+   - *Heavy robot.* At 8 kg (legs near zero) the trot saturates the servos for more than 20% of the walking time and the run does not count as walked (test).
+   Animations: `scripts/make_gait_replay_demo.py` writes `results/trot_replay.gif` and `results/crawl_replay.gif` (side view of the
+   left legs, filled foot = loaded, dashed line = where the body would be at the commanded speed).
+
+   **Why the body falls short** (`scripts/gait_speed_diagnosis.py`, `results/gait_speed_diagnosis.json`; same model, one run
+   per entry). A planted foot is fixed in the world, so one whose commanded body-frame velocity is v asks the body to move at -v.
+   `ask` is that, averaged over the loaded feet weighted by normal force. Trot at 0.15 m/s:
+
+   | variant | measured m/s | ask m/s | load on feet commanded to swing |
+   |---|---|---|---|
+   | baseline (kp 10, 20 ms latency, PCA9685 steps) | 0.041 | 0.103 | 24% |
+   | latency 0 | 0.042 | 0.101 | 23% |
+   | fine command resolution | 0.038 | 0.104 | 23% |
+   | kp 100, kd 1 | 0.095 | 0.116 | 17% |
+   | ideal servo (kp 100, kd 1, no latency, fine, 10x torque) | 0.088 | 0.095 | 23% |
+   | swing height 60 mm | 0.079 | 0.120 | 17% |
+
+   Two causes, measured separately:
+   1. *The servos are soft (kp 10).* The ask is 0.103 and the body makes 0.041. With kp 100 the body makes 0.095 and with the
+      ideal servo 0.088 (ask 0.095). Latency and command resolution made no difference (0.042, 0.038). Marching in place
+      (command 0) drifts back at 0.038 m/s at kp 10 and 0.005 at kp 100, so that drift is softness too. In the crawl, which keeps nearly all
+      load on the feet it commands to stand, the ask is 0.040 for a 0.04 command; the body makes 0.028 at kp 10 and
+      0.040 at kp 100. So the whole crawl shortfall is the servo not following.
+   2. *Feet that should be in the air still carry weight, and they push the body backward.* In the trot, 24% of the load is on feet commanded to
+      swing, so the ask is 0.103 instead of 0.15, and no servo setting fixes that (ideal servo: ask 0.095). The rear
+      feet are the cause: with the commanded foot less than 8 mm above its stance height the rear foot was loaded in every step I looked at (172 of 172
+      steps; front foot 40% of 172), and 88% between 8 and 15 mm. The loaded rear feet sit 12 mm higher in the body frame than commanded (front 6 mm): the legs sag with the weight, so a 30 mm swing (19 mm actually achieved)
+      does not clear the ground for the first and last part of the swing.
+   A taller swing (60 mm) raised the trot to 0.079 but also raised the tilt to 8.3° (4.1° at 30 mm) and with the ideal servo it did not help (0.079), so I did not establish a
+   fix. 100 mm gave 0.186 (ideal servo) with 21° tilt: not a result I trust. Not tested: friction, body mass distribution, gait timing, or how the
+   weight split (20% front, 30% rear for the default masses) feeds into this. The sag figures are the measured *mean* over loaded stance steps in one trot run.
+
+   **How the gait timing is set** (`mojito/gaits.py`, `Gait`). Four numbers, all per cycle:
+   - `period`: seconds per cycle. Trot 0.5 s, crawl 2.0 s.
+   - `duty`: the fraction of the cycle a foot is on the ground. Trot 0.5, crawl 0.85. So stance lasts `duty * period` (`Gait.stance_time`)
+     and swing `(1 - duty) * period` (`Gait.swing_time`): trot 0.25 s / 0.25 s, crawl 1.7 s / 0.3 s.
+   - `offsets` (FL, FR, RL, RR): the cycle phase at which each leg *starts its stance*. A leg's phase is `(t / period - offset) mod 1`;
+     it is on the ground while the phase is below `duty` and swinging after that, so it lifts at `(offset + duty) mod 1` (`Gait.swing_starts()`).
+     Trot (0, 0.5, 0.5, 0): FL and RR together, FR and RL half a cycle later. Crawl (0.75, 0.25, 0.5, 0): lifts at phases FR 0.10, RL 0.35,
+     FL 0.60, RR 0.85, spaced a quarter cycle apart; each swing is 0.15 of the cycle, so there is a 0.10 gap with all four down.
+     `gaits.sequence_offsets(order, duty)` makes the offsets for a one-leg-at-a-time order.
+   - `lift` (swing height, m) and `sway` (crawl body lean, m). The lean only acts when no two swings overlap.
+   Where each foot goes follows from these and the commanded velocity: a foot on the ground moves backward in the body frame at the body's
+   velocity, so one stance covers `velocity * stance_time` (trot at 0.15 m/s: 37.5 mm; crawl at 0.04 m/s: 68 mm), and the swing carries the
+   foot forward to where the next stance starts, with a sin² lift. The commanded stance and the measured foot load are drawn together in
+   the timing chart at the bottom of each isometric GIF (`results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif`, from
+   `scripts/make_gait_iso_demos.py`).
+
+   **Live explorer** (`scripts/live_gait.py`, `mojito/live_sim.py`, `scripts/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
+
+   **Trying variations** (`scripts/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
+   and the measured result, and writes `results/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
+   `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
+   Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
+   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). See below for why the pace goes backward.
+
+   **Why the pace goes backward** (`scripts/pace_diagnosis.py`, `results/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
+   - *Established for the base pace.* Only two feet on one side are commanded down, so the support is a line along that side, 125 mm from the
+     centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 13.5°,
+     against 13.7° for `2 atan(lift / track)` with the 30 mm lift and the 0.25 m foot track; with a 60 mm lift it is 25.6°, against 27.9°. The roll does not
+     change with the period (13.4° at 1 s, 13.0° at 2 s). Load sits on the side commanded to swing: the left feet carry 39% while the left legs are
+     commanded down and 61% while the right legs are (for the trot: 53% / 47%). So 65% of the load is on feet commanded to swing (trot 23%).
+     A loaded swing foot moves forward in the body frame, so it pushes the body back: the load-weighted ask is -0.032 m/s and the body made -0.030. The
+     same holds with kp 100 (ask -0.055, measured -0.036) and the ideal servo (ask -0.064, measured -0.049), so it is not the servo softness of the trot.
+     Longer periods shrink the effect (period 2 s: ask -0.010, measured -0.012) because the swing foot then moves forward more slowly.
+   - *Not established.* Where the load is moved off the swing feet the prediction fails. Swing height 60 mm: ask +0.059, measured -0.058
+     (load now on the stance side, 82%, roll 25.6°). Duty 0.7: ask +0.013, measured -0.039. A lateral body shift of 30 mm toward the stance side (a quick
+     test with the crawl-style lean, sign found by trial) drops the swing-foot load to 13% and gives ask +0.084, but the body made -0.036 and rolled 26.7°;
+     60 mm tipped it past 36°. So the swing-foot load explains the base pace, but something else
+     also pushes the body back in these cases, probably tied to the large roll. I did not find it, and I did not find a pace that goes forward.
+
+   Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
+   other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
+   of each case, no randomisation.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.

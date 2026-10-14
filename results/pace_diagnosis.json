@@ -1,0 +1,170 @@
+{
+  "what": "Why does the pace (left legs together, then right) go backward? (docs/STAGE2.md, work package 4)",
+  "velocity_commanded_m_s": 0.1,
+  "trot_vs_pace": {
+    "trot kp 10": {
+      "measured_m_s": 0.014,
+      "load_weighted_ask_m_s": 0.07,
+      "load_share_on_feet_commanded_to_swing": 0.228,
+      "roll_range_deg": 5.0,
+      "left_load_share_while_left_commanded_down": 0.53,
+      "left_load_share_while_right_commanded_down": 0.47,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 4.2,
+      "walked": true
+    },
+    "trot kp 100": {
+      "measured_m_s": 0.064,
+      "load_weighted_ask_m_s": 0.081,
+      "load_share_on_feet_commanded_to_swing": 0.154,
+      "roll_range_deg": 8.1,
+      "left_load_share_while_left_commanded_down": 0.49,
+      "left_load_share_while_right_commanded_down": 0.51,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 5.4,
+      "walked": true
+    },
+    "trot ideal servo": {
+      "measured_m_s": 0.057,
+      "load_weighted_ask_m_s": 0.068,
+      "load_share_on_feet_commanded_to_swing": 0.221,
+      "roll_range_deg": 8.1,
+      "left_load_share_while_left_commanded_down": 0.58,
+      "left_load_share_while_right_commanded_down": 0.42,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 5.4,
+      "walked": true
+    },
+    "pace kp 10": {
+      "measured_m_s": -0.03,
+      "load_weighted_ask_m_s": -0.032,
+      "load_share_on_feet_commanded_to_swing": 0.645,
+      "roll_range_deg": 13.5,
+      "left_load_share_while_left_commanded_down": 0.39,
+      "left_load_share_while_right_commanded_down": 0.61,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 6.9,
+      "walked": true
+    },
+    "pace kp 100": {
+      "measured_m_s": -0.036,
+      "load_weighted_ask_m_s": -0.055,
+      "load_share_on_feet_commanded_to_swing": 0.723,
+      "roll_range_deg": 14.3,
+      "left_load_share_while_left_commanded_down": 0.28,
+      "left_load_share_while_right_commanded_down": 0.71,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 7.2,
+      "walked": true
+    },
+    "pace ideal servo": {
+      "measured_m_s": -0.049,
+      "load_weighted_ask_m_s": -0.064,
+      "load_share_on_feet_commanded_to_swing": 0.72,
+      "roll_range_deg": 14.5,
+      "left_load_share_while_left_commanded_down": 0.3,
+      "left_load_share_while_right_commanded_down": 0.71,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 7.3,
+      "walked": true
+    }
+  },
+  "pace_variants": {
+    "pace period 0.5 (base)": {
+      "measured_m_s": -0.03,
+      "load_weighted_ask_m_s": -0.032,
+      "load_share_on_feet_commanded_to_swing": 0.645,
+      "roll_range_deg": 13.5,
+      "left_load_share_while_left_commanded_down": 0.39,
+      "left_load_share_while_right_commanded_down": 0.61,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 6.9,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 13.7
+    },
+    "period 1.0": {
+      "measured_m_s": -0.016,
+      "load_weighted_ask_m_s": -0.019,
+      "load_share_on_feet_commanded_to_swing": 0.575,
+      "roll_range_deg": 13.4,
+      "left_load_share_while_left_commanded_down": 0.43,
+      "left_load_share_while_right_commanded_down": 0.57,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 6.7,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 13.6
+    },
+    "period 2.0": {
+      "measured_m_s": -0.012,
+      "load_weighted_ask_m_s": -0.01,
+      "load_share_on_feet_commanded_to_swing": 0.539,
+      "roll_range_deg": 13.0,
+      "left_load_share_while_left_commanded_down": 0.46,
+      "left_load_share_while_right_commanded_down": 0.54,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 7.1,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 13.5
+    },
+    "duty 0.6": {
+      "measured_m_s": -0.038,
+      "load_weighted_ask_m_s": -0.02,
+      "load_share_on_feet_commanded_to_swing": 0.53,
+      "roll_range_deg": 11.9,
+      "left_load_share_while_left_commanded_down": 0.44,
+      "left_load_share_while_right_commanded_down": 0.6,
+      "feet_commanded_down_mean": 2.4,
+      "max_tilt_deg": 6.1,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 13.8
+    },
+    "duty 0.7": {
+      "measured_m_s": -0.039,
+      "load_weighted_ask_m_s": 0.013,
+      "load_share_on_feet_commanded_to_swing": 0.383,
+      "roll_range_deg": 10.2,
+      "left_load_share_while_left_commanded_down": 0.51,
+      "left_load_share_while_right_commanded_down": 0.47,
+      "feet_commanded_down_mean": 2.8,
+      "max_tilt_deg": 5.4,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 13.8
+    },
+    "swing height 60 mm": {
+      "measured_m_s": -0.058,
+      "load_weighted_ask_m_s": 0.059,
+      "load_share_on_feet_commanded_to_swing": 0.321,
+      "roll_range_deg": 25.6,
+      "left_load_share_while_left_commanded_down": 0.82,
+      "left_load_share_while_right_commanded_down": 0.14,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 14.4,
+      "walked": true,
+      "roll_range_if_swing_foot_just_reaches_floor_deg": 27.9
+    }
+  },
+  "pace_with_lateral_shift_toward_stance_side": {
+    "30 mm": {
+      "measured_m_s": -0.036,
+      "load_weighted_ask_m_s": 0.084,
+      "load_share_on_feet_commanded_to_swing": 0.132,
+      "roll_range_deg": 26.7,
+      "left_load_share_while_left_commanded_down": 0.83,
+      "left_load_share_while_right_commanded_down": 0.0,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 14.7,
+      "walked": true
+    },
+    "60 mm": {
+      "measured_m_s": -0.061,
+      "load_weighted_ask_m_s": 0.06,
+      "load_share_on_feet_commanded_to_swing": 0.216,
+      "roll_range_deg": 55.3,
+      "left_load_share_while_left_commanded_down": 0.94,
+      "left_load_share_while_right_commanded_down": 0.34,
+      "feet_commanded_down_mean": 2.0,
+      "max_tilt_deg": 36.3,
+      "walked": false
+    }
+  }
+}

@@ -401,6 +401,48 @@ the stall torque for 3 kg and 0.72 for 4 kg; 5 kg does not rise. The weight is n
 for near-weightless legs, 20% and 30% with the default placeholder masses.
 The masses, gains and servo figures are placeholders, so these show how the model behaves, not what a built robot can do.
 
+`python scripts/gait_replay.py` (needs MuJoCo) replays the trot and crawl through the servo model with a free body and
+writes `results/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
+5.0°). The body does not reach the commanded speed: trot at 0.15 m/s
+measured 0.041 m/s, at 0.30 m/s 0.111 m/s, and marching in place drifted back at 0.038 m/s; crawl at 0.04 m/s measured
+0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; `scripts/gait_speed_diagnosis.py` traces the shortfall to two causes: the soft servos (kp 10; the crawl reaches its 0.04 m/s at kp 100) and, in the trot, rear feet that still carry weight when commanded to swing (see `docs/STAGE2.md`). Animations: `results/trot_replay.gif`, `results/crawl_replay.gif` (side view) and `results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif` (isometric, with a gait timing chart). The pace (left legs, then right) goes backward because the body rolls onto the feet it is lifting (`scripts/pace_diagnosis.py`, `docs/STAGE2.md`). `python scripts/try_gait.py --help` tries other timings (period, duty, offsets, lift order); how the timing is set is in `docs/STAGE2.md`.
+
+### Running the live gait explorer on your machine
+
+The physics runs in Python on your computer; the browser only draws and sends slider changes. Nothing leaves your machine (the
+server listens on 127.0.0.1).
+
+```bash
+git clone https://github.com/mi897/mojito && cd mojito
+git checkout stage-2-trot-crawl-physics-replay      # until it is merged to main
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install numpy scipy mujoco
+python scripts/live_gait.py                         # add --preset crawl, --walk, --port 9000
+```
+
+Open http://127.0.0.1:8765. Press **Walk** to start and **Stand** to stop; **Reset** rebuilds the robot (needed after a fall); **Pause** freezes the physics.
+Drag in the picture to rotate the view, use the wheel to zoom, double-click to reset the view; **Follow** keeps the body centred (the floor grid
+stays fixed in the world, so you see the real speed). The strip under the picture shows, for the last 4 s, each leg's commanded stance (thin black bar)
+against the weight it actually carries (coloured bar). The readouts show measured against commanded speed (in brackets), tilt, feet down and peak servo torque as a fraction of the stall torque.
+
+Parameters (all apply while it runs; speed, yaw rate, lift and sway are eased in over about 0.3 s so the feet do not jump; the mass slider rebuilds the model and the robot stands again):
+
+| Slider | What it sets |
+|---|---|
+| period | seconds per cycle |
+| duty | fraction of the cycle a foot is on the ground |
+| offset FL, FR, RL, RR | cycle phase at which each leg starts its stance; it lifts at offset + duty |
+| lift, sway | swing height; crawl-style body lean (acts only when no two swings overlap, duty 0.75 or more) |
+| forward, left, yaw | commanded body velocity |
+| kp, kd | servo position-loop gains |
+| mass | total mass; the placeholder masses scaled together |
+| sim speed | physics speed relative to the wall clock |
+
+Experiments that match results in `docs/STAGE2.md` (placeholder everything, one run each, so look for the same direction, not the same numbers):
+trot at 0.15 m/s with kp 10, then kp 100 and kd 1 (the body should get much closer to the commanded speed); the **pace** preset (rolls onto the feet it lifts and goes backward);
+lift 0.03 against 0.06 on the pace (roll about doubles); the **crawl** with sway 0 against 0.025; raising mass until the servos saturate (torque/stall reaches 1).
+Playing with the sliders is exploration, not a measurement: for numbers use `scripts/try_gait.py` and put them in `results/`.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.

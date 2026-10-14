@@ -47,8 +47,11 @@ mojito/mjcf.py         MuJoCo model generated from a URDF (optional dependency: 
 mojito/actuators.py    servo model: voltage, latency, resolution, torque-speed limit (NumPy)
 mojito/sensors.py      joint-angle sensor and IMU models (NumPy)
 mojito/stand.py        stand test: IK posture held through the servo model in MuJoCo
+mojito/gait_replay.py  trot and crawl replayed in MuJoCo through the servo model (needs mujoco)
+mojito/gait_plots.py   gait timing chart and isometric animation of a replay (matplotlib)
+mojito/live_sim.py     replay stepped a few steps at a time, gait and servo parameters changeable live (needs mujoco)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
-scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo
+scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
@@ -68,6 +71,9 @@ python scripts/torque_envelope.py          # results/torque_envelope.json, stati
 python scripts/stand_test.py               # results/stand_test.json (needs mujoco)
 python scripts/sit_to_stand.py             # results/sit_to_stand.json and .png (needs mujoco)
 python scripts/make_stand_demo.py          # results/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
+python scripts/gait_replay.py              # results/gait_replay.json (needs mujoco)
+python scripts/try_gait.py --help          # try other gait timings in physics, GIF in results/try/
+python scripts/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
 python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
 ```
