@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full reports · Mojito</title>
+<meta name="description" content="The project's README, plan, Stage 2 report and naming conventions, rendered from the repository.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/docs.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <h1 class="no-rule">Full reports</h1>
+  <p class="lede">The documents in the repository, rendered exactly as written. They are the long-form record; the other pages summarise them.</p>
+  <div class="tabs" id="doc-tabs" role="tablist"></div>
+  <div class="cols"><nav class="toc" id="doc-toc" aria-label="Contents"></nav><article class="md" id="doc"></article></div>
+</main>
+<script src="vendor/marked/marked.umd.js"></script>
+<script>
+const DOCS = [['README', 'README'], ['PLAN', 'Plan'], ['STAGE2', 'Stage 2 report'], ['NAMING', 'Naming conventions'], ['CLAUDE', 'Working rules']];
+const tabs = document.getElementById('doc-tabs'), doc = document.getElementById('doc'), toc = document.getElementById('doc-toc');
+const slug = s => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function show(key) {
+  const md = window.MOJITO_DOCS[key].replace(/\]\((?:\.\.\/)?results\/([^)]+\.(?:gif|png))\)/g, '](media/$1)').replace(/\]\((?:\.\.\/)?docs\/([A-Z0-9_]+)\.md\)/g, (m, n) => `](reports.html#${n})`).replace(/\]\(\.?\/?demo\.html\)/g, '](media/leg_demo.html)');
+  const html = marked.parse(md, { gfm: true });
+  doc.innerHTML = html;
+  toc.innerHTML = '';
+  doc.querySelectorAll('h2, h3').forEach(h => { h.id = slug(h.textContent); const a = document.createElement('a'); a.href = '#' + key + '/' + h.id; a.textContent = h.textContent; if (h.tagName === 'H3') a.className = 'sub'; a.onclick = e => { e.preventDefault(); h.scrollIntoView(); history.replaceState(null, '', '#' + key + '/' + h.id); }; toc.append(a); });
+  doc.querySelectorAll('a[href^="http"]').forEach(a => { a.rel = 'noopener'; });
+  doc.querySelectorAll('img').forEach(i => { i.loading = 'lazy'; });
+  doc.querySelectorAll('table').forEach(t => { /* wide tables scroll via CSS */ });
+  tabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.k === key));
+}
+DOCS.forEach(([k, label]) => { const b = document.createElement('button'); b.dataset.k = k; b.textContent = label; b.setAttribute('aria-selected', 'false'); b.onclick = () => { show(k); history.replaceState(null, '', '#' + k); window.scrollTo(0, 0); }; tabs.append(b); });
+const [first, anchor] = (location.hash.slice(1) || 'README').split('/');
+show(DOCS.some(d => d[0] === first) ? first : 'README');
+if (anchor) { const el = document.getElementById(anchor); if (el) el.scrollIntoView(); }
+</script>
+</body>
+</html>

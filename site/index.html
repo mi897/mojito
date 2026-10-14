@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mojito · robots that learn to move</title>
+<meta name="description" content="A quadruped that learns to move by itself: first from simulation, then from real interaction. Progress, theory, results and a playground.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/results.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Robots that learn to move by themselves.</h1>
+      <p class="lede">Mojito is a project to get a quadruped with 12 motors to learn a task from a simulation first, then refine it from real interaction. The robot does not exist yet, so this site shows the simulation, the maths and the measurements so far, and lets you change the robot and watch what happens.</p>
+      <div class="cta"><a class="primary" href="playground.html">Open the playground</a><a href="progress.html">Progress report</a><a href="theory.html">How it works</a><a href="results.html">Results</a></div>
+    </div>
+    <div>
+      <canvas id="hero-view" aria-label="The quadruped trotting, drawn live in your browser"></canvas>
+      <div class="btnrow"><button class="btn on" data-hero-gait="trot">Trot</button><button class="btn" data-hero-gait="crawl">Crawl</button>
+        <span class="small muted" style="align-self:center">Running live in your browser. Drag to rotate. Filled foot = carrying weight.</span></div>
+    </div>
+  </section>
+
+  <div class="notice"><b>Everything here is a simulation of a robot that does not exist.</b> Dimensions, joint limits, masses and servo figures are placeholders; the servo figures are unverified retailer numbers. Stages 0 and 1 are pure geometry, so they say nothing about balance, torque or grip. Stage 2 adds physics, with placeholder everything and one run per case.</div>
+
+  <h2 class="no-rule">The robot</h2>
+  <p>A quadruped with <b>12 degrees of freedom</b>, three per leg (abduction and hip pitch at the shoulder, and a knee), with grippy pads for feet. Actuators are 20&nbsp;kg·cm hobby servos on a 5–6&nbsp;V supply; an ESP32 will drive them through a PCA9685 over I²C, with joint-angle sensors on each joint and learning done off board. None of it is built.</p>
+
+  <h2>Where the work stands</h2>
+  <div class="grid g4">
+    <div class="card stat"><b data-bind="metrics.learned_varied_legs.median_mm" data-fmt="2" data-unit=" mm"></b><span>median foot error of the learned leg network</span><small>200,000 unseen targets and leg sizes; the leg reaches 240 mm. Geometry only.</small></div>
+    <div class="card stat"><b data-bind="calibration.error_after_mm.median" data-fmt="2" data-unit=" mm"></b><span>after calibrating a leg from 30 measurements</span><small>down from <span data-bind="calibration.error_before_mm.median" data-fmt="1" data-unit=" mm"></span>; simulated leg, 1 mm of noise, no retraining.</small></div>
+    <div class="card stat"><b data-bind="body_metrics.trot_forward.foot_error_mm.max" data-fmt="2" data-unit=" mm"></b><span>worst foot error while trotting</span><small>whole body, network-driven, 0.15 m/s. Geometry only.</small></div>
+    <div class="card stat"><b data-bind="gait_replay.runs.2.measured_forward_lateral_velocity_m_s.0" data-fmt="3" data-unit=" m/s"></b><span>what the trot actually did in physics</span><small>commanded 0.15 m/s; upright, but short of the command. One run, placeholder everything.</small></div>
+  </div>
+  <p class="small muted">The last card matters as much as the first three: the physics replay is the first time the gaits met gravity, and they do not yet move at the commanded speed. <a href="results.html#s2c">Why</a>.</p>
+
+  <table>
+    <tr><th>Stage</th><th>What</th><th>State</th></tr>
+    <tr><td>0</td><td>One network learns inverse kinematics for a leg, with link lengths as inputs</td><td><span class="pill done">Done</span></td></tr>
+    <tr><td>1</td><td>Whole body: posture control, trot and crawl, NumPy or PyTorch</td><td><span class="pill done">Done</span></td></tr>
+    <tr><td>–</td><td>Robots defined in URDF; the network is generated from it</td><td><span class="pill done">Done</span></td></tr>
+    <tr><td>2</td><td>Physics simulation (MuJoCo) and learned locomotion</td><td><span class="pill wip">In progress</span> work packages 0–4 of 8 done</td></tr>
+    <tr><td>3</td><td>The real robot: measurement, calibration, per-leg correction</td><td><span class="pill todo">Planned</span></td></tr>
+    <tr><td>4</td><td>The loop: real experience updates the simulator, retrain, redeploy</td><td><span class="pill todo">Planned</span></td></tr>
+  </table>
+
+  <h2>What is on this site</h2>
+  <div class="grid g3">
+    <a class="card" href="progress.html" style="text-decoration:none;color:inherit"><h3>Progress</h3><p>A timeline of every stage and work package: what was built, what was measured, what it does not show, and what is next.</p></a>
+    <a class="card" href="theory.html" style="text-decoration:none;color:inherit"><h3>How it works</h3><p>The theory and its implementation: leg kinematics, the learned solver, gaits, statics, the servo model and the physics set-up, with the equations.</p></a>
+    <a class="card" href="results.html" style="text-decoration:none;color:inherit"><h3>Results</h3><p>Every measurement, graphed from the committed results files, with the caveats beside each chart.</p></a>
+    <a class="card" href="demos.html" style="text-decoration:none;color:inherit"><h3>Demos</h3><p>All the animations, from one leg to a trot replayed in physics, plus the interactive single-leg demo.</p></a>
+    <a class="card" href="playground.html" style="text-decoration:none;color:inherit"><h3>Playground</h3><p>Change link lengths, body size, posture, gait timing, mass and servo settings. A live kinematic lab, and a lab that replays 144 MuJoCo runs.</p></a>
+    <a class="card" href="reports.html" style="text-decoration:none;color:inherit"><h3>Full reports</h3><p>The project's README, plan and Stage 2 report, rendered as they are in the repository.</p></a>
+  </div>
+
+  <h2>Why start in simulation</h2>
+  <p>No robot exists yet, and the dimensions are still to be chosen. So the first job of the simulator is a design-exploration tool: given a set of dimensions, does the robot stand, does it walk, and are the servos inside their limits? Learning to walk comes after the model is trusted. The long-term loop is simulation for a first idea of the task, the real robot to refine it, and return trips to simulation to prepare for specific tasks.</p>
+</main>
+<script src="assets/mojito.js"></script>
+<script src="assets/viewer.js"></script>
+<script src="assets/hero.js"></script>
+</body>
+</html>
