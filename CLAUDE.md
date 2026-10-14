@@ -51,7 +51,8 @@ mojito/gait_replay.py  trot and crawl replayed in MuJoCo through the servo model
 mojito/gait_plots.py   gait timing chart and isometric animation of a replay (matplotlib)
 mojito/live_sim.py     replay stepped a few steps at a time, gait and servo parameters changeable live (needs mujoco)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
-scripts/               train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
+scripts/               build_site, site_sweep, train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
@@ -74,6 +75,8 @@ python scripts/make_stand_demo.py          # results/stand_demo.gif, sit_to_stan
 python scripts/gait_replay.py              # results/gait_replay.json (needs mujoco)
 python scripts/try_gait.py --help          # try other gait timings in physics, GIF in results/try/
 python scripts/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
+python scripts/build_site.py               # website data from results/; then: python -m http.server -d site
+python scripts/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/physics_sweep.json (needs mujoco)
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
 python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
 ```
@@ -123,9 +126,15 @@ else NumPy.
   needs the matching change to the other and a parity test in
   `tests/test_backends.py`.
 
+## Website rules
+
+- The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/test_build_site.py`) or draw it from the JSON in a script.
+- `site/assets/mojito.js` is a port of `leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/test_site_js.py` compares them.
+- Say in the page what a lab does not model. The kinematic lab is static (no dynamics); the physics lab replays stored runs, no interpolation.
+
 ## Generated files
 
-`weights/ik_leg.npz`, everything in `results/`, and `docs/demo.html` are
+`weights/ik_leg.npz`, everything in `results/` (including `physics_sweep.json`), and `docs/demo.html` are
 outputs that are committed so the README renders. Regenerate them with the
 scripts; do not edit them by hand. If the weights change, re-run evaluate,
 calibrate, make_demo and make_body_demos and update every number quoted in

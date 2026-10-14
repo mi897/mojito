@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playground · Mojito</title>
+<meta name="description" content="Change the robot's dimensions, posture, gait and servo settings and watch it respond.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/results.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap" id="app">
+  <h1 class="no-rule">Playground</h1>
+  <p class="lede">Change the robot and watch what it does. Two labs, because a browser can run the geometry live but not the physics engine.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-kin" aria-selected="true">Kinematic lab · live, any value</button>
+    <button role="tab" id="tab-phys" aria-selected="false">Physics lab · MuJoCo runs, 144 combinations</button>
+  </div>
+
+  <!-- ====================== kinematic lab ====================== -->
+  <section id="kin">
+    <div class="notice"><b>What this lab is, and is not.</b>
+      It runs the project's own maths in your browser (closed-form inverse kinematics, the trot, crawl and pace foot paths, static joint torques) and
+      checks them every time the page's code changes against the Python (<code>tests/test_site_js.py</code>). It is geometry plus gravity held still at each instant:
+      <b>no dynamics, no friction, no leg mass, no servo lag.</b> The torque shown is what the servos would need to <em>hold</em> the weight in that pose,
+      with the weight shared over the grounded feet by an assumption (see below). For real behaviour, use the Physics lab.</div>
+    <div class="pg">
+      <aside class="pg-side card" aria-label="Controls"><div id="kin-controls"></div></aside>
+      <div>
+        <div class="card stage">
+          <canvas id="kin-view" style="height:min(56vh,470px)"></canvas>
+          <div class="bar">
+            <button class="btn" id="kin-play">Pause</button>
+            <label>cycle <input type="range" id="kin-scrub" min="0" max="1" step="0.001" value="0"></label>
+            <label>speed <select id="kin-speed"><option>0.25</option><option selected>1</option><option>2</option></select>×</label>
+            <button class="btn" id="kin-follow" aria-pressed="true">Follow</button>
+            <button class="btn" id="kin-zin" aria-label="zoom in">＋</button><button class="btn" id="kin-zout" aria-label="zoom out">－</button>
+            <span class="small muted">Drag to rotate · Ctrl+scroll or pinch to zoom · double-click resets. Filled foot = carrying weight; dashed ring = target outside the joint limits.</span>
+          </div>
+        </div>
+        <div class="kpis" id="kin-kpis"></div>
+        <div class="msgs" id="kin-msgs"></div>
+        <div class="grid g2">
+          <div class="card chart-card"><h4>Joint angles over one cycle · front-left leg</h4><p class="sub">degrees, with the joint limits as dashed lines</p><div id="ch-joints"></div></div>
+          <div class="card chart-card"><h4>Foot path · front-left leg, side view</h4><p class="sub">forward and vertical foot position in the body frame, mm</p><div id="ch-foot"></div></div>
+          <div class="card chart-card"><h4>Servo torque needed to hold the weight</h4><p class="sub">worst joint of each leg, as a fraction of the stall torque at this supply voltage</p><div id="ch-torque"></div></div>
+          <div class="card chart-card"><h4>Gait timing</h4><p class="sub">commanded stance (bars) per leg over one cycle; the line is now</p><div id="ch-timing"></div></div>
+        </div>
+        <h3>Over one full cycle</h3>
+        <div class="kpis" id="kin-cycle"></div>
+        <details><summary>How these numbers are worked out, and what to distrust</summary>
+          <ul class="small">
+            <li><b>Foot positions</b> come from the gait generator: a grounded foot stays fixed in the world, a swinging foot lifts and moves to where its next stance starts. The legs follow by closed-form inverse kinematics; the trained network is not used here (it agrees with the closed form to a median 0.17 mm, see Results).</li>
+            <li><b>Weight sharing.</b> Three feet down: the loads that balance the weight are unique. Two feet: the centre of mass is projected on to the line between them. Four feet: the balance is redundant, so the page takes the smallest loads that balance it, dropping any foot that would pull. MuJoCo shows the real split is not even (about 24% / 26% front / rear for a light-legged robot), so treat four-foot torques as an estimate of the order of magnitude.</li>
+            <li><b>Body centre = centre of mass</b>, and the legs weigh nothing. The Physics lab has the real masses.</li>
+            <li><b>Torque</b> is |Jᵀ F| for the vertical foot force F, in each leg's frame. <b>Stall torque</b> is the listed (unverified) 19 kg·cm at 5 V and 21.5 kg·cm at 6.8 V, on a straight line between.</li>
+            <li><b>"Heaviest robot"</b> scales the current mass until the worst torque in the cycle is half the stall torque (an assumed continuous rating). It is an upper bound from weight alone, like <code>torque_envelope.py</code>.</li>
+            <li>Nothing here says the robot balances while moving: the trot has two feet down, so the body centre is never inside a support polygon, and that needs dynamics.</li>
+          </ul></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== physics lab ====================== -->
+  <section id="phys" hidden>
+    <div class="notice"><b>What this lab is, and is not.</b>
+      Every combination offered here was run once in MuJoCo (this project's physics model with the servo model: 20&nbsp;ms latency, command steps of the real PWM driver, torque limits that depend on speed) and the motion was recorded.
+      The page replays the stored run. There is no interpolation between combinations and each is a single run with no randomness, so the differences you see between neighbouring cells are real for the model but not a statistical result.
+      <b>Dimensions (50/150/150 mm legs, 300×150 mm body), masses, friction and servo figures are placeholders.</b> To try other values, run <code>scripts/live_gait.py</code> or <code>scripts/try_gait.py</code> on your machine.</div>
+    <div class="pg">
+      <aside class="pg-side card"><div id="phys-controls"></div></aside>
+      <div>
+        <div class="card stage">
+          <canvas id="phys-view" style="height:min(56vh,470px)"></canvas>
+          <div class="bar">
+            <button class="btn" id="phys-play">Pause</button>
+            <label>time <input type="range" id="phys-scrub" min="0" max="1" step="0.001" value="0"></label>
+            <label>speed <select id="phys-speed"><option>0.25</option><option selected>0.5</option><option>1</option></select>×</label>
+            <button class="btn" id="phys-follow" aria-pressed="true">Follow</button>
+            <button class="btn" id="phys-zin" aria-label="zoom in">＋</button><button class="btn" id="phys-zout" aria-label="zoom out">－</button>
+            <span class="small muted">The dashed line on the floor is where the body would be at the commanded speed.</span>
+          </div>
+        </div>
+        <div class="kpis" id="phys-kpis"></div>
+        <div class="msgs" id="phys-msgs"></div>
+        <div class="grid g2">
+          <div class="card chart-card"><h4>Body position along the walk</h4><p class="sub">mm travelled forward; dashed = commanded speed</p><div id="pc-pos"></div></div>
+          <div class="card chart-card"><h4>Body tilt and height</h4><p class="sub">roll and pitch in degrees (left axis); height is in the readouts</p><div id="pc-tilt"></div></div>
+          <div class="card chart-card" style="grid-column:1/-1"><h4>Which feet carry the weight</h4><p class="sub">thin dark bar = commanded stance; coloured bar = pad force above 0.5 N (measured). Where they disagree the leg is loaded when it was told to swing, or the reverse.</p><div id="pc-timing"></div></div>
+        </div>
+        <h3>Measured forward speed across this gait and swing height</h3>
+        <p class="small muted">Rows: servo stiffness kp. Columns: total mass. Click a cell to jump to it. Orange = the run tipped past 30° or sank below half height.</p>
+        <div id="phys-heat"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/charts.js"></script>
+<script src="assets/mojito.js"></script>
+<script src="assets/viewer.js"></script>
+<script src="assets/playground.js"></script>
+<script>
+  // The physics grid is 1.3 MB: fetch it only when the tab is opened.
+  window.loadSweep = () => window.MOJITO_SWEEP ? Promise.resolve() : new Promise((ok, no) => {
+    const s = document.createElement('script'); s.src = 'data/sweep.js'; s.onload = ok; s.onerror = no; document.head.append(s);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works · Mojito</title>
+<meta name="description" content="The theory behind Mojito and how it is implemented: leg kinematics, the learned IK network, gaits, statics, the servo model and the physics set-up.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/results.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap has-math">
+  <div class="cols">
+    <nav class="toc" aria-label="On this page">
+      <a href="#pipeline">The pipeline</a><a href="#frames">Frames and conventions</a><a href="#leg">The leg</a>
+      <a class="sub" href="#fk">Forward kinematics</a><a class="sub" href="#jac">Jacobian</a><a class="sub" href="#ik">Closed-form IK</a>
+      <a href="#network">The learned solver</a><a class="sub" href="#calibration">Calibration</a>
+      <a href="#body">The body</a><a href="#gaits">Gaits</a><a href="#statics">Statics</a><a href="#servo">The servo model</a><a href="#physics">Physics</a>
+      <a href="#impl">Implementation notes</a><a href="#repro">Reproduce it</a>
+    </nav>
+    <div class="narrow" style="max-width:none">
+      <h1 class="no-rule">How it works</h1>
+      <p class="lede">The theory, and how each piece is implemented in the repository. Each section names the file that holds the code and the test that checks it against something independent.</p>
+
+      <h2 id="pipeline">The pipeline</h2>
+      <p>A command ("walk forward at 0.15 m/s") becomes foot positions, the foot positions become joint angles, the joint angles become servo torques, and the torques act on a simulated body. Each arrow is a module with its own tests, so a piece can be replaced (the closed-form IK by a network, the servo by a DC-motor model) without touching its neighbours.</p>
+      <figure class="card" style="padding:12px">
+        <svg viewBox="0 0 860 150" role="img" aria-label="Pipeline from URDF to physics" style="width:100%;height:auto">
+          <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" style="fill:var(--muted)"/></marker></defs>
+          <g style="font:600 12.5px var(--sans)">
+            <g><rect x="6" y="12" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--line)"/><text x="66" y="40" text-anchor="middle" style="fill:var(--ink)">URDF + manifest</text></g>
+            <g><rect x="160" y="12" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--line)"/><text x="220" y="40" text-anchor="middle" style="fill:var(--ink)">spec.py</text></g>
+            <g><rect x="314" y="12" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--blue)"/><text x="374" y="40" text-anchor="middle" style="fill:var(--ink)">leg IK</text></g>
+            <g><rect x="468" y="12" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--blue)"/><text x="528" y="40" text-anchor="middle" style="fill:var(--ink)">body.py</text></g>
+            <g><rect x="622" y="12" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--blue)"/><text x="682" y="40" text-anchor="middle" style="fill:var(--ink)">gaits.py</text></g>
+            <g><rect x="160" y="92" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--orange)"/><text x="220" y="120" text-anchor="middle" style="fill:var(--ink)">MuJoCo model</text></g>
+            <g><rect x="314" y="92" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--orange)"/><text x="374" y="120" text-anchor="middle" style="fill:var(--ink)">servo model</text></g>
+            <g><rect x="468" y="92" width="120" height="46" rx="8" style="fill:var(--soft);stroke:var(--orange)"/><text x="528" y="120" text-anchor="middle" style="fill:var(--ink)">replay + metrics</text></g>
+          </g>
+          <g style="stroke:var(--muted);stroke-width:1.6;fill:none" marker-end="url(#ah)">
+            <path d="M126 35H158" marker-end="url(#ah)"/><path d="M280 35H312" marker-end="url(#ah)"/><path d="M434 35H466" marker-end="url(#ah)"/><path d="M742 35H756"/>
+            <path d="M682 58V75H528V90" marker-end="url(#ah)"/><path d="M468 115H436" marker-end="url(#ah)"/><path d="M314 115H282" marker-end="url(#ah)"/><path d="M220 58V90" marker-end="url(#ah)"/>
+          </g>
+          <text x="640" y="88" style="fill:var(--muted);font:11.5px var(--sans)">foot targets</text>
+          <text x="760" y="40" style="fill:var(--muted);font:11.5px var(--sans)">command</text>
+        </svg>
+        <figcaption>Blue: geometry (Stages 0–1, no physics). Orange: physics (Stage 2). The joint angles from the IK become torques through the servo model and act on the MuJoCo body, whose geometry is generated from the same URDF the IK was built from.</figcaption>
+      </figure>
+
+      <h2 id="frames">Frames and conventions</h2>
+      <ul>
+        <li><b>Units:</b> metres and radians in code; millimetres and degrees only in printed output, plots and docs.</li>
+        <li><b>Leg frame:</b> origin at the shoulder, \(x\) forward, \(y\) lateral (away from the body for a left leg), \(z\) up. All leg maths is written for the left ("canonical") leg. A right leg is its mirror: flip \(y\) of the target going in and flip the abduction angle coming out.</li>
+        <li><b>Body frame:</b> origin at the centre of the four shoulders, \(x\) forward, \(y\) left, \(z\) up. Rotation is \(R = R_z(\psi)\,R_y(\theta)\,R_x(\phi)\) (yaw, pitch, roll), body to world. Legs are ordered FL, FR, RL, RR.</li>
+        <li><b>Link lengths are arguments, never constants</b>: \(\ell = (\ell_a, \ell_u, \ell_l)\), the abduction offset, upper leg and lower leg, so a batch can hold different legs. The URDF is the source of truth for geometry; the example URDFs are generated by <code>mojito/robots.py</code>.</li>
+      </ul>
+
+      <h2 id="leg">The leg</h2>
+      <p>Three joints: abduction \(a\) (rotation about \(x\)), hip pitch \(b\) (about \(y\)), and knee \(k\) (about \(y\), relative to the upper leg). The hip pitch and knee swing the leg in a plane that contains the \(x\) axis; the abduction then rotates that whole plane about \(x\). The knee bends one way only and stops short of straight (placeholder limits: abduction ±0.6, hip pitch 0 to 1.5, knee −2.3 to −0.3 rad), which makes the inverse problem have one answer and keeps clear of the fully extended singularity. <em>Changing the limits changes the problem and means retraining.</em></p>
+
+      <h3 id="fk">Forward kinematics <small class="muted">· <code>mojito/leg.py: forward</code></small></h3>
+      <p>The foot lies at</p>
+      <div class="eq">$$x = -\ell_u \sin b - \ell_l \sin(b+k), \qquad e = \ell_u \cos b + \ell_l \cos(b+k)$$
+      $$y = \ell_a \cos a + e \sin a, \qquad z = \ell_a \sin a - e \cos a$$</div>
+      <p>where \(e\) is the <em>extension</em>: the distance down the leg plane measured from the hip. The knee angle is relative to the upper leg, so the lower leg points along \(b+k\).</p>
+
+      <h3 id="jac">The Jacobian <small class="muted">· <code>leg.jacobian</code></small></h3>
+      <p>Differentiating the above, the matrix \(J = \partial p / \partial q\) with \(q=(a,b,k)\) has the columns</p>
+      <div class="eq">$$\frac{\partial p}{\partial a} = (0,\,-z,\,y)$$
+      $$\frac{\partial p}{\partial b} = (-e,\; x\sin a,\; -x\cos a)$$
+      $$\frac{\partial p}{\partial k} = \ell_l\,\big(-\cos(b+k),\; -\sin(b+k)\sin a,\; \sin(b+k)\cos a\big)$$</div>
+      <p>The abduction column is \((0,-z,y)\) because a rotation about the \(x\) axis moves the foot at right angles to its offset from that axis. The tests check the whole matrix against finite differences. The Jacobian is used for two things: weighting the training samples, and turning a force on the foot into joint torques (see <a href="#statics">statics</a>).</p>
+
+      <h3 id="ik">Closed-form inverse kinematics <small class="muted">· <code>leg.analytic_ik</code></small></h3>
+      <ol>
+        <li>\(y\) and \(z\) only see the offset \(\ell_a\) and the extension \(e\): \(y^2+z^2=\ell_a^2+e^2\), so \(e=\sqrt{y^2+z^2-\ell_a^2}\). The abduction is the direction of \((y,z)\) plus the angle the offset subtends: \(a=\operatorname{atan2}(z,y)+\operatorname{atan2}(e,\ell_a)\).</li>
+        <li>In the leg plane the foot is at \((x,e)\), a two-link arm. The law of cosines gives the knee: \(\cos k = \dfrac{x^2+e^2-\ell_u^2-\ell_l^2}{2\,\ell_u\ell_l}\), taking the negative root because the knee bends one way only.</li>
+        <li>The hip pitch is the direction to the foot minus the angle the bent lower leg adds: \(b=\operatorname{atan2}(-x,e)-\operatorname{atan2}\!\big(\ell_l\sin k,\;\ell_u+\ell_l\cos k\big)\).</li>
+      </ol>
+      <p>Unreachable targets are clamped to the nearest reachable distance rather than returning NaN. This is the <b>reference</b>: exact on an ideal leg, so the network is judged against it, and the tests of body and gait code use it so they do not depend on trained weights. The playground runs a JavaScript port of exactly this, checked against the Python in <code>tests/test_site_js.py</code>.</p>
+      <p><b>Try it:</b> drag the foot target in the original single-leg demo, and change the link lengths while you do.</p>
+      <iframe class="leg" src="media/leg_demo.html" title="Interactive single-leg inverse kinematics demo" loading="lazy"></iframe>
+
+      <h2 id="network">The learned solver</h2>
+      <p>If the closed form is exact, why learn it? Because the closed form needs the lengths to be right, and the real leg's lengths and servo zero points are not exactly known. The network takes the three lengths as <em>inputs</em>, so one network covers a family of legs, and adapting to a particular real leg means estimating a handful of numbers (see <a href="#calibration">calibration</a>), not retraining. It is also a stand-in for the harder case: limbs with more joints, where there is no closed form.</p>
+      <table>
+        <tr><th>Design choice</th><th>Why</th></tr>
+        <tr><td><b>Inputs:</b> the foot target (3 numbers) and the three link lengths. <b>Outputs:</b> three joint angles, squashed so they always lie inside the joint limits.</td><td>Every prediction is a legal pose. 3 hidden layers of 128 units, about 34,000 weights.</td></tr>
+        <tr><td><b>Loss through forward kinematics:</b> push the predicted angles through \(\mathrm{FK}\) and compare with the requested position: \(\mathcal L = \lVert \mathrm{FK}(\hat q,\ell) - p\rVert\).</td><td>The network is never shown the angles that generated the target, so it cannot average two valid poses into an invalid one.</td></tr>
+        <tr><td><b>Training data:</b> random joint angles through FK, with each link length varied ±10%.</td><td>Every target is reachable by construction.</td></tr>
+        <tr><td><b>Workspace-uniform sampling:</b> draw four candidates per leg and keep one with probability proportional to \(\lvert\det J\rvert\).</td><td>\(\lvert\det J\rvert\) is the local volume the foot sweeps per unit of joint motion, so this makes foot positions uniform over the reachable volume instead of piling up where the leg is folded. The effect is mild with the current limits.</td></tr>
+        <tr><td><b>One model for four legs:</b> mirror the target in and the abduction out for right legs.</td><td>Legs are nominally identical; per-leg differences enter through the length inputs.</td></tr>
+        <tr><td><b>Gradients:</b> NumPy backend uses a hand-derived Jacobian (checked against finite differences); the PyTorch backend uses autograd.</td><td>Both backends read and write the same <code>.npz</code> weight layout and are checked to agree on predictions, gradients and the path training takes.</td></tr>
+      </table>
+      <p><b>What it achieves:</b> median error <span data-bind="metrics.learned_varied_legs.median_mm" data-fmt="2" data-unit=" mm"></span> on unseen leg sizes, against <span data-bind="metrics.learned_assuming_nominal_lengths.median_mm" data-fmt="1" data-unit=" mm"></span> if told nothing about the lengths. <a href="results.html#s0">See the charts</a>. On an ideal leg the closed form is better; the network earns its place only by being adaptable.</p>
+
+      <h3 id="calibration">Calibration <small class="muted">· <code>scripts/calibrate.py</code></small></h3>
+      <p>Take \(N\) measured foot positions \(p_i\) for commanded joint angles \(q_i\). The unknowns are the true lengths \(\ell\) and per-joint zero offsets \(\delta\). Find the ones that make the forward kinematics reproduce the measurements: \(\min_{\ell,\delta}\sum_i \lVert \mathrm{FK}(q_i+\delta,\ell)-p_i\rVert^2\). Then hand \(\ell\) to the same network. In the simulated test (30 measurements, 1&nbsp;mm noise) the median error falls from <span data-bind="calibration.error_before_mm.median" data-fmt="1" data-unit=" mm"></span> to <span data-bind="calibration.error_after_mm.median" data-fmt="2" data-unit=" mm"></span>. Calibrated lengths can be written back into a copy of the URDF (<code>RobotSpec.write_back</code>).</p>
+
+      <h2 id="body">The body <small class="muted">· <code>mojito/body.py</code></small></h2>
+      <p><code>Robot</code> holds the four shoulder positions and each leg's lengths. A foot target in the body frame is moved into its leg's shoulder frame (subtract the shoulder, mirror for a right leg) and solved. <b>Posture</b> with the feet planted: if the body is shifted by \(d\) and rotated by \(R\), a foot fixed in the world appears in the new body frame at</p>
+      <div class="eq">$$p' = R^{\mathsf T}\,(p - d)$$</div>
+      <p>so posture control is a change of frame followed by IK. Joint-limit margin and reachability are checked against the exact solution.</p>
+
+      <h2 id="gaits">Gaits <small class="muted">· <code>mojito/gaits.py</code></small></h2>
+      <p>The gaits are <em>kinematic reference motions</em>: they say nothing about forces or balance. They give foot targets in the body frame at time \(t\) for a velocity command \((v_x, v_y)\) and yaw rate \(\omega\).</p>
+      <h3>Timing</h3>
+      <p>Four numbers per cycle: the <b>period</b>; the <b>duty</b> \(D\) (fraction of the cycle a foot is on the ground); four <b>offsets</b> \(o_i\) (the cycle phase at which leg \(i\) starts its stance); and the swing <b>lift</b>. Leg \(i\)'s phase is \(\varphi_i = (t/T - o_i) \bmod 1\); it is on the ground while \(\varphi_i<D\) and swinging after, so it lifts at \((o_i + D) \bmod 1\). Stance lasts \(DT\) and swing \((1-D)T\).</p>
+      <table>
+        <tr><th>Gait</th><th>Period</th><th>Duty</th><th>Offsets (FL, FR, RL, RR)</th><th>Idea</th></tr>
+        <tr><td>Trot</td><td>0.5 s</td><td>0.5</td><td>0, 0.5, 0.5, 0</td><td>Diagonal pairs together; two feet down at all times</td></tr>
+        <tr><td>Crawl</td><td>2.0 s</td><td>0.85</td><td>0.75, 0.25, 0.5, 0</td><td>One foot up at a time (RL, FL, RR, FR); body leans away from it</td></tr>
+        <tr><td>Pace</td><td>0.5 s</td><td>0.5</td><td>0, 0.5, 0, 0.5</td><td>Left legs together, then right (a test case: it goes backward in physics)</td></tr>
+      </table>
+      <h3>Stance: the foot is fixed in the world</h3>
+      <p>A grounded foot does not move in the world, so in the body frame it moves opposite to the body. For constant planar motion the heading after time \(s\) is \(\omega s\) and the displacement is the integral of the rotated velocity:</p>
+      <div class="eq">$$\Delta(s) = \int_0^{s} R(\omega u)\begin{pmatrix}v_x\\v_y\end{pmatrix}du = \begin{pmatrix}\tfrac{\sin\omega s}{\omega}v_x - \tfrac{1-\cos\omega s}{\omega}v_y\\[2pt] \tfrac{1-\cos\omega s}{\omega}v_x + \tfrac{\sin\omega s}{\omega}v_y\end{pmatrix}$$</div>
+      <p>which tends to \((s v_x, s v_y)\) as \(\omega\to0\). A stance foot sits at its home position half-way through stance. The tests check that grounded feet do not move in the world, for any mix of forward, sideways and turning speed, to a nanometre.</p>
+      <h3>Swing: lift and land</h3>
+      <p>A swinging foot travels from where its stance ended to where the next begins, with progress \(u\in[0,1]\) blended by \(u - \sin(2\pi u)/(2\pi)\), whose slope \(1-\cos 2\pi u\) is zero at both ends so the foot leaves and lands with zero horizontal speed, and lifted by \(h\sin^2(\pi u)\), which is zero at both ends with zero slope and peaks at \(h\) mid-swing.</p>
+      <h3>The crawl's lean</h3>
+      <p>While one foot is in the air, the body shifts \(s\) (the <em>sway</em>) away from it, so the centre of mass is over the triangle of the three feet still down. Between leans the shift blends with a smoothstep \(3x^2-2x^3\) so the body is already across before a foot leaves the ground. It acts only when no two swings overlap (duty 0.75 or more).</p>
+      <h3>Stability margin</h3>
+      <p>For three or more grounded feet, the signed distance from a point to each edge of the support polygon is the 2-D cross product of the edge and the point's offset, divided by the edge length; the margin is the smallest of them (positive inside). With fewer than three feet the support is a line and the margin is minus the distance to it. In the crawl the body centre stays at least <span data-bind="body_metrics.crawl_forward.body_centre_inside_support_mm_min" data-fmt="1" data-unit=" mm"></span> inside; in the trot it is never inside, which is why the trot's balance needs dynamics.</p>
+
+      <h2 id="statics">Statics: how heavy can it be? <small class="muted">· <code>mojito/statics.py</code></small></h2>
+      <p>With the robot still, the weight \(W\) at the centre of mass \((c_x,c_y)\) is carried by the vertical loads \(f_i\) on the grounded feet at \((x_i,y_i)\):</p>
+      <div class="eq">$$\sum f_i = W,\qquad \sum f_i x_i = W c_x,\qquad \sum f_i y_i = W c_y$$</div>
+      <p>For three feet this is a 3×3 linear system with a unique answer, and a negative load means the centre of mass is outside the support triangle (the robot would tip). For four feet it is redundant, which is why the <a href="playground.html">playground</a> makes an assumption there, and the <a href="results.html#s2b">MuJoCo results</a> show the real split is not even. By virtual work (\(\tau\cdot\delta q = F\cdot\delta p\)) the joint torques that hold a force \(F\) on the foot are</p>
+      <div class="eq">$$\tau = J^{\mathsf T} F,\qquad F = (0,0,f_i)$$</div>
+      <p>The heaviest robot a stance can hold is the weight at which the worst joint reaches the torque limit: because \(\tau\) scales with \(W\), it is \(W_{\max} = \tau_{\text{limit}} / (\tau \text{ per newton of weight})\). In every stance the knee is the limiting joint, because with the foot under the hip the knee is offset about 106&nbsp;mm horizontally from the foot and must resist that share of the weight across that lever arm. A worked example, trot at 5&nbsp;V and half of stall: knee torque per kilogram \(= 0.5\times 9.81\times 0.106 \approx 0.52\) N·m; the servo allows 0.93 N·m; \(0.93/0.52 \approx 1.8\) kg.</p>
+      <div class="callout limit"><b>An upper bound only.</b> This leaves out leg and servo mass, gait dynamics and landing impacts, friction limits and heat. "Half of stall" is an assumed continuous rating, not a datasheet value.</div>
+
+      <h2 id="servo">The servo model <small class="muted">· <code>mojito/actuators.py</code></small></h2>
+      <p>The commanded joint target is not necessarily the angle reached, and a hobby servo reports nothing back. The model is a chain, applied per joint at every physics step:</p>
+      <ol>
+        <li><b>Quantise</b> the target to the PCA9685's step: 4096 counts per 20&nbsp;ms, so one count is 4.9&nbsp;µs; the listed 500–2500&nbsp;µs range is about 410 counts, about 0.66° per count over 270°.</li>
+        <li><b>Delay</b> it by the latency (20&nbsp;ms, assumed).</li>
+        <li><b>PD law</b> on the delayed target: \(\tau = k_p (q^\ast - q) - k_d\,\dot q\).</li>
+        <li><b>Torque-speed limit.</b> Available torque falls linearly from the stall torque at rest to zero at the no-load speed, as for a brushed motor: \(\tau_{\max}(\dot q)=\tau_{\text{stall}}\,(1-\lvert\dot q\rvert/\omega_{0})\), applied to torque along the direction of motion only (braking is not reduced). Stall torque and no-load speed vary with the supply voltage, on a straight line between the listed 5&nbsp;V and 6.8&nbsp;V points.</li>
+      </ol>
+      <div class="card chart-card" style="margin:1.2em 0"><h4>Torque-speed line</h4><p class="sub">available torque along the direction of motion, from the model's formulas</p>
+        <div class="row" style="grid-template-columns:110px 1fr 60px;max-width:420px"><label for="volts">supply voltage</label><input type="range" id="volts" min="5" max="6" step="0.1" value="5"><output id="volts-v">5.0 V</output></div>
+        <div id="c-servo"></div>
+        <p class="read">Listed (unverified) figures: 19 kg·cm and 0.16 s/60° at 5 V; 21.5 kg·cm and 0.14 s/60° at 6.8 V; 1 kg·cm = 0.0980665 N·m. The model refuses to run outside 5–6 V.</p></div>
+      <p>Test against a closed form: a servo holding a mass \(m\) on a horizontal arm of length \(L\) settles at the root of \(k_p q = m g L\cos q\) while the torque is below the limit, and above the limit sags until \(\cos q = \tau_{\text{stall}}/(m g L)\). The gains (kp 10, kd 0.2) are placeholders, and the physics results depend on them: <a href="results.html#s2c">kp 10 against kp 100</a> changes the crawl from 0.028 to 0.040&nbsp;m/s.</p>
+
+      <h2 id="physics">Physics <small class="muted">· <code>mojito/mjcf.py</code>, <code>stand.py</code>, <code>gait_replay.py</code></small></h2>
+      <ul>
+        <li><b>The model is generated from the URDF</b>, so a leg-length change reaches both the IK and the simulator: floating base, joint limits from the URDF, a site at each foot tip and at the body origin, a floor with friction, capsule links with placeholder masses (about 1.7&nbsp;kg in total). Only the foot pads and the floor collide. Foot positions from MuJoCo equal the kinematics code to 1e-9&nbsp;m.</li>
+        <li><b>Servos are torque motors.</b> The servo model above turns the IK joint targets into torques at each 2&nbsp;ms step; MuJoCo does the rest. Nothing holds the body up or moves it along.</li>
+        <li><b>A replay</b> stands for 1&nbsp;s, blends from the standing feet to the gait over 0.5&nbsp;s, then walks whole cycles. <b>Measured velocity</b> is the body displacement over the walking phase.</li>
+        <li><b>Definitions used in the metrics.</b> A foot is <em>planted</em> if it carries more than 0.5&nbsp;N for two consecutive steps; <em>slip</em> is a planted foot's horizontal movement per step; a run <em>walked</em> if the body stayed within 30° of upright, never sank below half the stance height, and the walk finished.</li>
+        <li><b>The "ask".</b> A planted foot is fixed in the world, so a foot whose commanded body-frame velocity is \(v\) asks the body to move at \(-v\). The <em>ask</em> is that, averaged over the loaded feet weighted by normal force. When the measured speed is well below the ask, the servos are not following; when the ask itself is below the command, weight is on feet that were told to swing.</li>
+        <li><b>Ground truth stays out of the policy.</b> Foot and base world positions are used for evaluation and rewards, never as policy observations; the simulated sensors report noisy, quantised, delayed readings instead.</li>
+      </ul>
+
+      <h2 id="impl">Implementation notes</h2>
+      <table>
+        <tr><th>Decision</th><th>Reason</th></tr>
+        <tr><td>Backends behind one interface (<code>predict</code>, <code>predict_leg</code>, <code>train_step</code>, <code>loss_and_grads</code>, <code>state</code>, <code>save</code>, <code>load</code>, <code>to_json</code>), the same <code>.npz</code> layout, NumPy by default</td><td>PyTorch is optional and only imported when asked for; a parity test keeps them identical.</td></tr>
+        <tr><td>The URDF is the single source of truth; weights embed the limb spec and raise <code>SpecMismatch</code> against a different URDF</td><td>Joint-limit changes need retraining; link-length changes do not, so lengths are inputs.</td></tr>
+        <tr><td>New maths gets a test against something independent: finite differences, the closed-form IK, or a conservation property ("grounded feet do not move in the world")</td><td>A test that recomputes the same formula proves nothing.</td></tr>
+        <tr><td>Numbers quoted anywhere come from a run, normally <code>results/*.json</code>, and say what was measured and on what</td><td>This site reads those files; it holds no measured number of its own.</td></tr>
+        <tr><td>MuJoCo and PyTorch are optional dependencies; their tests skip if absent</td><td>The geometry stages run with NumPy, SciPy, Matplotlib and Pillow only.</td></tr>
+        <tr><td>Plots follow one palette, one y-axis per chart, text in neutral ink</td><td>Readable and consistent in light and dark.</td></tr>
+      </table>
+
+      <h2 id="repro">Reproduce it</h2>
+<pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
+pip install -r requirements.txt            # NumPy, SciPy, Matplotlib, Pillow
+python -m unittest discover tests          # all tests (PyTorch, MuJoCo and Node ones skip if absent)
+python scripts/evaluate.py                 # network against exact IK -> results/metrics.json
+python scripts/make_body_demos.py          # posture, trot, crawl -> results/body_metrics.json, GIFs
+pip install mujoco
+python scripts/stand_test.py               # stand test in physics
+python scripts/gait_replay.py              # trot and crawl in physics
+python scripts/live_gait.py                # live gait explorer at 127.0.0.1:8765
+python scripts/site_sweep.py               # the 144 runs behind the physics lab on this site
+python scripts/build_site.py &amp;&amp; python -m http.server -d site   # this website</code></pre>
+    </div>
+  </div>
+</main>
+<script src="assets/charts.js"></script>
+<script>
+document.addEventListener('mojito-ready', () => {
+  const KGCM = 0.0980665, lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+  const el = document.getElementById('c-servo'), range = document.getElementById('volts'), out = document.getElementById('volts-v');
+  function draw() {
+    const v = parseFloat(range.value); out.textContent = v.toFixed(1) + ' V';
+    const stall = lerp(v, 5, 19 * KGCM, 6.8, 21.5 * KGCM), noload = lerp(v, 5, (Math.PI / 3) / 0.16, 6.8, (Math.PI / 3) / 0.14);
+    const ref = lerp(5, 5, 19 * KGCM, 6.8, 21.5 * KGCM), refNo = (Math.PI / 3) / 0.16;
+    Charts.line(el, { x: { label: 'joint speed, rad/s', domain: [0, 7], zero: true, fmt: x => x }, y: { label: 'available torque, N·m', domain: [0, 2.2], fmt: x => x.toFixed(1) },
+      series: [{ name: 'at 5 V', color: 'var(--muted)', dashed: true, width: 1.6, points: [[0, ref], [refNo, 0]] }, { name: `at ${v.toFixed(1)} V`, color: 'var(--blue)', width: 2.6, points: [[0, stall], [noload, 0]] }],
+      hlines: [{ y: stall / 2, label: 'half of stall', color: 'var(--orange)' }], aspect: 2.4 });
+  }
+  range.addEventListener('input', draw); draw();
+});
+</script>
+</body>
+</html>

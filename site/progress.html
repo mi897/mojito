@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progress · Mojito</title>
+<meta name="description" content="A stage-by-stage report: what was built, what was measured, what it does not show, and what is next.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/results.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <div class="cols">
+    <nav class="toc" aria-label="On this page">
+      <a href="#summary">Summary</a><a href="#stage0">Stage 0 · one leg</a><a href="#stage1">Stage 1 · whole body</a><a href="#urdf">URDF layer</a>
+      <a href="#stage2">Stage 2 · physics</a>
+      <a class="sub" href="#wp0">0 · static mass bound</a><a class="sub" href="#wp1">1 · MuJoCo model</a><a class="sub" href="#wp2">2 · servo and sensors</a><a class="sub" href="#wp3">3 · stand test</a><a class="sub" href="#wp4">4 · gaits in physics</a><a class="sub" href="#wp5">5–7 · what is next</a>
+      <a href="#hardware">Hardware decisions</a><a href="#stage34">Stages 3 and 4</a><a href="#open">Open questions</a>
+    </nav>
+    <div>
+      <h1 class="no-rule">Progress report</h1>
+      <p class="lede">What has been built, what was measured on each step, what the measurement does not show, and what comes next. Numbers are read from <code>results/*.json</code>; the reasoning is in <code>docs/PLAN.md</code> and <code>docs/STAGE2.md</code> (see <a href="reports.html">full reports</a>).</p>
+
+      <h2 id="summary">Summary</h2>
+      <ul>
+        <li><b>Done:</b> a learned inverse-kinematics network for one leg that handles legs of different sizes; whole-body posture, trot and crawl; a URDF-driven robot description; a MuJoCo model, a servo and sensor model, a stand test and a replay of the gaits in physics.</li>
+        <li><b>Learned in physics so far:</b> a 1.5&nbsp;kg robot with near-weightless legs stands within 0.5% of the static torque calculation; the stand and the rise fail well below the static mass bound; the trot and crawl stay upright but do not reach the commanded speed, mostly because the placeholder servo gain is soft.</li>
+        <li><b>Next:</b> a design sweep over link lengths, body size and mass (work package 5), a mechanical-fit check (6), then locomotion learning (7).</li>
+        <li><b>Not true yet:</b> there is no robot, no real dimension, no measured servo figure, and no learned locomotion. Every result below is on placeholders.</li>
+      </ul>
+
+      <h2 id="timeline">Timeline</h2>
+      <div class="timeline">
+
+        <div class="tl done" id="stage0"><h3>Stage 0 · One leg, learned inverse kinematics <span class="pill done">done</span></h3>
+          <p><b>Question:</b> can one small network turn "put the foot here" into joint angles, for a whole family of slightly different legs, accurately enough to be useful?</p>
+          <p><b>Built:</b> forward kinematics, Jacobian and closed-form IK for the 3-joint leg; a network whose inputs are the foot target and the three link lengths and whose outputs are squashed into the joint limits; training with the loss taken <em>through forward kinematics</em>; a calibration routine; two interchangeable backends (NumPy and PyTorch) with the same weight files.</p>
+          <p><b>Measured:</b> median foot error <b data-bind="metrics.learned_varied_legs.median_mm" data-fmt="2" data-unit=" mm"></b>, 95th percentile <span data-bind="metrics.learned_varied_legs.p95_mm" data-fmt="2" data-unit=" mm"></span>, worst <span data-bind="metrics.learned_varied_legs.max_mm" data-fmt="1" data-unit=" mm"></span> on 200,000 unseen targets and leg sizes. Assuming every leg is nominal, the median is <span data-bind="metrics.learned_assuming_nominal_lengths.median_mm" data-fmt="1" data-unit=" mm"></span>. Calibrating a simulated leg with unknown lengths and servo offsets from 30 noisy measurements brings the median from <span data-bind="calibration.error_before_mm.median" data-fmt="1" data-unit=" mm"></span> to <span data-bind="calibration.error_after_mm.median" data-fmt="2" data-unit=" mm"></span>, with no retraining.</p>
+          <p><b>Done-when criteria met:</b> median under 1 mm and 95th under 2 mm; accuracy kept across the ±10% range of lengths; a simulated "real" leg brought back to that accuracy.</p>
+          <p class="small muted"><b>Does not show:</b> anything about physics. The closed-form solution is exact on an ideal leg and about 40× faster; the network is worth having only because it adapts.</p>
+          <p><a href="results.html#s0">Charts →</a> · <a href="theory.html#network">How the network works →</a></p>
+        </div>
+
+        <div class="tl done" id="stage1"><h3>Stage 1 · Whole body, still geometry <span class="pill done">done</span></h3>
+          <p><b>Built:</b> body-frame foot targets for a commanded posture (height, shift, roll, pitch, yaw) with the feet planted; scripted trot and crawl from a velocity command (forward, sideways, yaw rate); stance feet held exactly fixed in the world; a crawl that leans the body away from the lifted foot; one shared leg network driving all four legs, each leg with its own lengths.</p>
+          <p><b>Measured:</b> across the posture, trot and turning demos and the crawl, the network's worst foot error is <span data-bind="body_metrics.crawl_forward.foot_error_mm.max" data-fmt="2" data-unit=" mm"></span> at most (the crawl; the others are lower) and every requested target is inside the joint limits. The crawl keeps the body centre at least <b data-bind="body_metrics.crawl_forward.body_centre_inside_support_mm_min" data-fmt="1" data-unit=" mm"></b> inside the triangle of grounded feet (treating the body centre as the centre of mass, an assumption).</p>
+          <p class="small muted"><b>Does not show:</b> balance, torque or grip. The trot has two feet down, so the body centre is never inside a support polygon (up to <span data-bind="body_metrics.trot_forward.body_centre_inside_support_mm_min" data-scale="-1" data-fmt="1" data-unit=" mm"></span> off the line between the grounded feet). The crawl's lean is quick (50 mm in 0.2 s). The gaits take a constant velocity command only.</p>
+          <p><a href="results.html#s1">Charts →</a> · <a href="demos.html">Animations →</a></p>
+        </div>
+
+        <div class="tl done" id="urdf"><h3>Robot description · URDF as the source of truth <span class="pill done">done</span></h3>
+          <p>The robot's geometry lives in a URDF so other tools can read it. A parsing layer derives the network's description from it (joint count, axes, limits, number of free lengths), saved weights carry a signature and refuse to load against a different URDF, and a quadruped, a hexapod and a planar leg are included as examples. Limbs with the same structure share a network; mirrored limbs reuse it with sign flips found and checked numerically.</p>
+          <p class="small muted"><b>Limits:</b> serial chains only; gaits assume four legs; limbs with more than three joints need redundancy resolved (Stage 2).</p>
+        </div>
+
+        <div class="tl wip" id="stage2"><h3>Stage 2 · Physics simulation <span class="pill wip">in progress: 5 of 8 work packages</span></h3>
+          <p>No physical robot exists, so the stage opens as a <b>design-exploration tool</b> (try dimensions in simulation before fixing the design) and learning comes after. The design placeholders are 1.25× the Stage 0–1 ones, so the servos (about 40×20×40.5&nbsp;mm and 60&nbsp;g, listed) are not bigger than the legs: 50/150/150&nbsp;mm links, 212.5&nbsp;mm standing height, 300×150&nbsp;mm shoulder spacing.</p>
+
+          <details open id="wp0"><summary>0 · Static mass bound <span class="pill done">done</span></summary>
+            <p>Joint torque to hold the body's weight in three stances, from vertical foot loads only. At 5&nbsp;V and half of the unverified listed stall torque: <b data-bind="torque_envelope/max_total_mass_kg/stand_4_feet/5.0 V derate 0.5" data-fmt="2" data-unit=" kg"></b> standing, <span data-bind="torque_envelope/max_total_mass_kg/crawl_3_feet/5.0 V derate 0.5" data-fmt="2" data-unit=" kg"></span> in the crawl, <span data-bind="torque_envelope/max_total_mass_kg/trot_2_feet/5.0 V derate 0.5" data-fmt="2" data-unit=" kg"></span> in the trot. The knee decides. Longer legs mean a lighter robot. <b>Working target (a recommendation, not a result):</b> treat 1.5&nbsp;kg as an upper limit and aim below it.</p>
+            <p class="small muted">Leaves out leg and servo mass (twelve servos are 0.72&nbsp;kg alone), gait dynamics, friction and heat: an upper bound, not a mass the robot can walk with.</p></details>
+
+          <details id="wp1"><summary>1 · MuJoCo model generated from the URDF <span class="pill done">done</span></summary>
+            <p>A leg-length change reaches both the IK input and the simulator. Foot positions from MuJoCo equal the kinematics code to 1e-9&nbsp;m for 25 random draws of lengths, body size, joint angles and base pose; joint ranges equal the URDF's; a stiffly held stance dropped on the floor ends on four contacts whose normal force sums to the weight within 3%. Placeholder masses total about 1.7&nbsp;kg.</p></details>
+
+          <details id="wp2"><summary>2 · Servo and sensor model <span class="pill done">done</span></summary>
+            <p>A position servo with a quantised, delayed command, a PD law, and a torque-speed limit that depends on supply voltage (5–6&nbsp;V, straight line between the listed 5&nbsp;V and 6.8&nbsp;V points); a joint-angle sensor with noise, quantisation, delay and offset; an IMU with gyro and accelerometer noise and drifting bias. Tested against a closed form: a servo holding a mass on a horizontal arm settles at the root of kp·q = m·g·L·cos q, and above the limit sags until the torque equals the stall value. <span class="small muted">The gains (kp 10, kd 0.2), latency (20&nbsp;ms) and sensor noise are placeholders, not measurements.</span></p></details>
+
+          <details id="wp3"><summary>3 · Stand test and sit-to-stand <span class="pill done">done</span></summary>
+            <p>With a 1.5&nbsp;kg robot and near-weightless legs the servo torques equal the static calculation given the <em>measured</em> foot loads to within 0.5%. The feet do <b>not</b> share the weight equally (24% on each front foot, 26% on each rear for light legs; 20% and 30% with the placeholder masses), so the equal-quarter prediction is up to 8% off. The robot stands up to 4&nbsp;kg with the default gain and falls at 4.5&nbsp;kg; with a stiffer gain it stands to 5.5&nbsp;kg and falls at 6&nbsp;kg: below the 7.18&nbsp;kg static bound either way. Rising from a 140&nbsp;mm crouch, the crouch is the hardest pose (25% more knee torque per newton than standing).</p>
+            <p class="small muted"><b>Does not show:</b> a real robot's limit (the collapse mass moved from 4.5 to 6&nbsp;kg between two gain settings). Only one collapse mechanism was traced.</p>
+            <p><a href="results.html#s2b">Charts →</a></p></details>
+
+          <details id="wp4"><summary>4 · Trot and crawl replayed in physics <span class="pill done">done</span></summary>
+            <p>All nine runs finished upright (largest tilt in any run: see the chart). But the body does not reach the commanded speed: the trot at 0.15&nbsp;m/s made <b data-bind="gait_replay.runs.2.measured_forward_lateral_velocity_m_s.0" data-fmt="3" data-unit=" m/s"></b>, the crawl at 0.04&nbsp;m/s made <b data-bind="gait_replay.runs.7.measured_forward_lateral_velocity_m_s.0" data-fmt="3" data-unit=" m/s"></b>, and marching in place drifts backward.</p>
+            <p><b>Diagnosis (measured separately).</b> (1) The placeholder servos are soft: at kp&nbsp;100 the crawl reaches 0.040&nbsp;m/s and the trot 0.095&nbsp;m/s. Latency and command resolution made no difference. (2) In the trot, about a quarter of the load sits on feet commanded to swing (the rear legs sag under the weight, so a 30&nbsp;mm swing does not clear the ground), and no servo setting fixed that. A taller swing raised the speed but also the tilt, and no fix was established.</p>
+            <p><b>The pace gait goes backward</b> (left legs together, then right): the body rolls toward the lifted side until the lifted feet touch the floor, loading the feet it is trying to swing. This explains the base case but not every variation, so something else also contributes.</p>
+            <p>A live explorer (<code>scripts/live_gait.py</code>) and a gait-timing tool (<code>scripts/try_gait.py</code>) came with this work package; the <a href="playground.html#phys">physics lab</a> on this site replays a grid of 144 recorded runs.</p>
+            <p><a href="results.html#s2c">Charts →</a></p></details>
+
+          <details open id="wp5"><summary>5, 6, 7 · What is next <span class="pill todo">planned</span></summary>
+            <ul>
+              <li><b>5 · Design sweep.</b> Vary link lengths, body size and mass; report which designs stand, which gaits survive, and the torque margin, with the sweep ranges and mass assumptions stated. The <a href="playground.html">kinematic lab</a> is a manual preview of this.</li>
+              <li><b>6 · Mechanical fit and structure check.</b> Servo-sized boxes in the model, a mass budget (servos, battery, electronics, frame, sensors), battery and electronics volume against the body, link stiffness and strength against the peak joint torque. Needs the owner's battery and electronics choices.</li>
+              <li><b>7 · Locomotion learning.</b> A policy acting in foot space through the IK layer, with randomised mass, friction, servo strength and latency; the current-angle input and smoothness penalties return here. Only after 1–6.</li>
+            </ul></details>
+          <p class="small muted">Masses and inertias are guesses until a real design exists, so a torque margin from the sweep will compare designs rather than predict a built robot. Foot friction needs a measured coefficient before slip results mean anything.</p>
+        </div>
+
+        <div class="tl" id="stage34"><h3>Stages 3 and 4 · The real robot, and the loop <span class="pill todo">planned</span></h3>
+          <p><b>Stage 3.</b> Decide the measurement source first (everything learned from real interaction needs to know where the feet or body went): stance feet on a flat floor plus an IMU, a single camera with markers, or motion capture, in rising cost. Calibrate each leg (lengths, servo zero offsets) with the Stage 0 procedure, and add a small learned per-leg correction if a systematic error remains.</p>
+          <p><b>Stage 4.</b> Log real experience, fit the simulator's parameters to it, retrain or fine-tune, redeploy; generate new simulated environments aimed at whatever the real robot is currently bad at.</p>
+        </div>
+      </div>
+
+      <h2 id="hardware">Hardware decisions so far</h2>
+      <table>
+        <tr><th>Item</th><th>Decision</th><th>Still open</th></tr>
+        <tr><td>Actuators, first robot</td><td>20&nbsp;kg·cm hobby servos ("DSServo DS3218 20KG"), 5–6&nbsp;V, no position feedback</td><td>Datasheet figures: torque and speed are retailer numbers, and 5–6&nbsp;V is interpolated between listed 5 and 6.8&nbsp;V points</td></tr>
+        <tr><td>Actuators, later</td><td>DC motors with position, velocity and current feedback</td><td>The actuator is an interface so the policy code need not change</td></tr>
+        <tr><td>Joint sensing</td><td>Custom Hall-effect boards, in line with the joint axis, close to the motor</td><td>Hall chip, resolution and magnet details (tabled)</td></tr>
+        <tr><td>Controller</td><td>ESP32 driving a PCA9685 over I²C; IMU wired to the ESP32; no Raspberry Pi</td><td>IMU model; the PCA9685 board's voltage rating against the 6&nbsp;V rail</td></tr>
+        <tr><td>Power</td><td>2S 1500&nbsp;mAh LiPo, one battery, separate servo and logic regulators</td><td>Regulator current rating (twelve servos at stall would draw about 27&nbsp;A; the real peak is unknown)</td></tr>
+        <tr><td>Learning and logging</td><td>Off board; control and logging over the network to a laptop; joint timing stays on the microcontroller</td><td>Body position in the world (needs an external system)</td></tr>
+      </table>
+
+      <h2 id="open">Open questions for the owner</h2>
+      <ol>
+        <li>Real link lengths, abduction offset, body dimensions and joint limits. They are to be explored in simulation (work package 5).</li>
+        <li>The servo datasheet figures, and the tabled sensor details.</li>
+        <li>The regulators, the PCA9685 board rating, and the IMU.</li>
+        <li>How foot or body position will be measured on the real robot. Simulation ground truth is used for now and is kept out of policy observations.</li>
+      </ol>
+    </div>
+  </div>
+</main>
+</body>
+</html>

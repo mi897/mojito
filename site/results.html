@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results · Mojito</title>
+<meta name="description" content="Every measured result of the Mojito project, graphed from the committed results files.">
+<link rel="stylesheet" href="assets/site.css">
+<script src="data/build.js"></script>
+<script src="data/results.js"></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <h1 class="no-rule">Results</h1>
+  <p class="lede">Every chart below is drawn from a JSON file in <code>results/</code>, produced by a script in <code>scripts/</code>. Hover a point or bar for its value.
+    Under each chart: what was measured, and what it does not show.</p>
+  <div class="notice"><b>Read this before trusting any number.</b> Stages 0 and 1 are pure geometry: nothing here says the robot balances, that its servos are strong enough, or that its feet grip.
+    The physics results (Stage 2) are MuJoCo with placeholder dimensions, masses, gains and friction, and unverified servo figures; most are one run per case.</div>
+  <nav class="small" aria-label="Sections"><a href="#s0">Stage 0: one leg</a> · <a href="#s1">Stage 1: whole body</a> · <a href="#s2a">Stage 2: how heavy</a> · <a href="#s2b">Stage 2: standing</a> · <a href="#s2c">Stage 2: walking in physics</a> · <a href="#plots">Original plots</a></nav>
+
+  <h2 id="s0">Stage 0: one leg, learned inverse kinematics</h2>
+  <p>One network (3 hidden layers of 128, about 34,000 weights) maps a foot target and the leg's three link lengths to joint angles. Tested on <span data-bind="metrics.test_targets" data-fmt="0"></span> foot targets and leg sizes it never saw. The leg reaches <span data-bind="metrics.reach_mm" data-fmt="0"></span> mm.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Foot position error on unseen targets</h4><p class="sub">millimetres</p><div id="c-err"></div>
+      <p class="read">The length input is what makes one network cover many legs: told each leg's lengths, the median error is <b data-bind="metrics.learned_varied_legs.median_mm" data-fmt="2" data-unit=" mm"></b>; assuming every leg is nominal it is <b data-bind="metrics.learned_assuming_nominal_lengths.median_mm" data-fmt="1" data-unit=" mm"></b>. The worst case, <span data-bind="metrics.learned_varied_legs.max_mm" data-fmt="1" data-unit=" mm"></span>, is at the edge of the workspace and is about 3% of the reach. The closed-form solution is exact on an ideal leg (error ~1e-13 mm) and about <span id="speedratio"></span>× faster in a batch; the network earns its place by being adaptable, not by being better on an ideal leg.</p></div>
+    <div class="card chart-card"><h4>Accuracy outside the trained range</h4><p class="sub">median and 95th percentile foot error as all links are scaled together; training varied each link by ±10%</p><div id="c-scale"></div>
+      <p class="read">Accuracy falls off smoothly outside the ±10% the network was trained on. At ±20% the median is <span data-bind="metrics.length_scale_sweep.0.median_mm" data-fmt="1" data-unit=" mm"></span> (−20%) and <span id="scale20"></span> mm (+20%).</p></div>
+    <div class="card chart-card"><h4>Training curve</h4><p class="sub">foot position error on a fixed validation draw during training, log scale</p><div id="c-train"></div>
+      <p class="read">40,000 steps, batch 2048, Adam, <span id="trainsec"></span> s on 2 CPU cores. The loss is foot position through forward kinematics, never error against the sampled joint angles.</p></div>
+    <div class="card chart-card"><h4>Adapting to one specific leg</h4><p class="sub">a simulated leg with unknown lengths (+6%, −5%, +8%) and servo zero points (2°, −3°, 4°), from 30 noisy foot measurements; no retraining</p><div id="c-cal"></div>
+      <p class="read" id="cal-read"></p></div>
+  </div>
+  <figure><img src="media/step_demo.gif" alt="Three leg sizes tracing the same step" loading="lazy" style="max-width:640px;width:100%"><figcaption>Three leg sizes tracing the same step with the same network (the lengths are an input).</figcaption></figure>
+
+  <h2 id="s1">Stage 1: whole body, still geometry</h2>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Worst foot error in each body demo</h4><p class="sub">millimetres, network against the requested foot position</p><div id="c-body"></div>
+      <p class="read">Posture, trot, turning trot and crawl all stay under 0.3 mm. Every requested foot position is inside the joint limits, and the network's angles differ from the exact solution by at most <span id="maxdiff"></span>°.</p></div>
+    <div class="card chart-card"><h4>Closest any joint gets to its limit</h4><p class="sub">degrees</p><div id="c-margin"></div>
+      <p class="read">Positive means room to spare. These are placeholder limits.</p></div>
+  </div>
+  <table id="t-body"></table>
+  <div class="callout limit"><b>What Stage 1 does not show.</b> Grounded feet are held fixed in the world by construction (tests check it to a nanometre), and the crawl keeps the body centre inside the triangle of grounded feet on paper. That treats the body centre as the centre of mass, and with two feet down (the trot) the body centre is never inside a support polygon: it ends up to <span id="trotout"></span> mm off the line between the grounded feet. Balance needs physics.</div>
+
+  <h2 id="s2a">Stage 2: how heavy can it be? (static bound)</h2>
+  <p>The joint torque needed to hold the body's weight in a pose, from vertical foot loads only, with the Stage 2 design placeholders (50/150/150 mm legs, 212.5 mm stand, 300×150 mm body) and the <em>unverified</em> listed stall torque of the servo.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Heaviest total mass a stance can hold</h4><p class="sub">kg; "half" assumes only half the stall torque is available continuously (an assumption, not a datasheet value)</p><div id="c-env"></div>
+      <p class="read">The knee decides: with the foot under the hip, the hip-pitch joint carries almost no static torque. This leaves out leg and servo mass (twelve listed servos are 0.72 kg alone), gait dynamics, friction and heat, so it is an upper bound, not a mass the robot can walk with.</p></div>
+    <div class="card chart-card"><h4>Longer legs mean a lighter robot</h4><p class="sub">heaviest mass at 5 V and half of stall, against leg length scale (1.0 = the 150 mm design)</p><div id="c-envscale"></div>
+      <p class="read">Mass scales inversely with leg length.</p></div>
+  </div>
+
+  <h2 id="s2b">Stage 2: standing and rising in physics</h2>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Standing: peak servo torque against robot mass</h4><p class="sub">fraction of the 1.86 N·m stall torque, whole run; light legs, 5 V; open marker = the robot fell</p><div id="c-stand"></div>
+      <p class="read">With the default gain (kp 10) the robot stands up to 4 kg and falls at 4.5 kg; with kp 100 it stands up to 5.5 kg and falls at 6 kg. Both fall below the 7.18 kg static bound, and the answer moves with gains that are placeholders.</p></div>
+    <div class="card chart-card"><h4>Rising from a 140 mm crouch</h4><p class="sub">peak servo torque fraction during the rise, kp 10, 0.66° command steps; open marker = did not stand</p><div id="c-sit"></div>
+      <p class="read">Faster rises cost torque; the crouch is the hardest pose (25% more knee torque per newton than standing). 5 kg does not rise at any rise time.</p></div>
+    <div class="card chart-card"><h4>The feet do not share the weight equally</h4><p class="sub">percent of the weight on each foot (an equal share would be 25%)</p><div id="c-share"></div>
+      <p class="read">The knees all bend backward, so the weight moves rearward. The mechanism was not traced.</p></div>
+    <div class="card"><h4>Against the static calculation</h4><p id="static-read" class="small"></p></div>
+  </div>
+
+  <h2 id="s2c">Stage 2: walking in physics</h2>
+  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Commanded against measured forward speed</h4><p class="sub">m/s; the dashed line is "does what it is told"</p><div id="c-speed"></div>
+      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed. Marching in place drifts backward.</p></div>
+    <div class="card chart-card"><h4>Peak servo torque while walking</h4><p class="sub">fraction of the 5 V stall torque</p><div id="c-torque"></div>
+      <p class="read">The crawl runs the servos at their limit; the reason was not traced. Standing with these masses peaks at 0.28.</p></div>
+    <div class="card chart-card"><h4>Why the trot falls short of 0.15 m/s</h4><p class="sub">measured body speed, and the speed the loaded feet's commanded motion would give ("ask")</p><div id="c-diag"></div>
+      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely and part of the trot's. The rest is rear feet that still carry weight when commanded to swing, which no servo setting fixed.</p></div>
+    <div class="card chart-card"><h4>Trot at 0.15 m/s: what the grid of runs says</h4><p class="sub">measured speed against servo stiffness, for three masses (swing 30 mm)</p><div id="c-sweep"><p class="muted small">Loading the recorded runs…</p></div>
+      <p class="read">From the playground's 144 recorded runs, one run per point.</p></div>
+  </div>
+  <table id="t-diag"></table>
+  <div class="callout limit"><b>Not shown.</b> Any real robot's behaviour; other speeds, turn rates, terrain or disturbances; friction limits (slip was measured but not separated from the foot rolling); whether tuned gains or gait timing close the speed gap. The pace gait (left legs, then right) goes backward because the body rolls onto the feet it is lifting; see <a href="reports.html#STAGE2">the Stage 2 report</a>.</div>
+
+  <h2 id="plots">Original plots</h2>
+  <div class="gallery" id="plots-g"></div>
+</main>
+<script src="assets/charts.js"></script>
+<script>
+(function () {
+  const R = window.MOJITO_RESULTS || {}, $ = id => document.getElementById(id), f = (v, d = 1) => v.toFixed(d);
+  const B = 'var(--blue)', O = 'var(--orange)', A = 'var(--aqua)', V = 'var(--violet)';
+  function ready() {
+    const m = R.metrics;
+    if (m) {
+      Charts.bars($('c-err'), { categories: ['median', '95th pct', '99th pct', 'worst'], y: { label: 'mm', fmt: v => f(v, v < 10 ? 2 : 1) },
+        series: [{ name: 'network, told each leg\'s lengths', color: B, values: ['median_mm', 'p95_mm', 'p99_mm', 'max_mm'].map(k => m.learned_varied_legs[k]) },
+                 { name: 'network, assuming nominal lengths', color: O, values: ['median_mm', 'p95_mm', 'p99_mm', 'max_mm'].map(k => m.learned_assuming_nominal_lengths[k]) }] });
+      $('speedratio').textContent = Math.round(m.speed.batched_ns_per_target_learned / m.speed.batched_ns_per_target_analytic);
+      const sw = m.length_scale_sweep, pct = r => r.scale_deviation * 100;
+      Charts.line($('c-scale'), { x: { label: 'all links scaled by, %', domain: [-21, 21], ticks: [-20, -10, 0, 10, 20], fmt: v => (v > 0 ? '+' : '') + v }, y: { label: 'foot error, mm', fmt: v => f(v, 1) },
+        vlines: [{ x: -10, label: 'trained range', color: 'var(--muted)' }, { x: 10, color: 'var(--muted)' }],
+        series: [{ name: 'median', color: B, markers: true, points: sw.map(r => [pct(r), r.median_mm]) }, { name: '95th percentile', color: O, markers: true, points: sw.map(r => [pct(r), r.p95_mm]) }] });
+      $('scale20').textContent = f(sw[sw.length - 1].median_mm, 1);
+    }
+    const T = R.training_log;
+    if (T) {
+      const log = T.log; $('trainsec').textContent = Math.round(log[log.length - 1].seconds);
+      Charts.line($('c-train'), { x: { label: 'training step', fmt: v => (v >= 1000 ? v / 1000 + 'k' : v) }, y: { label: 'foot error, mm (log)', log: true, fmt: v => v >= 1 ? v : f(v, 1) },
+        series: [{ name: 'median', color: B, points: log.map(r => [r.step, r.median_mm]) }, { name: '95th percentile', color: O, points: log.map(r => [r.step, r.p95_mm]) }, { name: 'worst', color: V, dashed: true, points: log.map(r => [r.step, r.max_mm]) }] });
+    }
+    const C = R.calibration;
+    if (C) {
+      Charts.bars($('c-cal'), { categories: ['median', '95th pct'], y: { label: 'foot error, mm' }, series: [{ name: 'before calibration', color: O, values: [C.error_before_mm.median, C.error_before_mm.p95] }, { name: 'after calibration', color: B, values: [C.error_after_mm.median, C.error_after_mm.p95] }] });
+      $('cal-read').innerHTML = `True lengths ${C.true_lengths_mm.map(v => f(v, 1)).join(' / ')} mm, estimated ${C.estimated_lengths_mm.map(v => f(v, 1)).join(' / ')} mm. True servo offsets ${C.true_offsets_deg.join(' / ')}°, estimated ${C.estimated_offsets_deg.map(v => f(v, 1)).join(' / ')}°. Measurement noise ${C.noise_mm} mm.`;
+    }
+    const BM = R.body_metrics;
+    if (BM) {
+      const names = { posture_demo: 'posture', trot_forward: 'trot, forward', trot_turn: 'trot, turning', crawl_forward: 'crawl' }, keys = Object.keys(names);
+      Charts.bars($('c-body'), { categories: keys.map(k => names[k]), y: { label: 'mm', fmt: v => f(v, 2) }, series: [{ name: 'worst foot error', color: B, values: keys.map(k => BM[k].foot_error_mm.max) }] });
+      Charts.bars($('c-margin'), { categories: keys.map(k => names[k]), y: { label: 'degrees', fmt: v => f(v, 0) }, series: [{ name: 'margin to a joint limit', color: A, values: keys.map(k => BM[k].joint_limit_margin_deg) }] });
+      $('maxdiff').textContent = f(Math.max(...keys.map(k => BM[k].max_joint_difference_from_exact_deg)), 2);
+      $('trotout').textContent = f(-BM.trot_forward.body_centre_inside_support_mm_min, 0);
+      $('t-body').innerHTML = '<tr><th>Demo</th><th class="num">Median foot error</th><th class="num">Worst</th><th class="num">Joint margin</th><th class="num">Feet down (min)</th><th>All targets inside limits</th></tr>'
+        + keys.map(k => { const r = BM[k]; return `<tr><td>${names[k]}</td><td class="num">${f(r.foot_error_mm.median, 2)} mm</td><td class="num">${f(r.foot_error_mm.max, 2)} mm</td><td class="num">${f(r.joint_limit_margin_deg, 0)}°</td><td class="num">${r.feet_down_min ?? 4}</td><td>${r.all_targets_within_joint_limits ? 'yes' : 'no'}</td></tr>`; }).join('');
+    }
+    const E = R.torque_envelope;
+    if (E) {
+      const cats = ['stand_4_feet', 'crawl_3_feet', 'trot_2_feet'], lab = ['standing, 4 feet', 'crawl, 3 feet', 'trot, 2 feet'], g = (k, key) => E.max_total_mass_kg[k][key];
+      Charts.bars($('c-env'), { categories: lab, y: { label: 'kg', fmt: v => f(v, 2) }, series: [
+        { name: '5 V, full stall', color: B, values: cats.map(k => g(k, '5.0 V derate 1.0')) }, { name: '5 V, half of stall', color: O, values: cats.map(k => g(k, '5.0 V derate 0.5')) }, { name: '6 V, half of stall', color: A, values: cats.map(k => g(k, '6.0 V derate 0.5')) }] });
+      const sc = E['max_mass_kg_by_leg_scale_5V_derate_0.5'] || {}, xs = Object.keys(sc).sort((a, b) => a - b);
+      Charts.line($('c-envscale'), { x: { label: 'leg length scale', zero: false, fmt: v => v + '×' }, y: { label: 'kg', fmt: v => f(v, 1) }, series: cats.map((k, i) => ({ name: lab[i], color: [B, A, O][i], markers: true, points: xs.map(x => [+x, sc[x][k]]) })) });
+    }
+    const S = R.stand_test, SS = R.sit_to_stand;
+    if (S) {
+      const sw = S.mass_sweep_5v_light_legs, cols = [B, O], names = Object.keys(sw);
+      Charts.line($('c-stand'), { x: { label: 'total mass, kg' }, y: { label: 'peak torque / stall', fmt: v => f(v, 1), domain: [0, 1.1] }, hlines: [{ y: 1, label: 'stall', color: 'var(--orange)' }],
+        series: names.map((n, i) => ({ name: n.replace(' N.m/rad', ' N·m/rad'), color: cols[i], markers: true, points: sw[n].map(r => [r.total_mass_kg, Math.min(1.05, r.peak_torque_fraction_of_limit_whole_run), r.stood ? 'solid' : 'open']) })),
+        tip: (s, p) => `<b>${s.name}</b><br>${f(p[0], 1)} kg<br>peak ${f(p[1], 2)} of stall<br>${p[2] === 'open' ? 'fell over' : 'stood'}` });
+      const share = k => k.foot_load_share_percent_FL_FR_RL_RR;
+      Charts.bars($('c-share'), { categories: ['FL', 'FR', 'RL', 'RR'], y: { label: '% of weight', fmt: v => f(v, 0) }, series: [
+        { name: 'near-weightless legs, standing', color: B, values: share(S.static_check_1p5kg_light_legs.run) }, { name: 'placeholder masses, standing', color: O, values: share(S.default_masses['5.0 V']) }, { name: 'placeholder masses, 140 mm crouch', color: A, values: share(S.crouch_140mm.default_masses) }] });
+      const r = S.static_check_1p5kg_light_legs;
+      $('static-read').innerHTML = `With a 1.5 kg robot and near-weightless legs, the servo torques the simulation measured equal the static calculation (<code>statics.joint_torques</code>) given the <em>measured</em> foot loads to within 0.5%. Knee torque: front ${f(r.per_leg[0].measured_nm[2], 3)} N·m, rear ${f(r.per_leg[2].measured_nm[2], 3)} N·m, against ${f(r.even_quarter_load_prediction_nm[2], 3)} N·m predicted from an equal quarter share. The equal-quarter figure is off by up to 8% because the feet do not share the weight equally. With the placeholder masses (${f(S.default_masses['5.0 V'].total_mass_kg, 2)} kg) the knee peaks at ${f(S.default_masses['5.0 V'].peak_torque_nm_by_joint_max_over_legs.knee, 2)} N·m, ${f(100 * S.default_masses['5.0 V'].peak_torque_fraction_of_limit_whole_run, 0)}% of the stall torque over the whole run.`;
+    }
+    if (SS) {
+      const rows = SS.sweeps[Object.keys(SS.sweeps)[0]], times = [...new Set(rows.map(r => r.rise_time_s))];
+      Charts.line($('c-sit'), { x: { label: 'robot mass, kg' }, y: { label: 'peak torque / stall', fmt: v => f(v, 1), domain: [0, 1.1] }, hlines: [{ y: 1, label: 'stall', color: 'var(--orange)' }],
+        series: times.map((t, i) => ({ name: `${t} s rise`, color: [O, B, A, V][i], markers: true, points: rows.filter(r => r.rise_time_s === t).map(r => [r.requested_mass_kg, r.rise_peak_fraction_of_limit, r.stood ? 'solid' : 'open']) })),
+        tip: (s, p) => `<b>${s.name}</b><br>${p[0]} kg<br>peak ${f(p[1], 2)} of stall<br>${p[2] === 'open' ? 'did not stand' : 'stood'}` });
+    }
+    const G = R.gait_replay;
+    if (G) {
+      const pure = G.runs.filter(r => r.commanded_yaw_rate_rad_s === 0), line = g => pure.filter(r => r.gait === g).map(r => [r.commanded_velocity_m_s[0], r.measured_forward_lateral_velocity_m_s[0]]);
+      Charts.line($('c-speed'), { x: { label: 'commanded, m/s', zero: true }, y: { label: 'measured, m/s', fmt: v => f(v, 2), zero: false },
+        series: [{ name: 'perfect', color: 'var(--muted)', dashed: true, width: 1.6, points: [[0, 0], [0.32, 0.32]] }, { name: 'trot', color: B, markers: true, points: line('trot') }, { name: 'crawl', color: O, markers: true, points: line('crawl') }] });
+      $('maxtilt').textContent = f(Math.max(...G.runs.map(r => r.max_tilt_deg)), 1);
+      const lab = G.runs.map(r => `${r.gait} ${r.commanded_yaw_rate_rad_s ? 'turn ' + r.commanded_yaw_rate_rad_s : r.commanded_velocity_m_s[0]}`);
+      Charts.bars($('c-torque'), { horizontal: true, categories: lab, y: { label: 'peak torque / stall', fmt: v => f(v, 2), domain: [0, 1.1] }, margin: { l: 96 }, aspect: 1.35, series: [{ name: 'peak torque', color: B, values: G.runs.map(r => r.peak_torque_fraction_of_limit) }] });
+    }
+    const D = R.gait_speed_diagnosis;
+    if (D) {
+      const variants = Object.keys(D.trot), pick = v => D.trot[v].find(r => r.commanded_m_s === 0.15);
+      Charts.bars($('c-diag'), { horizontal: true, categories: variants.map(v => v.replace(/\(.*\)/, '').trim() || v), y: { label: 'm/s', fmt: v => f(v, 3) }, margin: { l: 200 }, aspect: 1.2,
+        series: [{ name: 'measured', color: B, values: variants.map(v => pick(v).measured_m_s) }, { name: 'ask', color: O, values: variants.map(v => pick(v).load_weighted_ask_m_s) }] });
+      $('t-diag').innerHTML = '<tr><th>Trot at 0.15 m/s, variant</th><th class="num">measured m/s</th><th class="num">ask m/s</th><th class="num">load on feet commanded to swing</th><th class="num">tilt</th></tr>'
+        + variants.map(v => { const r = pick(v); return `<tr><td>${v}</td><td class="num">${f(r.measured_m_s, 3)}</td><td class="num">${f(r.load_weighted_ask_m_s, 3)}</td><td class="num">${f(100 * r.load_share_on_feet_commanded_to_swing, 0)}%</td><td class="num">${f(r.max_tilt_deg, 1)}°</td></tr>`; }).join('');
+    }
+    const gal = [['error_distribution.png', 'Error distribution'], ['error_vs_length.png', 'Error against leg size'], ['error_map.png', 'Error across the workspace'], ['training_curve.png', 'Training curve'], ['sit_to_stand.png', 'Sit to stand: height and torque']];
+    $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');
+    // the 144-run grid
+    const s = document.createElement('script'); s.src = 'data/sweep.js';
+    s.onload = () => {
+      const runs = window.MOJITO_SWEEP.runs.filter(r => r.gait === 'trot' && r.speed_m_s === 0.15 && r.lift_m === 0.03);
+      const cols = { 0.6: A, 1: B, 1.75: O };
+      Charts.line($('c-sweep'), { x: { label: 'servo stiffness kp, N·m/rad', log: true, ticks: [10, 30, 100], fmt: v => v }, y: { label: 'measured m/s', fmt: v => f(v, 2), domain: [-0.05, 0.16] }, hlines: [{ y: 0.15, label: 'commanded 0.15', color: 'var(--muted)' }],
+        series: [0.6, 1, 1.75].map(ms => ({ name: `${f(1.72 * ms, 2)} kg`, color: cols[ms], markers: true, points: runs.filter(r => r.mass_scale === ms).sort((a, b) => a.kp - b.kp).map(r => [r.kp, r.measured_speed_m_s, r.walked ? 'solid' : 'open']) })) });
+    };
+    s.onerror = () => { $('c-sweep').innerHTML = '<p class="muted small">data/sweep.js not found; run scripts/build_site.py.</p>'; };
+    document.head.append(s);
+  }
+  document.addEventListener('mojito-ready', ready);
+})();
+</script>
+</body>
+</html>
