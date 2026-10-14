@@ -32,6 +32,9 @@ DEFAULTS = dict(
     period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0,
     vx=0.15, vy=0.0, yaw_rate=0.0,
     kp=10.0, kd=0.2, mass=1.72, speed=1.0, walk=False,
+    # robot design: these rebuild the model (like mass). Metres.
+    la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.2125,
+    voltage=5.0,
 )
 PRESETS = {
     "trot": dict(period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0),
@@ -40,9 +43,11 @@ PRESETS = {
 }
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
-              yaw_rate=(-3.0, 3.0), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0))
+              yaw_rate=(-3.0, 3.0), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
+              la=(0.02, 0.09), lu=(0.08, 0.24), ll=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
+              height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
+REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width", "height")  # changing any of these needs a new model
 SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway")
-GEOMETRY = dict(lengths=(0.05, 0.15, 0.15), height=0.2125, body_length=0.30, body_width=0.15)
 
 
 DEFAULT_TOTAL_MASS = mjcf.DEFAULT_MASSES["body"] + 4 * sum(v for k, v in mjcf.DEFAULT_MASSES.items() if k != "body")  # 1.72 kg
@@ -79,11 +84,12 @@ class LiveSim:
             else:
                 low, high = LIMITS.get(key, (-np.inf, np.inf))
                 value = float(np.clip(float(value), low, high))
-            if key == "mass" and value != self.params["mass"]:
+            if key in REBUILD and value != self.params[key]:
                 rebuild = True
             self.params[key] = value
         if hasattr(self, "servo"):
-            self.servo.params = dataclasses.replace(self.servo.params, kp=self.params["kp"], kd=self.params["kd"])
+            self.servo.params = dataclasses.replace(self.servo.params, kp=self.params["kp"], kd=self.params["kd"],
+                                                   voltage=self.params["voltage"])
         return rebuild
 
     def gait(self) -> gaits.Gait:
@@ -97,13 +103,13 @@ class LiveSim:
         import mujoco
 
         self._mujoco = mujoco
-        masses = scaled_masses(self.params["mass"])
+        p = self.params
+        masses = scaled_masses(p["mass"])
         self.robot, self.model, self.data, self.qadr, self.dadr, self.aid, self.pad, self.start_z = stand._open(
-            np.asarray(GEOMETRY["lengths"]), GEOMETRY["height"], GEOMETRY["body_length"], GEOMETRY["body_width"],
-            masses, self.timestep)
-        self.servo = actuators.Servo(actuators.ServoParams(kp=self.params["kp"], kd=self.params["kd"]))
+            np.array([p["la"], p["lu"], p["ll"]]), p["height"], p["body_length"], p["body_width"], masses, self.timestep)
+        self.servo = actuators.Servo(actuators.ServoParams(kp=p["kp"], kd=p["kd"], voltage=p["voltage"]))
         self.servo.reset()
-        self.home = self.robot.stance(GEOMETRY["height"])
+        self.home = self.robot.stance(p["height"])
         self.time = 0.0
         self.cycles = 0.0
         self.blend_progress = 0.0
@@ -190,7 +196,7 @@ class LiveSim:
         legs = np.array([[d.body(f"{n}_hip").xpos, d.body(f"{n}_shank").xpos, d.site(f"{n}_foot").xpos]
                          for n in body.LEG_NAMES])
         yaw = float(np.degrees(np.arctan2(rotation[1, 0], rotation[0, 0])))
-        fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * GEOMETRY["height"])
+        fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * self.params["height"])
         return {
             "time": self.time, "legs": legs.round(5).tolist(), "origin": origin.xpos.round(5).tolist(),
             "rotation": rotation.round(5).tolist(), "loads": self.loads.round(3).tolist(),
@@ -199,6 +205,8 @@ class LiveSim:
             "tilt_deg": round(tilt, 1), "yaw_deg": round(yaw, 1), "measured_velocity": [round(v, 3) for v in self.measured_velocity()],
             "feet_down": int((self.loads > CONTACT_FORCE).sum()), "fell": fell, "total_mass_kg": round(float(self.model.body_subtreemass[1]), 3),
             "blend": round(float(stand.smoothstep(self.blend_progress)), 2), "cycle_phase": round(self.cycles % 1.0, 3),
-            "body_size": [GEOMETRY["body_length"], GEOMETRY["body_width"]],
+            "body_size": [self.params["body_length"], self.params["body_width"]],
+            "stall_torque_nm": round(self.servo.params.stall_torque, 3),
+            "stance_reachable": bool(self.robot.reachable(self.home).all()),
             "params": self.params,
         }

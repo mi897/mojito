@@ -397,12 +397,13 @@
     window.addEventListener('themechange', () => { if (phys.run) physChanged(); });
   }
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!$('kin').hidden) kinCharts(); else if (phys.run) physChanged(); }, 200); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!$('kin').hidden) kinCharts(); else if (!$('phys').hidden && phys.run) physChanged(); }, 200); });
 
   /* ---------- tabs ---------- */
   function show(which) {
-    $('kin').hidden = which !== 'kin'; $('phys').hidden = which !== 'phys';
-    $('tab-kin').setAttribute('aria-selected', which === 'kin'); $('tab-phys').setAttribute('aria-selected', which === 'phys');
+    $('kin').hidden = which !== 'kin'; $('phys').hidden = which !== 'phys'; $('live').hidden = which !== 'live';
+    ['kin', 'phys', 'live'].forEach(k => $('tab-' + k).setAttribute('aria-selected', which === k));
+    if (which === 'live') window.LivePhysics.start(); else window.LivePhysics.stop();
     history.replaceState(null, '', '#' + which);
     if (which === 'kin' && kinView) { kinCharts(); kinFrame(); }
     if (which === 'phys') {
@@ -414,7 +415,7 @@
   }
   document.addEventListener('DOMContentLoaded', () => {
     initKin();
-    $('tab-kin').onclick = () => show('kin'); $('tab-phys').onclick = () => show('phys');
-    if (location.hash === '#phys') show('phys');
+    $('tab-kin').onclick = () => show('kin'); $('tab-phys').onclick = () => show('phys'); $('tab-live').onclick = () => show('live');
+    if (location.hash === '#phys') show('phys'); else if (location.hash === '#live') show('live');
   });
 })();
