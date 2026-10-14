@@ -60,7 +60,7 @@ class Runner:
     def update(self, changes):
         with self.lock:
             if self.sim.set_params(**{k: v for k, v in changes.items() if k != "paused"}):
-                self.sim.reset()  # a new mass needs a new model
+                self.sim.reset()  # a new mass or size needs a new model
             if "paused" in changes:
                 self.paused = bool(changes["paused"])
 

@@ -49,10 +49,10 @@ mojito/sensors.py      joint-angle sensor and IMU models (NumPy)
 mojito/stand.py        stand test: IK posture held through the servo model in MuJoCo
 mojito/gait_replay.py  trot and crawl replayed in MuJoCo through the servo model (needs mujoco)
 mojito/gait_plots.py   gait timing chart and isometric animation of a replay (matplotlib)
-mojito/live_sim.py     replay stepped a few steps at a time, gait and servo parameters changeable live (needs mujoco)
+mojito/live_sim.py     replay stepped a few steps at a time; gait, servo, robot dimensions and mass changeable live (needs mujoco)
 robots/                example URDFs + manifests: quadruped, hexapod, planar
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
-scripts/               build_site, site_sweep, train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+scripts/               build_site, site_sweep, serve_site, train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
 tests/                 unittest suites (no pytest dependency)
 weights/ik_leg.npz     the trained leg network
 results/               metrics (json), plots (png), animations (gif)
@@ -76,6 +76,7 @@ python scripts/gait_replay.py              # results/gait_replay.json (needs muj
 python scripts/try_gait.py --help          # try other gait timings in physics, GIF in results/try/
 python scripts/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
 python scripts/build_site.py               # website data from results/; then: python -m http.server -d site
+python scripts/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
 python scripts/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/physics_sweep.json (needs mujoco)
 python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
 python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
@@ -130,6 +131,7 @@ else NumPy.
 
 - The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/test_build_site.py`) or draw it from the JSON in a script.
 - `site/assets/mojito.js` is a port of `leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/test_site_js.py` compares them.
+- `scripts/serve_site.py` is local only: it binds 127.0.0.1 and checks Host and Origin (tested in `tests/test_serve_site.py`). Do not add a public mode without asking the owner.
 - Say in the page what a lab does not model. The kinematic lab is static (no dynamics); the physics lab replays stored runs, no interpolation.
 
 ## Generated files

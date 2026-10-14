@@ -13,11 +13,12 @@
 <body>
 <main class="wrap" id="app">
   <h1 class="no-rule">Playground</h1>
-  <p class="lede">Change the robot and watch what it does. Two labs, because a browser can run the geometry live but not the physics engine.</p>
+  <p class="lede">Change the robot and watch what it does. Three labs, because a web page can run the geometry live but not the physics engine: a kinematic lab (live, in your browser), a physics lab (stored MuJoCo runs), and live physics that runs on your own machine.</p>
 
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-kin" aria-selected="true">Kinematic lab · live, any value</button>
     <button role="tab" id="tab-phys" aria-selected="false">Physics lab · MuJoCo runs, 144 combinations</button>
+    <button role="tab" id="tab-live" aria-selected="false">Live physics · runs on your machine</button>
   </div>
 
   <!-- ====================== kinematic lab ====================== -->
@@ -97,12 +98,41 @@
       </div>
     </div>
   </section>
+  <!-- ====================== live physics (local server only) ====================== -->
+  <section id="live" hidden>
+    <div class="notice" id="live-note" hidden><b>This tab needs the local server.</b>
+      Real-time MuJoCo physics with any robot dimension, gait or servo setting cannot run in a web page, so it runs in Python on your computer and this page only draws it.
+      Nothing is sent anywhere: the server listens on 127.0.0.1 only and refuses other hosts and origins.
+<pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
+pip install numpy scipy matplotlib pillow mujoco
+python scripts/build_site.py
+python scripts/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
+      On this hosted copy the tab stays empty; use the Kinematic and Physics labs here.</div>
+    <div id="live-ui" hidden>
+      <div class="notice"><b>Real physics, your settings, placeholder everything.</b> This is the same MuJoCo model, servo model and gait generator as the stored runs, stepped live. Changing a robot dimension or the mass rebuilds the model (the robot stands again).
+        Dimensions, masses, friction and servo figures are placeholders; what you see is how the model behaves, not what a built robot would do. Playing with sliders is exploration, not a measurement: for numbers use <code>scripts/try_gait.py</code> and put them in <code>results/</code>.</div>
+      <div class="pg">
+        <aside class="pg-side card"><div id="live-controls"></div></aside>
+        <div>
+          <div class="card stage">
+            <canvas id="live-view" style="height:min(56vh,470px)"></canvas>
+            <div class="bar"><button class="btn" id="live-follow" aria-pressed="true">Follow</button><button class="btn" id="live-zin" aria-label="zoom in">＋</button><button class="btn" id="live-zout" aria-label="zoom out">－</button>
+              <span class="small muted">Drag to rotate · Ctrl+scroll or pinch to zoom · double-click resets. Filled foot = carrying weight.</span></div>
+          </div>
+          <div class="kpis" id="live-kpis"></div>
+          <div class="msgs" id="live-msgs"></div>
+          <div class="card chart-card"><h4>Which feet carry the weight · last 4 s</h4><p class="sub">thin dark bar = commanded stance; coloured bar = pad force above 0.5 N</p><canvas id="live-timing" style="width:100%;height:150px"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script src="assets/charts.js"></script>
 <script src="assets/mojito.js"></script>
 <script src="assets/viewer.js"></script>
 <script src="assets/playground.js"></script>
+<script src="assets/livephys.js"></script>
 <script>
   // The physics grid is 1.3 MB: fetch it only when the tab is opened.
   window.loadSweep = () => window.MOJITO_SWEEP ? Promise.resolve() : new Promise((ok, no) => {
