@@ -68,8 +68,11 @@ docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html 
 
 ## Commands
 
+Setup is `./scripts/setup.sh` (installs uv and just, then `uv sync`); dependencies are in `pyproject.toml`, pinned in
+`uv.lock`. Tasks live in the `justfile` (`just` lists them). Run any script as `uv run --extra sim python <script>`.
+
 ```bash
-python -m unittest discover tests          # all tests; PyTorch ones skip if torch is absent
+python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
 python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
 python scripts/learning/calibrate.py                # results/learning/calibration.json
