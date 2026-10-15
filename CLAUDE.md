@@ -8,7 +8,7 @@ pads for feet.
 Read `docs/NAMING.md` before naming anything (variables, arguments, functions) or
 writing code that implements an equation. Read `docs/PLAN.md` for the staged roadmap and what is done, and
 `docs/STAGE2.md` for the current stage (MuJoCo, servo model, work packages). Read `README.md`
-for results and usage. Keep both current when the work changes them.
+for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USAGE.md` for usage. Keep both current when the work changes them.
 
 ## Working rules
 
@@ -52,6 +52,7 @@ tests/                 unittest suites, mirroring the layout: geometry/, robot/,
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
 docs/NAMING.md         naming and equation-commenting conventions
+docs/USAGE.md  RESULTS.md  PHYSICS.md   usage, geometry results, physics results
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
 ```
 
@@ -149,7 +150,7 @@ else NumPy.
 outputs that are committed so the README renders. Regenerate them with the
 scripts; do not edit them by hand. If the weights change, re-run evaluate,
 calibrate, make_demo and make_body_demos and update every number quoted in
-`README.md` and `docs/PLAN.md` in the same branch. Edit
+`README.md`, `docs/RESULTS.md`, `docs/PHYSICS.md` and `docs/PLAN.md` in the same branch. Edit
 `docs/demo_template.html`, not `docs/demo.html`.
 
 ## Environment notes
