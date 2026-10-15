@@ -58,14 +58,22 @@ joint limits are placeholders, not a real robot's:
 
 ## Quick start
 
-Python 3.10 or newer. No GPU needed.
+Linux or macOS, no GPU needed. You need `git` and `curl`; everything else is installed for you:
+[uv](https://docs.astral.sh/uv/) (Python and the virtual environment, fetches Python 3.10+ itself) and
+[just](https://just.systems) (the task runner).
 
 ```bash
 git clone https://github.com/mi897/mojito && cd mojito
-pip install -r requirements.txt          # NumPy, SciPy, Matplotlib, Pillow
-python -m unittest discover tests        # 72 tests; the 7 PyTorch ones skip if torch is absent
-python scripts/body/make_body_demos.py        # re-render the animations from the trained network
+./scripts/setup.sh            # installs uv and just if missing, then the dependencies
+just test                     # all tests; the PyTorch ones skip if torch is absent
+just body                     # re-render the animations from the trained network
+just                          # list every task
 ```
+
+PyTorch is optional. `./scripts/setup.sh --torch` installs the CUDA build if an NVIDIA GPU is detected and the CPU build
+otherwise; `--gpu` or `--cpu` force one and skip detection. Already have uv and just? `just setup` (same flags) does the dependency step alone. Without just, prefix any command in this README
+with `uv run --extra sim`, for example `uv run --extra sim python scripts/body/make_body_demos.py`. Dependencies live in
+`pyproject.toml`; `uv.lock` pins exact versions.
 
 The trained network is in the repository (`weights/ik_leg.npz`), so nothing
 needs training to try it. Open `docs/demo.html` in a browser to drag a foot
@@ -130,7 +138,7 @@ robot.lengths[0] = [0.041, 0.118, 0.125]              # give one leg different l
 ### NumPy or PyTorch
 
 The leg network has two interchangeable backends. **NumPy is the default** and
-needs nothing extra. PyTorch is optional (`pip install torch`) and is imported
+needs nothing extra. PyTorch is optional (`./scripts/setup.sh --torch`, or `--cpu` / `--gpu`) and is imported
 only when asked for.
 
 | Scope | How |
@@ -437,9 +445,8 @@ server listens on 127.0.0.1).
 ```bash
 git clone https://github.com/mi897/mojito && cd mojito
 git checkout stage-2-trot-crawl-physics-replay      # until it is merged to main
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install numpy scipy mujoco
-python scripts/sim/live_gait.py                         # add --preset crawl, --walk, --port 9000
+./scripts/setup.sh
+just live                                           # add --preset crawl, --walk, --port 9000 after it
 ```
 
 Open http://127.0.0.1:8765. Press **Walk** to start and **Stand** to stop; **Reset** rebuilds the robot (needed after a fall); **Pause** freezes the physics.
