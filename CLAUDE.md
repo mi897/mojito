@@ -47,7 +47,7 @@ scripts/               entry points, one folder per topic
   body/                make_body_demos, torque_envelope
   sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis,
                        make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
-  website/             build_site, serve_site, site_sweep, make_og_image
+  website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
@@ -89,6 +89,7 @@ python scripts/website/build_site.py               # website data from results/;
 python scripts/website/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
 python scripts/website/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/gait/physics_sweep.json (needs mujoco)
 python scripts/website/make_og_image.py           # site/assets/og-image.png, the 1200x630 social preview (needs google-chrome or chromium)
+python scripts/website/make_favicon.py          # site/assets/favicon-32.png and apple-touch-icon.png from favicon.svg (needs google-chrome or chromium)
 python scripts/body/make_body_demos.py          # body animations, results/body/body_metrics.json (add --no-gif for numbers only)
 python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # network sized from a URDF
 ```
