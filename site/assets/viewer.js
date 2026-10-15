@@ -92,7 +92,8 @@
           if (s.labels !== false) { ctx.fillStyle = colour; ctx.font = `600 ${11 * d}px system-ui`; ctx.fillText(name, proj[0][0] + 7 * d, proj[0][1] - 7 * d); }
         } });
       });
-      items.sort((a, b) => b.depth - a.depth).forEach(it => it.draw());
+      // depth grows toward the camera (project() puts nearer ground lower on screen), so paint the smallest first
+      items.sort((a, b) => a.depth - b.depth).forEach(it => it.draw());
       if (s.overlay) s.overlay(ctx, d, W, H);
     }
   }

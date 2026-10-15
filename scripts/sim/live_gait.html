@@ -129,10 +129,10 @@ function drawView(){
   const corner=(sx,sy)=>{const l=[sx*L/2,sy*Wd/2,0];return [o[0]+R[0][0]*l[0]+R[0][1]*l[1],o[1]+R[1][0]*l[0]+R[1][1]*l[1],o[2]+R[2][0]*l[0]+R[2][1]*l[1]];};
   const items=[];
   const outline=[[1,1],[1,-1],[-1,-1],[-1,1],[1,1]].map(c=>P(corner(c[0],c[1])));
-  items.push({depth:-1e9,draw:()=>{vx.strokeStyle=css('--body');vx.lineWidth=5*d;vx.lineJoin='round';vx.beginPath();outline.forEach((q,i)=>i?vx.lineTo(q[0],q[1]):vx.moveTo(q[0],q[1]));vx.stroke();}});
+  items.push({depth:P(o)[2]+0.001,draw:()=>{vx.strokeStyle=css('--body');vx.lineWidth=5*d;vx.lineJoin='round';vx.beginPath();outline.forEach((q,i)=>i?vx.lineTo(q[0],q[1]):vx.moveTo(q[0],q[1]));vx.stroke();}});
   LEGS.forEach((name,i)=>{
     const pts=state.legs[i].map(P),foot=state.legs[i][2],shadow=P([foot[0],foot[1],0]),colour=css('--'+name);
-    items.push({depth:pts[2][2],draw:()=>{
+    items.push({depth:(pts[0][2]+pts[2][2])/2,draw:()=>{
       vx.strokeStyle=colour;vx.lineWidth=4*d;vx.lineCap='round';vx.lineJoin='round';
       vx.beginPath();pts.forEach((q,k)=>k?vx.lineTo(q[0],q[1]):vx.moveTo(q[0],q[1]));vx.stroke();
       vx.fillStyle=css('--grid');vx.beginPath();vx.arc(shadow[0],shadow[1],3*d,0,7);vx.fill();
@@ -140,7 +140,7 @@ function drawView(){
       vx.fillStyle=colour;vx.font=`${11*d}px system-ui`;vx.fillText(name,pts[0][0]+6*d,pts[0][1]-6*d);
     }});
   });
-  items.sort((a,b)=>b.depth-a.depth).forEach(it=>it.draw()); // far first
+  items.sort((a,b)=>a.depth-b.depth).forEach(it=>it.draw()); // far first: depth grows toward the camera
 }
 function drawTiming(){
   const d=fit(tc),W=tc.width,H=tc.height;tx.clearRect(0,0,W,H);

@@ -69,6 +69,17 @@ def _body_outline(frame):
     return frame["origin"] + corners @ frame["R"].T
 
 
+def toward_camera(points, elev_deg, azim_deg):
+    """How far toward the viewer each world point is, for a Matplotlib 3D axes at (elev, azim); bigger = nearer.
+
+    Matplotlib orders separate artists by one depth number each, which puts a far leg's line above a
+    nearer body outline. Painting by an explicit zorder from this number fixes that.
+    """
+    elev, azim = np.radians(elev_deg), np.radians(azim_deg)
+    view = np.array([np.cos(elev) * np.cos(azim), np.cos(elev) * np.sin(azim), np.sin(elev)])
+    return np.asarray(points, float) @ view
+
+
 def save_isometric(result, path, title="", fps=25, follow=True, span=0.3, grid=0.1, contact_force=0.5):
     """Isometric (orthographic) animation of the four legs and the body, with the gait timing chart below.
 
@@ -92,6 +103,7 @@ def save_isometric(result, path, title="", fps=25, follow=True, span=0.3, grid=0
         frame = frames[i]
         ax.clear()
         centre = frame["origin"][:2] if follow else start_xy
+        ax.computed_zorder = False  # paint in the zorder given below: far legs under the body, near legs over it
         ax.set_proj_type("ortho")
         ax.view_init(elev=35.264, azim=-45)  # the isometric angles
         ax.set_xlim(centre[0] - span, centre[0] + span)
@@ -103,20 +115,22 @@ def save_isometric(result, path, title="", fps=25, follow=True, span=0.3, grid=0
         gx = np.arange(np.floor((centre[0] - span) / grid), np.ceil((centre[0] + span) / grid) + 1) * grid
         gy = np.arange(np.floor((centre[1] - span) / grid), np.ceil((centre[1] + span) / grid) + 1) * grid
         for x in gx:
-            ax.plot([x, x], [gy[0], gy[-1]], [0, 0], color="#cccccc", lw=0.6)
+            ax.plot([x, x], [gy[0], gy[-1]], [0, 0], color="#cccccc", lw=0.6, zorder=0)
         for y in gy:
-            ax.plot([gx[0], gx[-1]], [y, y], [0, 0], color="#cccccc", lw=0.6)
+            ax.plot([gx[0], gx[-1]], [y, y], [0, 0], color="#cccccc", lw=0.6, zorder=0)
         outline = _body_outline(frame)
-        ax.plot(*outline.T, color=INK, lw=3)
+        ax.plot(*outline.T, color=INK, lw=3, zorder=2)
+        body_near = toward_camera(frame["origin"], 35.264, -45)
         for leg, name in enumerate(body.LEG_NAMES):
             points = frame["legs3d"][leg]
-            ax.plot(*points.T, "-", color=LEG_COLOURS[name], lw=3)
+            z = 3 if toward_camera(points[0], 35.264, -45) >= body_near else 1  # shoulder nearer than the body centre
+            ax.plot(*points.T, "-", color=LEG_COLOURS[name], lw=3, zorder=z)
             foot = points[2]
             down = frame["loads"][leg] > contact_force
             ax.plot([foot[0]], [foot[1]], [foot[2]], "o", ms=7, color=LEG_COLOURS[name],
-                    mfc=LEG_COLOURS[name] if down else "white")
-            ax.plot([foot[0]], [foot[1]], [0.0], ".", ms=3, color=GREY)  # shadow, to read the height
-            ax.text(*(points[0] + [0, 0, 0.02]), name, fontsize=7, color=LEG_COLOURS[name])
+                    mfc=LEG_COLOURS[name] if down else "white", zorder=z)
+            ax.plot([foot[0]], [foot[1]], [0.0], ".", ms=3, color=GREY, zorder=0)  # shadow, to read the height
+            ax.text(*(points[0] + [0, 0, 0.02]), name, fontsize=7, color=LEG_COLOURS[name], zorder=z)
         ax.set_title(f"{title}\nt = {t_frames[i]:.2f} s", fontsize=9, color=INK, y=0.93)
         timing.clear()
         draw_timing(timing, result, contact_force, cursor=t_frames[i])

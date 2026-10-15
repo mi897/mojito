@@ -153,16 +153,18 @@ def animate(robot, s, path, dpi=80):
 
     # --- 3D scene ---
     ax.set_axis_off(); ax.set_proj_type("persp", focal_length=0.35)
+    ax.computed_zorder = False  # painted by the zorder set per frame: far legs under the torso, near legs over it
     ax.view_init(elev=22, azim=-58); ax.set_box_aspect((1, 1, 0.62), zoom=1.45)
     half = 0.27
     gx = np.arange(-2.0, 2.0001, 0.05)
-    grid_lines = [ax.plot([], [], [], color=GRID, lw=0.7)[0] for _ in range(2)]
+    grid_lines = [ax.plot([], [], [], color=GRID, lw=0.7, zorder=0)[0] for _ in range(2)]
     shadow = Poly3DCollection([np.zeros((4, 3))], facecolor="#e9e8e3", edgecolor="none")
     ax.add_collection3d(shadow)
     targets_on = ax.plot([], [], [], "o", color=ORANGE, ms=9, mfc="none", mew=1.8)[0]
     targets_off = ax.plot([], [], [], "o", color=ORANGE, ms=5, mfc="none", mew=1.2, alpha=0.6)[0]
     torso = Poly3DCollection([np.zeros((4, 3))], facecolor="#c9d6e6", edgecolor=INK2, linewidths=1.2, alpha=0.9)
     ax.add_collection3d(torso)
+    torso.set_zorder(2); shadow.set_zorder(0)
     front_label = ax.text(0, 0, 0, "front", color=INK2, fontsize=8, ha="center", va="bottom")
     legs = [ax.plot([], [], [], color=BLUE, lw=3.2, marker="o", ms=4.5, solid_capstyle="round")[0] for _ in range(4)]
     readout = ax.text2D(0.03, 0.02, "", transform=ax.transAxes, color=INK2, fontsize=9)
@@ -186,8 +188,12 @@ def animate(robot, s, path, dpi=80):
         torso.set_verts([P[order, 0]])
         front = P[[0, 1], 0].mean(axis=0) + 0.6 * (P[[0, 1], 0].mean(axis=0) - P[[2, 3], 0].mean(axis=0)) * 0.12
         front_label.set_position_3d((front[0], front[1], front[2] + 0.012))
+        view = np.array([np.cos(np.radians(22)) * np.cos(np.radians(-58)), np.cos(np.radians(22)) * np.sin(np.radians(-58)),
+                         np.sin(np.radians(22))])  # toward the camera
+        body_near = P[order, 0].mean(axis=0) @ view
         for line, pts in zip(legs, P):
             line.set_data_3d(pts[:, 0], pts[:, 1], pts[:, 2])
+            line.set_zorder(3 if pts[0] @ view >= body_near else 1)  # shoulder nearer than the torso centre
         tw = body.to_world(s["targets"][i], s["position"][i], *s["rpy"][i])
         on = s["contact"][i]
         targets_on.set_data_3d(tw[on, 0], tw[on, 1], tw[on, 2])
