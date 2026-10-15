@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build site data from results/
-        run: python scripts/build_site.py
+        run: python scripts/website/build_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

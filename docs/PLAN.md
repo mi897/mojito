@@ -63,8 +63,8 @@ are unchecked; body dimensions are placeholders; the crawl lean is fast.
 ## Robot description — URDF as the single source of truth (done)
 
 The robot's geometry lives in a URDF, not in Python, so other tools and languages
-can read it. `mojito/urdf.py` parses it, `mojito/spec.py` derives the network's
-description from it (and checks saved weights against it), `mojito/kinematics.py`
+can read it. `mojito/geometry/urdf.py` parses it, `mojito/geometry/spec.py` derives the network's
+description from it (and checks saved weights against it), `mojito/geometry/kinematics.py`
 runs any serial chain with NumPy or torch, and `IKNet` is sized from the chain.
 Any number of limbs, any number of joints per limb; limbs with the same structure
 share a network, mirrored limbs reuse it with verified sign flips.
@@ -75,7 +75,7 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 
 ## Stage 2 — physics simulation
 
-**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/mjcf.py`, foot positions tested against `mojito/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo model in `mojito/actuators.py`, joint-sensor and IMU models in `mojito/sensors.py`, tested against closed-form holding deflection) and 3 (stand test and sit-to-stand test: `mojito/stand.py`, `results/stand_test.json`, `results/sit_to_stand.json`) and 4 (trot and crawl replayed in physics: `mojito/gait_replay.py`, `results/gait_replay.json`) are done; the design sweep is next.
+**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/sim/mjcf.py`, foot positions tested against `mojito/geometry/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo model in `mojito/sim/actuators.py`, joint-sensor and IMU models in `mojito/sim/sensors.py`, tested against closed-form holding deflection) and 3 (stand test and sit-to-stand test: `mojito/sim/stand.py`, `results/stand/stand_test.json`, `results/stand/sit_to_stand.json`) and 4 (trot and crawl replayed in physics: `mojito/sim/gait_replay.py`, `results/gait/gait_replay.json`) are done; the design sweep is next.
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
 Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5–6 V,

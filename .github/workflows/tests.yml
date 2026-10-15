@@ -27,7 +27,7 @@ jobs:
         env:
           MOJITO_BACKEND: ${{ matrix.backend }}
         run: |
-          python scripts/train.py --steps 1500 --out /tmp/ci.npz --log /tmp/ci.json
-          python scripts/calibrate.py --out /tmp/cal.json
-          python scripts/make_body_demos.py --no-gif
+          python scripts/learning/train.py --steps 1500 --out /tmp/ci.npz --log /tmp/ci.json
+          python scripts/learning/calibrate.py --out /tmp/cal.json
+          python scripts/body/make_body_demos.py --no-gif
           git diff --stat

@@ -25,21 +25,21 @@
 </main>
 <script>
 const DEMOS = [
-  ['s0', 'step_demo.gif', 'Three leg sizes, one network', 'Stage 0', 'The same learned network drives legs 10% shorter, nominal and 10% longer through one step; the lengths are an input.', 'Geometry only. Worst error on each path is 0.2–0.5 mm.'],
-  ['s1', 'posture_demo.gif', 'Posture with the feet planted', 'Stage 1', 'Roll, pitch, yaw and height change while every foot stays where it is. Each leg is drawn from the network\'s joint angles; orange rings are the requested foot positions.', 'Geometry only: says nothing about whether the servos could hold these poses.'],
-  ['s1', 'trot_forward.gif', 'Trot, forward', 'Stage 1', 'Diagonal pairs of feet move together at 0.15 m/s. Side panels show the command, the network output for the front-left leg, and the worst foot error.', 'Two feet down means no static balance; dynamics decide.'],
-  ['s1', 'trot_turn.gif', 'Trot, turning on the spot', 'Stage 1', 'Yaw rate 1.2 rad/s with no forward speed. Stance feet stay fixed in the world.', 'Geometry only.'],
-  ['s1', 'crawl_forward.gif', 'Crawl, leaning away from the lifted foot', 'Stage 1', 'One foot lifts at a time and the body shifts away from it while all four are down.', 'The body centre stays inside the support triangle on paper, treating it as the centre of mass. The lean is quick: 50 mm in 0.2 s.'],
-  ['s2', 'stand_demo.gif', 'Standing in physics', 'Stage 2', 'The IK standing posture held through the servo model in MuJoCo.', 'Placeholder masses, gains and servo figures.'],
-  ['s2', 'sit_to_stand_demo.gif', 'Rising from a crouch', 'Stage 2', 'A rise from a 140 mm crouch to the 212.5 mm stand along a minimum-jerk profile.', 'The crouch is the hardest pose. Near-weightless legs; not a real robot\'s limit.'],
-  ['s2', 'trot_replay.gif', 'Trot replayed in physics (side view)', 'Stage 2', 'The Stage 1 trot at 0.15 m/s through the servo model. Filled foot = loaded; the dashed line is where the body would be at the commanded speed.', 'The body falls well short of the dashed line: 0.041 m/s measured.'],
-  ['s2', 'crawl_replay.gif', 'Crawl replayed in physics (side view)', 'Stage 2', 'The Stage 1 crawl at 0.04 m/s through the servo model.', 'Servo torque reaches 0.94–0.99 of stall in the crawl; the reason was not traced.'],
-  ['s2', 'trot_iso.gif', 'Trot, isometric, with timing chart', 'Stage 2', 'Isometric view of the trot with each leg\'s commanded stance (thin bar) against the weight it actually carries (coloured bar).', 'Where bars disagree, a leg is loaded when told to swing.'],
-  ['s2', 'trot_turn_iso.gif', 'Trot turning, isometric', 'Stage 2', 'The turning trot (1.2 rad/s commanded) in physics.', 'It measured 0.82 rad/s, with 0.04 m/s of backward drift.'],
-  ['s2', 'crawl_iso.gif', 'Crawl, isometric, with timing chart', 'Stage 2', 'The crawl in physics with the timing chart.', 'Fewest feet carrying weight was 2, although the Stage 1 design keeps 3 down; whether this is a brief unloading was not examined.'],
+  ['s0', 'learning/step_demo.gif', 'Three leg sizes, one network', 'Stage 0', 'The same learned network drives legs 10% shorter, nominal and 10% longer through one step; the lengths are an input.', 'Geometry only. Worst error on each path is 0.2–0.5 mm.'],
+  ['s1', 'body/posture_demo.gif', 'Posture with the feet planted', 'Stage 1', 'Roll, pitch, yaw and height change while every foot stays where it is. Each leg is drawn from the network\'s joint angles; orange rings are the requested foot positions.', 'Geometry only: says nothing about whether the servos could hold these poses.'],
+  ['s1', 'body/trot_forward.gif', 'Trot, forward', 'Stage 1', 'Diagonal pairs of feet move together at 0.15 m/s. Side panels show the command, the network output for the front-left leg, and the worst foot error.', 'Two feet down means no static balance; dynamics decide.'],
+  ['s1', 'body/trot_turn.gif', 'Trot, turning on the spot', 'Stage 1', 'Yaw rate 1.2 rad/s with no forward speed. Stance feet stay fixed in the world.', 'Geometry only.'],
+  ['s1', 'body/crawl_forward.gif', 'Crawl, leaning away from the lifted foot', 'Stage 1', 'One foot lifts at a time and the body shifts away from it while all four are down.', 'The body centre stays inside the support triangle on paper, treating it as the centre of mass. The lean is quick: 50 mm in 0.2 s.'],
+  ['s2', 'stand/stand_demo.gif', 'Standing in physics', 'Stage 2', 'The IK standing posture held through the servo model in MuJoCo.', 'Placeholder masses, gains and servo figures.'],
+  ['s2', 'stand/sit_to_stand_demo.gif', 'Rising from a crouch', 'Stage 2', 'A rise from a 140 mm crouch to the 212.5 mm stand along a minimum-jerk profile.', 'The crouch is the hardest pose. Near-weightless legs; not a real robot\'s limit.'],
+  ['s2', 'gait/trot_replay.gif', 'Trot replayed in physics (side view)', 'Stage 2', 'The Stage 1 trot at 0.15 m/s through the servo model. Filled foot = loaded; the dashed line is where the body would be at the commanded speed.', 'The body falls well short of the dashed line: 0.041 m/s measured.'],
+  ['s2', 'gait/crawl_replay.gif', 'Crawl replayed in physics (side view)', 'Stage 2', 'The Stage 1 crawl at 0.04 m/s through the servo model.', 'Servo torque reaches 0.94–0.99 of stall in the crawl; the reason was not traced.'],
+  ['s2', 'gait/trot_iso.gif', 'Trot, isometric, with timing chart', 'Stage 2', 'Isometric view of the trot with each leg\'s commanded stance (thin bar) against the weight it actually carries (coloured bar).', 'Where bars disagree, a leg is loaded when told to swing.'],
+  ['s2', 'gait/trot_turn_iso.gif', 'Trot turning, isometric', 'Stage 2', 'The turning trot (1.2 rad/s commanded) in physics.', 'It measured 0.82 rad/s, with 0.04 m/s of backward drift.'],
+  ['s2', 'gait/crawl_iso.gif', 'Crawl, isometric, with timing chart', 'Stage 2', 'The crawl in physics with the timing chart.', 'Fewest feet carrying weight was 2, although the Stage 1 design keeps 3 down; whether this is a brief unloading was not examined.'],
 ];
 const g = document.getElementById('gallery');
-g.innerHTML = DEMOS.map(([f, file, title, tag, what, caveat]) => `<article class="card demo" data-s="${f}"><img src="media/${file}" alt="${title}" loading="lazy" width="640" height="400">
+g.innerHTML = DEMOS.map(([f, file, title, tag, what, caveat]) => `<article class="card demo" data-s="${f}"><img src="media/${file.split('/').pop()}" alt="${title}" loading="lazy" width="640" height="400">
   <h3>${title}</h3><div class="tags"><span class="pill ${f === 's2' ? 'wip' : 'done'}">${tag}</span><span class="pill">results/${file}</span></div><p>${what}</p><p class="small muted"><b>Does not show:</b> ${caveat}</p></article>`).join('');
 document.querySelectorAll('.filters button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b));

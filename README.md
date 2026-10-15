@@ -9,7 +9,7 @@ trips to simulation to prepare for specific tasks.
 The first robot is a quadruped with 12 degrees of freedom, 3 per leg:
 abduction and hip pitch at the shoulder, and a knee. The feet are grippy pads.
 
-![The body twisting and turning with its feet planted](results/posture_demo.gif)
+![The body twisting and turning with its feet planted](results/body/posture_demo.gif)
 
 *Every leg in this animation is drawn from the joint angles a trained neural
 network produced. The orange rings are where the feet were asked to be.*
@@ -18,18 +18,18 @@ network produced. The orange rings are where the feet were asked to be.*
 
 A static site with a progress report, the theory and implementation, every result graphed, all the demos, and a playground
 where the robot's dimensions, posture, gait, mass and servo settings can be changed (a live kinematic lab, and a replay of 144 recorded
-MuJoCo runs). It reads the numbers from `results/*.json`; it holds none of its own.
+MuJoCo runs). It reads the numbers from the JSON files under `results/`; it holds none of its own.
 
 ```bash
-python scripts/build_site.py                 # site/data and site/media from results/ (not committed)
+python scripts/website/build_site.py                 # site/data and site/media from results/ (not committed)
 python -m http.server -d site 8000           # open http://127.0.0.1:8000
-python scripts/site_sweep.py                 # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
+python scripts/website/site_sweep.py                 # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
 ```
 
-**Live physics, local only.** `python scripts/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
+**Live physics, local only.** `python scripts/website/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
 
 The `site` workflow publishes it with GitHub Pages when `main` changes (one-time: Settings, Pages, Source: GitHub Actions). The kinematic lab uses
-the closed-form IK in JavaScript (`site/assets/mojito.js`), checked against the Python by `tests/test_site_js.py` (needs Node).
+the closed-form IK in JavaScript (`site/assets/mojito.js`), checked against the Python by `tests/website/test_site_js.py` (needs Node).
 
 ## Status
 
@@ -64,7 +64,7 @@ Python 3.10 or newer. No GPU needed.
 git clone https://github.com/mi897/mojito && cd mojito
 pip install -r requirements.txt          # NumPy, SciPy, Matplotlib, Pillow
 python -m unittest discover tests        # 72 tests; the 7 PyTorch ones skip if torch is absent
-python scripts/make_body_demos.py        # re-render the animations from the trained network
+python scripts/body/make_body_demos.py        # re-render the animations from the trained network
 ```
 
 The trained network is in the repository (`weights/ik_leg.npz`), so nothing
@@ -73,11 +73,11 @@ target around and change the link lengths live.
 
 | Script | What it does | Writes |
 |---|---|---|
-| `scripts/train.py` | Train the leg network (about 12 minutes on 2 CPU cores) | `weights/ik_leg.npz`, `results/training_log.json` |
-| `scripts/evaluate.py` | Compare the network with exact IK | `results/metrics.json`, four plots |
-| `scripts/calibrate.py` | Adapt to a simulated leg with unknown lengths | `results/calibration.json` |
-| `scripts/make_demo.py` | Single-leg demos | `results/step_demo.gif`, `docs/demo.html` |
-| `scripts/make_body_demos.py` | Posture, trot and crawl animations (`--no-gif` for numbers only) | four GIFs, `results/body_metrics.json` |
+| `scripts/learning/train.py` | Train the leg network (about 12 minutes on 2 CPU cores) | `weights/ik_leg.npz`, `results/learning/training_log.json` |
+| `scripts/learning/evaluate.py` | Compare the network with exact IK | `results/learning/metrics.json`, four plots |
+| `scripts/learning/calibrate.py` | Adapt to a simulated leg with unknown lengths | `results/learning/calibration.json` |
+| `scripts/learning/make_demo.py` | Single-leg demos | `results/learning/step_demo.gif`, `docs/demo.html` |
+| `scripts/body/make_body_demos.py` | Posture, trot and crawl animations (`--no-gif` for numbers only) | four GIFs, `results/body/body_metrics.json` |
 
 Every script takes `--backend numpy|torch` and `--help`.
 
@@ -135,7 +135,7 @@ only when asked for.
 
 | Scope | How |
 |---|---|
-| One command | `python scripts/train.py --backend torch` |
+| One command | `python scripts/learning/train.py --backend torch` |
 | Whole shell session | `export MOJITO_BACKEND=torch` |
 | The rest of a Python process | `mojito.set_backend("torch")` |
 | One call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
@@ -159,11 +159,11 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 ### Training for a different leg
 
 ```bash
-python scripts/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
+python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
-Joint limits live in `JOINT_LIMITS` in `mojito/leg.py`. After retraining,
+Joint limits live in `JOINT_LIMITS` in `mojito/robot/leg.py`. After retraining,
 re-run the other scripts so the results match the new weights.
 
 ### Robots from URDF
@@ -174,18 +174,18 @@ limits, link lengths) is written in Python.
 
 ```
 robots/quadruped.urdf + quadruped.json   <- the definition (any tool can read the URDF)
-        |  mojito.urdf     parse / write the URDF (pure Python, no NumPy)
+        |  mojito.geometry.urdf     parse / write the URDF (pure Python, no NumPy)
         v
-   RobotSpec / LimbSpec                  <- mojito.spec: the alignment layer
+   RobotSpec / LimbSpec                  <- mojito.geometry.spec: the alignment layer
         |  mojito.kinematics  forward kinematics + Jacobian for any serial chain
         v                      (NumPy arrays or torch tensors, same code)
      IKNet(spec)                         <- inputs and outputs sized from the chain
 ```
 
 ```bash
-python -m mojito.spec robots/quadruped.urdf --manifest robots/quadruped.json   # what the model will see
-python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
-python scripts/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FR
+python -m mojito.geometry.spec robots/quadruped.urdf --manifest robots/quadruped.json   # what the model will see
+python scripts/learning/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
+python scripts/learning/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FR
 ```
 
 ```python
@@ -257,7 +257,7 @@ Each link length was varied independently by ±10% in training. Tested on
   about 40 times faster in a batch. The network earns its place only by being
   adaptable, which is the next result.
 
-**Adapting to one specific leg.** `scripts/calibrate.py` simulates a leg whose
+**Adapting to one specific leg.** `scripts/learning/calibrate.py` simulates a leg whose
 true lengths (+6%, −5%, +8%) and servo zero points (2°, −3°, 4°) are unknown.
 From 30 foot measurements with 1 mm of noise it estimates all six numbers and
 hands the lengths to the same network. Nothing is retrained.
@@ -269,10 +269,10 @@ hands the lengths to the same network. Nothing is retrained.
 
 | | |
 |---|---|
-| ![Error distribution](results/error_distribution.png) | ![Error against leg size](results/error_vs_length.png) |
-| ![Error across the workspace](results/error_map.png) | ![Training curve](results/training_curve.png) |
+| ![Error distribution](results/learning/error_distribution.png) | ![Error against leg size](results/learning/error_vs_length.png) |
+| ![Error across the workspace](results/learning/error_map.png) | ![Training curve](results/learning/training_curve.png) |
 
-![Three leg sizes tracing the same step](results/step_demo.gif)
+![Three leg sizes tracing the same step](results/learning/step_demo.gif)
 
 ### Stage 1: whole body
 
@@ -282,11 +282,11 @@ foot error at that instant.
 
 | Trot, straight | Trot, turning on the spot |
 |---|---|
-| ![Trot forward](results/trot_forward.gif) | ![Trot turning](results/trot_turn.gif) |
+| ![Trot forward](results/body/trot_forward.gif) | ![Trot turning](results/body/trot_turn.gif) |
 
 | Crawl, leaning away from the lifted foot |
 |---|
-| ![Crawl forward](results/crawl_forward.gif) |
+| ![Crawl forward](results/body/crawl_forward.gif) |
 
 | Demo | Worst foot error | Median | Closest any joint gets to its limit | Feet down |
 |---|---|---|---|---|
@@ -310,7 +310,7 @@ Known weaknesses of these motions:
   cannot check. With two feet the body centre is never inside a support
   polygon: in the forward trot it ends up as much as 11 mm off the line
   between the grounded feet (`body_centre_inside_support_mm_min` in
-  `results/body_metrics.json`).
+  `results/body/body_metrics.json`).
 - The crawl's lean is quick: the body shifts 50 mm in 0.2 s.
 - The gaits take a constant velocity command. Changing speed mid-stride is
   not handled yet.
@@ -354,23 +354,27 @@ FR, RL, RR.
 ## Repository layout
 
 ```
-mojito/urdf.py         read and write URDF (no NumPy)
-mojito/spec.py         URDF + manifest -> LimbSpec / RobotSpec; groups, mirrors, checks, write-back
-mojito/kinematics.py   forward kinematics, Jacobian, numeric IK for any serial chain
-mojito/robots.py       generators for the example URDFs in robots/
-mojito/leg.py          the 3-joint leg: closed-form IK (reference), sampling
-mojito/model.py        the leg network, NumPy backend; shared base class
-mojito/torch_model.py  the leg network, PyTorch backend
-mojito/backend.py      backend switch: make_model, load_model, set_backend
-mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot: quadruped; URDFRobot: any URDF)
-mojito/gaits.py        trot and crawl, crawl lean, stability margin
-robots/                example URDFs and manifests: quadruped, hexapod, planar 2-joint leg
-site/                  the website (HTML, JS, CSS); site/data and site/media are generated by scripts/build_site.py
-scripts/               train, evaluate, calibrate, make_demo, make_body_demos
-tests/                 unit tests (standard-library unittest)
+mojito/                the library, in four subpackages (each holds at most about a dozen files)
+  geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
+                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/)
+  robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
+                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
+  learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
+  sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
+                       stand.py, gait_replay.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+robots/                example URDFs + manifests: quadruped, hexapod, planar
+site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
+scripts/               entry points, one folder per topic
+  learning/            train, evaluate, calibrate, make_demo
+  body/                make_body_demos, torque_envelope
+  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis,
+                       make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  website/             build_site, serve_site, site_sweep
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
-results/               metrics (JSON), plots, animations
-docs/PLAN.md           roadmap and the reasoning behind it
+results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
+docs/NAMING.md         naming and equation-commenting conventions
+docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage
 docs/demo.html         interactive single-leg demo (generated from demo_template.html)
 CLAUDE.md              conventions and working rules for AI coding assistants
 ```
@@ -390,7 +394,7 @@ committed so this page renders. Regenerate them rather than editing by hand.
 
 ## How heavy can it be?
 
-`python scripts/torque_envelope.py` writes `results/torque_envelope.json`: the
+`python scripts/body/torque_envelope.py` writes `results/body/torque_envelope.json`: the
 static joint torque needed to hold the body in a stance, and the largest total
 mass a servo can hold. For the Stage 2 design placeholders (50, 150, 150 mm
 links, 212.5 mm stand height, 300 × 150 mm shoulder spacing; larger than the
@@ -401,8 +405,8 @@ This counts weight on vertical foot loads only. It leaves out leg and servo mass
 is an upper bound, not a mass the robot can walk with. Details and the
 length-to-width result are in `docs/STAGE2.md`.
 
-`python scripts/stand_test.py` (needs MuJoCo) then holds the standing posture in
-physics through the servo model and writes `results/stand_test.json`. With the
+`python scripts/sim/stand_test.py` (needs MuJoCo) then holds the standing posture in
+physics through the servo model and writes `results/stand/stand_test.json`. With the
 same placeholders, 5 V and servo gains that are also placeholders, a 1.5 kg robot
 with near-weightless legs stands with the servo torques within 0.5% of the static
 calculation when that is given the measured foot loads. The feet carry the weight
@@ -411,19 +415,19 @@ to 8% off. The sweep stood up to 4 kg and fell at 4.5 kg with the default gain,
 and stood up to 5.5 kg and fell at 6 kg with a stiffer one: below the 7.18 kg
 static bound either way, and the answer moves with gains that are placeholders.
 
-`python scripts/sit_to_stand.py` rises from a 140 mm crouch to the 212.5 mm stand over 0.5 to 4 s and
-writes `results/sit_to_stand.json` and `.png`; `python scripts/make_stand_demo.py` writes the animations
-`results/stand_demo.gif` and `results/sit_to_stand_demo.gif`. The crouch is the hardest pose (25% more knee
+`python scripts/sim/sit_to_stand.py` rises from a 140 mm crouch to the 212.5 mm stand over 0.5 to 4 s and
+writes `results/stand/sit_to_stand.json` and `.png`; `python scripts/sim/make_stand_demo.py` writes the animations
+`results/stand/stand_demo.gif` and `results/stand/sit_to_stand_demo.gif`. The crouch is the hardest pose (25% more knee
 torque per newton than standing). With fine command resolution a 2 s rise peaks where the crouch hold does, 0.54 of
 the stall torque for 3 kg and 0.72 for 4 kg; 5 kg does not rise. The weight is not shared equally: 24% on each front foot and 26% on each rear foot
 for near-weightless legs, 20% and 30% with the default placeholder masses.
 The masses, gains and servo figures are placeholders, so these show how the model behaves, not what a built robot can do.
 
-`python scripts/gait_replay.py` (needs MuJoCo) replays the trot and crawl through the servo model with a free body and
-writes `results/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
+`python scripts/sim/gait_replay.py` (needs MuJoCo) replays the trot and crawl through the servo model with a free body and
+writes `results/gait/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
 5.0°). The body does not reach the commanded speed: trot at 0.15 m/s
 measured 0.041 m/s, at 0.30 m/s 0.111 m/s, and marching in place drifted back at 0.038 m/s; crawl at 0.04 m/s measured
-0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; `scripts/gait_speed_diagnosis.py` traces the shortfall to two causes: the soft servos (kp 10; the crawl reaches its 0.04 m/s at kp 100) and, in the trot, rear feet that still carry weight when commanded to swing (see `docs/STAGE2.md`). Animations: `results/trot_replay.gif`, `results/crawl_replay.gif` (side view) and `results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif` (isometric, with a gait timing chart). The pace (left legs, then right) goes backward because the body rolls onto the feet it is lifting (`scripts/pace_diagnosis.py`, `docs/STAGE2.md`). `python scripts/try_gait.py --help` tries other timings (period, duty, offsets, lift order); how the timing is set is in `docs/STAGE2.md`.
+0.028 m/s. Peak torque is 0.65 to 0.85 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything; `scripts/sim/gait_speed_diagnosis.py` traces the shortfall to two causes: the soft servos (kp 10; the crawl reaches its 0.04 m/s at kp 100) and, in the trot, rear feet that still carry weight when commanded to swing (see `docs/STAGE2.md`). Animations: `results/gait/trot_replay.gif`, `results/gait/crawl_replay.gif` (side view) and `results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif` (isometric, with a gait timing chart). The pace (left legs, then right) goes backward because the body rolls onto the feet it is lifting (`scripts/sim/pace_diagnosis.py`, `docs/STAGE2.md`). `python scripts/sim/try_gait.py --help` tries other timings (period, duty, offsets, lift order); how the timing is set is in `docs/STAGE2.md`.
 
 ### Running the live gait explorer on your machine
 
@@ -435,7 +439,7 @@ git clone https://github.com/mi897/mojito && cd mojito
 git checkout stage-2-trot-crawl-physics-replay      # until it is merged to main
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install numpy scipy mujoco
-python scripts/live_gait.py                         # add --preset crawl, --walk, --port 9000
+python scripts/sim/live_gait.py                         # add --preset crawl, --walk, --port 9000
 ```
 
 Open http://127.0.0.1:8765. Press **Walk** to start and **Stand** to stop; **Reset** rebuilds the robot (needed after a fall); **Pause** freezes the physics.
@@ -459,7 +463,7 @@ Parameters (all apply while it runs; speed, yaw rate, lift and sway are eased in
 Experiments that match results in `docs/STAGE2.md` (placeholder everything, one run each, so look for the same direction, not the same numbers):
 trot at 0.15 m/s with kp 10, then kp 100 and kd 1 (the body should get much closer to the commanded speed); the **pace** preset (rolls onto the feet it lifts and goes backward);
 lift 0.03 against 0.06 on the pace (roll about doubles); the **crawl** with sway 0 against 0.025; raising mass until the servos saturate (torque/stall reaches 1).
-Playing with the sliders is exploration, not a measurement: for numbers use `scripts/try_gait.py` and put them in `results/`.
+Playing with the sliders is exploration, not a measurement: for numbers use `scripts/sim/try_gait.py` and put them in `results/`.
 
 ## Open questions
 
