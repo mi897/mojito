@@ -25,7 +25,7 @@
   <section id="kin">
     <div class="notice"><b>What this lab is, and is not.</b>
       It runs the project's own maths in your browser (closed-form inverse kinematics, the trot, crawl and pace foot paths, static joint torques) and
-      checks them every time the page's code changes against the Python (<code>tests/test_site_js.py</code>). It is geometry plus gravity held still at each instant:
+      checks them every time the page's code changes against the Python (<code>tests/website/test_site_js.py</code>). It is geometry plus gravity held still at each instant:
       <b>no dynamics, no friction, no leg mass, no servo lag.</b> The torque shown is what the servos would need to <em>hold</em> the weight in that pose,
       with the weight shared over the grounded feet by an assumption (see below). For real behaviour, use the Physics lab.</div>
     <div class="pg">
@@ -70,7 +70,7 @@
     <div class="notice"><b>What this lab is, and is not.</b>
       Every combination offered here was run once in MuJoCo (this project's physics model with the servo model: 20&nbsp;ms latency, command steps of the real PWM driver, torque limits that depend on speed) and the motion was recorded.
       The page replays the stored run. There is no interpolation between combinations and each is a single run with no randomness, so the differences you see between neighbouring cells are real for the model but not a statistical result.
-      <b>Dimensions (50/150/150 mm legs, 300×150 mm body), masses, friction and servo figures are placeholders.</b> To try other values, run <code>scripts/live_gait.py</code> or <code>scripts/try_gait.py</code> on your machine.</div>
+      <b>Dimensions (50/150/150 mm legs, 300×150 mm body), masses, friction and servo figures are placeholders.</b> To try other values, run <code>scripts/sim/live_gait.py</code> or <code>scripts/sim/try_gait.py</code> on your machine.</div>
     <div class="pg">
       <aside class="pg-side card"><div id="phys-controls"></div></aside>
       <div>
@@ -105,12 +105,12 @@
       Nothing is sent anywhere: the server listens on 127.0.0.1 only and refuses other hosts and origins.
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
 pip install numpy scipy matplotlib pillow mujoco
-python scripts/build_site.py
-python scripts/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
+python scripts/website/build_site.py
+python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
       On this hosted copy the tab stays empty; use the Kinematic and Physics labs here.</div>
     <div id="live-ui" hidden>
       <div class="notice"><b>Real physics, your settings, placeholder everything.</b> This is the same MuJoCo model, servo model and gait generator as the stored runs, stepped live. Changing a robot dimension or the mass rebuilds the model (the robot stands again).
-        Dimensions, masses, friction and servo figures are placeholders; what you see is how the model behaves, not what a built robot would do. Playing with sliders is exploration, not a measurement: for numbers use <code>scripts/try_gait.py</code> and put them in <code>results/</code>.</div>
+        Dimensions, masses, friction and servo figures are placeholders; what you see is how the model behaves, not what a built robot would do. Playing with sliders is exploration, not a measurement: for numbers use <code>scripts/sim/try_gait.py</code> and put them in <code>results/</code>.</div>
       <div class="pg">
         <aside class="pg-side card"><div id="live-controls"></div></aside>
         <div>

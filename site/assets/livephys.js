@@ -1,4 +1,4 @@
-/* Live physics tab: talks to scripts/serve_site.py on this machine (api/*). Absent when the site is hosted statically. */
+/* Live physics tab: talks to scripts/website/serve_site.py on this machine (api/*). Absent when the site is hosted statically. */
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);

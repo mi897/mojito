@@ -1,7 +1,7 @@
-/* Mojito kinematics in JavaScript: a port of mojito/leg.py, body.py, gaits.py and statics.py.
+/* Mojito kinematics in JavaScript: a port of mojito/robot/leg.py, body.py, gaits.py and statics.py.
  *
  * It uses the closed-form inverse kinematics (the reference the trained network is judged against),
- * not the trained network. tests/test_site_js.py checks every function here against the Python.
+ * not the trained network. tests/website/test_site_js.py checks every function here against the Python.
  * Units: metres and radians. Leg order FL, FR, RL, RR. Leg frame: x forward, y lateral, z up.
  * Body frame: x forward, y left, z up. R = Rz(yaw) Ry(pitch) Rx(roll), body to world.
  */

@@ -163,8 +163,8 @@
       $('t-diag').innerHTML = '<tr><th>Trot at 0.15 m/s, variant</th><th class="num">measured m/s</th><th class="num">ask m/s</th><th class="num">load on feet commanded to swing</th><th class="num">tilt</th></tr>'
         + variants.map(v => { const r = pick(v); return `<tr><td>${v}</td><td class="num">${f(r.measured_m_s, 3)}</td><td class="num">${f(r.load_weighted_ask_m_s, 3)}</td><td class="num">${f(100 * r.load_share_on_feet_commanded_to_swing, 0)}%</td><td class="num">${f(r.max_tilt_deg, 1)}°</td></tr>`; }).join('');
     }
-    const gal = [['error_distribution.png', 'Error distribution'], ['error_vs_length.png', 'Error against leg size'], ['error_map.png', 'Error across the workspace'], ['training_curve.png', 'Training curve'], ['sit_to_stand.png', 'Sit to stand: height and torque']];
-    $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');
+    const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
+    $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');
     // the 144-run grid
     const s = document.createElement('script'); s.src = 'data/sweep.js';
     s.onload = () => {
@@ -173,7 +173,7 @@
       Charts.line($('c-sweep'), { x: { label: 'servo stiffness kp, N·m/rad', log: true, ticks: [10, 30, 100], fmt: v => v }, y: { label: 'measured m/s', fmt: v => f(v, 2), domain: [-0.05, 0.16] }, hlines: [{ y: 0.15, label: 'commanded 0.15', color: 'var(--muted)' }],
         series: [0.6, 1, 1.75].map(ms => ({ name: `${f(1.72 * ms, 2)} kg`, color: cols[ms], markers: true, points: runs.filter(r => r.mass_scale === ms).sort((a, b) => a.kp - b.kp).map(r => [r.kp, r.measured_speed_m_s, r.walked ? 'solid' : 'open']) })) });
     };
-    s.onerror = () => { $('c-sweep').innerHTML = '<p class="muted small">data/sweep.js not found; run scripts/build_site.py.</p>'; };
+    s.onerror = () => { $('c-sweep').innerHTML = '<p class="muted small">data/sweep.js not found; run scripts/website/build_site.py.</p>'; };
     document.head.append(s);
   }
   document.addEventListener('mojito-ready', ready);

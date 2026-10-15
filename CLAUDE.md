@@ -32,54 +32,60 @@ for results and usage. Keep both current when the work changes them.
 ## Layout
 
 ```
-mojito/urdf.py         read and write URDF (no NumPy)
-mojito/spec.py         URDF + manifest -> LimbSpec / RobotSpec; groups, mirrors, checks, write-back
-mojito/kinematics.py   forward kinematics, Jacobian, numeric IK for any serial chain
-mojito/robots.py       generators for the example URDFs in robots/
-mojito/leg.py          the 3-joint leg: closed-form IK (reference), sampling
-mojito/model.py        IK network, NumPy backend; shared base class; Adam
-mojito/torch_model.py  IK network, PyTorch backend
-mojito/backend.py      backend switch: make_model, load_model, set_backend
-mojito/body.py         legs on a body: frames, posture, per-leg solving (Robot, URDFRobot)
-mojito/gaits.py        trot and crawl foot trajectories, crawl lean, stability margin
-mojito/statics.py      static joint torques from foot loads (mass bound)
-mojito/mjcf.py         MuJoCo model generated from a URDF (optional dependency: mujoco)
-mojito/actuators.py    servo model: voltage, latency, resolution, torque-speed limit (NumPy)
-mojito/sensors.py      joint-angle sensor and IMU models (NumPy)
-mojito/stand.py        stand test: IK posture held through the servo model in MuJoCo
-mojito/gait_replay.py  trot and crawl replayed in MuJoCo through the servo model (needs mujoco)
-mojito/gait_plots.py   gait timing chart and isometric animation of a replay (matplotlib)
-mojito/live_sim.py     replay stepped a few steps at a time; gait, servo, robot dimensions and mass changeable live (needs mujoco)
-robots/                example URDFs + manifests: quadruped, hexapod, planar
+mojito/                the library, in four subpackages (each holds at most about a dozen files)
+  geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
+                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/)
+  robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
+                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
+  learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
+  sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
+                       stand.py, gait_replay.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
-scripts/               build_site, site_sweep, serve_site, train, evaluate, calibrate, make_demo, make_body_demos, torque_envelope, stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
-tests/                 unittest suites (no pytest dependency)
+scripts/               entry points, one folder per topic
+  learning/            train, evaluate, calibrate, make_demo
+  body/                make_body_demos, torque_envelope
+  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis,
+                       make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  website/             build_site, serve_site, site_sweep
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
-results/               metrics (json), plots (png), animations (gif)
+results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
 docs/NAMING.md         naming and equation-commenting conventions
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
 ```
+
+## Keeping folders small
+
+- **A folder holds at most about 12 files.** When one grows past that, split it by topic into subfolders
+  *in the same change*: do not wait. Group by what the files are about, not by file type, and name the folder for the
+  topic (`sim/`, `learning/`), not `misc/` or `utils/`. Never name a folder after a standard-library module (`site`, `test`).
+- Mirror the grouping across `mojito/`, `scripts/`, `tests/` and `results/` so a topic is in the same-named folder in each.
+- A script writes its outputs to the matching `results/<topic>/` folder. File names stay unique across `results/`
+  (the website flattens them into `site/media/`).
+- When you move a file, update every path that names it (imports, docs, `CLAUDE.md` layout, README, workflows, site pages) and run the tests.
+- New packages need an `__init__.py`; new test folders too, or `unittest discover` skips them.
 
 ## Commands
 
 ```bash
 python -m unittest discover tests          # all tests; PyTorch ones skip if torch is absent
-python scripts/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
-python scripts/evaluate.py                 # results/metrics.json and plots
-python scripts/calibrate.py                # results/calibration.json
-python scripts/make_demo.py                # results/step_demo.gif, docs/demo.html
-python scripts/torque_envelope.py          # results/torque_envelope.json, static mass bound
-python scripts/stand_test.py               # results/stand_test.json (needs mujoco)
-python scripts/sit_to_stand.py             # results/sit_to_stand.json and .png (needs mujoco)
-python scripts/make_stand_demo.py          # results/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
-python scripts/gait_replay.py              # results/gait_replay.json (needs mujoco)
-python scripts/try_gait.py --help          # try other gait timings in physics, GIF in results/try/
-python scripts/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
-python scripts/build_site.py               # website data from results/; then: python -m http.server -d site
-python scripts/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
-python scripts/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/physics_sweep.json (needs mujoco)
-python scripts/make_body_demos.py          # body animations, results/body_metrics.json (add --no-gif for numbers only)
-python scripts/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
+python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
+python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
+python scripts/learning/calibrate.py                # results/learning/calibration.json
+python scripts/learning/make_demo.py                # results/learning/step_demo.gif, docs/demo.html
+python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
+python scripts/sim/stand_test.py               # results/stand/stand_test.json (needs mujoco)
+python scripts/sim/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
+python scripts/sim/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
+python scripts/sim/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
+python scripts/sim/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
+python scripts/sim/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
+python scripts/website/build_site.py               # website data from results/; then: python -m http.server -d site
+python scripts/website/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
+python scripts/website/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/gait/physics_sweep.json (needs mujoco)
+python scripts/body/make_body_demos.py          # body animations, results/body/body_metrics.json (add --no-gif for numbers only)
+python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # network sized from a URDF
 ```
 
 Every script takes `--backend numpy|torch`. The default is `$MOJITO_BACKEND`,
@@ -99,11 +105,11 @@ else NumPy.
   are `(..., 4, 3)`. `body.URDFRobot` instead uses dicts keyed by limb name
   (the hexapod has FL, FR, ML, MR, RL, RR) and has no gaits.
 - **The URDF is the source of truth for geometry.** Limb structure, axes,
-  limits and the number of free lengths come from `robots/*.urdf` (plus the
-  JSON manifest) via `mojito/spec.py`, not from Python constants. Weight files
+  limits and the number of free lengths come from `robots/*/*.urdf` (plus the
+  JSON manifest) via `mojito/geometry/spec.py`, not from Python constants. Weight files
   embed the limb spec; loading them against a different URDF raises
   `SpecMismatch`. The example URDFs in `robots/` come from the generators
-  in `mojito/robots.py`, so change the generator and regenerate rather than
+  in `mojito/geometry/robots.py`, so change the generator and regenerate rather than
   hand-editing both. Joint-limit changes need retraining;
   link-length changes do not.
 - **Link lengths are arguments, never module constants.** For the built-in
@@ -125,13 +131,13 @@ else NumPy.
   `to_json`) and the same `.npz` layout, with `W[i]` shaped (inputs, outputs).
   `predict` takes and returns NumPy arrays on both. A change to one backend
   needs the matching change to the other and a parity test in
-  `tests/test_backends.py`.
+  `tests/learning/test_backends.py`.
 
 ## Website rules
 
-- The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/test_build_site.py`) or draw it from the JSON in a script.
-- `site/assets/mojito.js` is a port of `leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/test_site_js.py` compares them.
-- `scripts/serve_site.py` is local only: it binds 127.0.0.1 and checks Host and Origin (tested in `tests/test_serve_site.py`). Do not add a public mode without asking the owner.
+- The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/website/test_build_site.py`) or draw it from the JSON in a script.
+- `site/assets/mojito.js` is a port of `mojito/robot/leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/website/test_site_js.py` compares them.
+- `scripts/website/serve_site.py` is local only: it binds 127.0.0.1 and checks Host and Origin (tested in `tests/website/test_serve_site.py`). Do not add a public mode without asking the owner.
 - Say in the page what a lab does not model. The kinematic lab is static (no dynamics); the physics lab replays stored runs, no interpolation.
 
 ## Generated files

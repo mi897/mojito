@@ -23,7 +23,7 @@ const DOCS = [['README', 'README'], ['PLAN', 'Plan'], ['STAGE2', 'Stage 2 report
 const tabs = document.getElementById('doc-tabs'), doc = document.getElementById('doc'), toc = document.getElementById('doc-toc');
 const slug = s => s.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function show(key) {
-  const md = window.MOJITO_DOCS[key].replace(/\]\((?:\.\.\/)?results\/([^)]+\.(?:gif|png))\)/g, '](media/$1)').replace(/\]\((?:\.\.\/)?docs\/([A-Z0-9_]+)\.md\)/g, (m, n) => `](reports.html#${n})`).replace(/\]\(\.?\/?demo\.html\)/g, '](media/leg_demo.html)');
+  const md = window.MOJITO_DOCS[key].replace(/\]\((?:\.\.\/)?results\/(?:[a-z]+\/)?([^)\/]+\.(?:gif|png))\)/g, '](media/$1)').replace(/\]\((?:\.\.\/)?docs\/([A-Z0-9_]+)\.md\)/g, (m, n) => `](reports.html#${n})`).replace(/\]\(\.?\/?demo\.html\)/g, '](media/leg_demo.html)');
   const html = marked.parse(md, { gfm: true });
   doc.innerHTML = html;
   toc.innerHTML = '';

@@ -17,7 +17,7 @@ the model is trusted.
 
 | Question | Answer | Consequence |
 |---|---|---|
-| Real dimensions | None yet; to be chosen from simulation | Dimensions are sweep parameters, never constants. The URDF generator in `mojito/robots.py` stays the single source. |
+| Real dimensions | None yet; to be chosen from simulation | Dimensions are sweep parameters, never constants. The URDF generator in `mojito/geometry/robots.py` stays the single source. |
 | Actuators, first robot | "DSServo DS3218 20KG Digital Metal Servo", supply adjustable 5–6 V | Torque-limited, speed-limited position servos whose limits depend on voltage. See "Servo model". |
 | Actuators, later robots | DC motors reporting position, velocity and current | The actuator is an interface: command in, torque out, plus a list of what it reports. Swapping servos for motors must not change the policy code. |
 | Joint feedback | The servo reports nothing. The first robot gets external joint-angle sensors fed back to the system | Simulation reports a **measured** angle (noise, quantisation, delay, offset), never the true one, as the policy's joint observation. |
@@ -30,7 +30,7 @@ Put a `site` at each foot tip and at the body-frame origin (the centre of the
 four shoulders, not the base body's own origin). MuJoCo gives world positions
 in `data.site_xpos`; the base orientation is `data.xmat`. The relative foot
 position is `R_baseᵀ · (foot_world − body_origin_world)`, in the same body
-frame as `mojito/body.py`.
+frame as `mojito/robot/body.py`.
 
 Use this ground truth for rewards, evaluation and foot-slip measurement. Do
 **not** put it in the policy's observation: the real robot will only have
@@ -118,12 +118,12 @@ actual gap becomes at the torque limit.
 
 ## How heavy can it be? (static bound)
 
-`scripts/torque_envelope.py` (maths in `mojito/statics.py`, test in
-`tests/test_statics.py`) computes the joint torque needed to hold the body's
+`scripts/body/torque_envelope.py` (maths in `mojito/robot/statics.py`, test in
+`tests/robot/test_statics.py`) computes the joint torque needed to hold the body's
 weight in three stances, with the Stage 2 design placeholders (see "Sizing
 against the servo"): leg 50, 150, 150 mm standing 212.5 mm high, feet under the
 hips, and a body of 300 × 150 mm shoulder spacing. The output is
-`results/torque_envelope.json`.
+`results/body/torque_envelope.json`.
 
 What it computes: vertical foot loads only, from weight. What it leaves out:
 the mass of the legs and of the servos hanging on them, gait dynamics and
@@ -147,7 +147,7 @@ shown? The cell is that total mass.
 *Rows are how many feet carry the weight.* Standing: four legs, about a quarter
 of the weight each (the easiest case). Crawl: three legs, with the body leaning
 away from the lifted foot, so the load is uneven; the busiest leg carries about
-42% of the weight (derived from `results/torque_envelope.json`, not a separate
+42% of the weight (derived from `results/body/torque_envelope.json`, not a separate
 output). Trot: two diagonal legs, half each (the hardest case).
 
 *The knee decides.* The foot sits under the hip, so the hip-pitch joint holds
@@ -219,7 +219,7 @@ Decision (owner asked for parts that are not smaller than the motors): the
 The Stage 0–1 network, results and demos keep the 120 mm placeholders. Changing
 them would mean retraining and regenerating every result, so it is deferred; the
 two sets differ until a design is chosen. The MuJoCo model and the design sweep
-use the new sizes (`scripts/torque_envelope.py` already does).
+use the new sizes (`scripts/body/torque_envelope.py` already does).
 
 What this does not settle: whether the structure is sound. The frame and links
 must carry the servos, battery and electronics, with enough stiffness and
@@ -354,20 +354,20 @@ improves sim-to-real transfer. This is a standard arrangement. Design points:
 
 Each is one branch-sized step. Tick them off here as they land.
 
-0. [x] **Static mass bound.** `scripts/torque_envelope.py`, as above.
-1. [x] **MJCF from the URDF.** `mojito/mjcf.py` generates a MuJoCo model from a
+0. [x] **Static mass bound.** `scripts/body/torque_envelope.py`, as above.
+1. [x] **MJCF from the URDF.** `mojito/sim/mjcf.py` generates a MuJoCo model from a
    `URDFModel` (so a leg-length change reaches both the IK input and the
    simulator), with a floating base, joint limits from the URDF, a site at each
    foot tip and at the body-frame origin, a floor with friction, and capsule
    geometry with placeholder masses (`DEFAULT_MASSES`, about 1.5 kg total, not the robot's).
    Only the foot pads and the floor collide. No actuators yet (work package 2).
-   Tests (`tests/test_mjcf.py`): foot positions from MuJoCo equal
+   Tests (`tests/sim/test_mjcf.py`): foot positions from MuJoCo equal
    `body.Robot.feet` to 1e-9 m for 25 random draws of per-leg lengths, body size,
    joint angles (left and right legs) and base pose, both in the body frame and in
    the world; joint ranges equal the URDF's; a longer shank lowers the foot; and
    a stiffly held stance dropped on the floor ends on four contacts whose normal
    force sums to the weight within 3%.
-2. [x] **Servo and sensor model** (`mojito/actuators.py` and `mojito/sensors.py`, with `tests/test_actuators.py` and `tests/test_sensors.py`; `mjcf_from_urdf(..., actuated=True)` adds torque motors and a gyro and accelerometer).
+2. [x] **Servo and sensor model** (`mojito/sim/actuators.py` and `mojito/sim/sensors.py`, with `tests/sim/test_actuators.py` and `tests/sim/test_sensors.py`; `mjcf_from_urdf(..., actuated=True)` adds torque motors and a gyro and accelerometer).
    Defaults are the unverified listed figures; kp 10 N·m/rad, kd 0.2, latency 20 ms and the
    sensor and IMU noise values are my placeholders, not measurements. Tests: a servo holding a mass on a
    horizontal arm settles at the root of kp·q = m g L cos q (below the limit), and above the limit sags to
@@ -377,7 +377,7 @@ Each is one branch-sized step. Tick them off here as they land.
    offset, and an IMU (gyro and accelerometer noise, drifting bias), behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
    below the limit, and saturate when it is above.
-3. [x] **Stand test** (`mojito/stand.py`, `scripts/stand_test.py`, `tests/test_stand.py`, `results/stand_test.json`).
+3. [x] **Stand test** (`mojito/sim/stand.py`, `scripts/sim/stand_test.py`, `tests/sim/test_stand.py`, `results/stand/stand_test.json`).
    The IK standing posture (design placeholders: 50, 150, 150 mm legs, 212.5 mm, 300 × 150 mm) is commanded
    through the servo model into the actuated MuJoCo model; the last 0.5 s of a 3 s run is reported.
    What was measured, all at 5 V with the unverified listed stall torque (1.86 N·m) and placeholder
@@ -402,8 +402,8 @@ Each is one branch-sized step. Tick them off here as they land.
    collapse mass moved from 4.5 to 6 kg between two gain settings); anything about walking; friction limits and foot slip (not
    measured here). After a collapse the body passes through the floor, because only
    the foot pads collide, so the "height drop" of about 450 mm in the failed runs is not a physical height.
-   **Sit to stand** (`stand.run_sit_to_stand`, `scripts/sit_to_stand.py`, `results/sit_to_stand.json` and `.png`,
-   `scripts/make_stand_demo.py` for the animations). Same model, 5 V, near-weightless legs. Start crouched
+   **Sit to stand** (`stand.run_sit_to_stand`, `scripts/sim/sit_to_stand.py`, `results/stand/sit_to_stand.json` and `.png`,
+   `scripts/sim/make_stand_demo.py` for the animations). Same model, 5 V, near-weightless legs. Start crouched
    at 140 mm (the placeholder knee limit of -2.3 rad stops the 150 mm legs at about 130 mm, so this is a deep
    crouch and not sitting down), hold 1 s, rise to 212.5 mm over 0.5 to 4 s along a minimum-jerk profile, hold 1 s.
    - Per newton of foot load the crouch needs 25% more knee torque than standing (0.325 against 0.260 N·m per kg of
@@ -422,14 +422,14 @@ Each is one branch-sized step. Tick them off here as they land.
    - Not shown: a real robot's limit (masses, gains and the servo figures are placeholders), rising from lying down,
      slip, or the effect of leg mass.
 
-   **Weight distribution** (`results/stand_test.json`). The feet do not share the weight equally. Standing with
+   **Weight distribution** (`results/stand/stand_test.json`). The feet do not share the weight equally. Standing with
    near-weightless legs: 24.1% on each front foot and 25.9% on each rear foot (front pair 48.3%). With the default
    placeholder masses: 20.4% front and 29.6% rear (front pair 40.9%); in the 140 mm crouch 19.7% and 30.3%
    (front pair 39.5%). Left and right match. The mechanism was not traced. Likely contributors: the knees all bend
    backwards, so the shank and foot masses sit behind the hips and move the centre of mass rearward, and the
    knee-bend direction makes front and rear legs not mirror images. Only the second of these applies to the near-weightless legs.
 
-4. [x] **Replay Stage 1 gaits in physics** (`mojito/gait_replay.py`, `scripts/gait_replay.py`, `tests/test_gait_replay.py`, `results/gait_replay.json`).
+4. [x] **Replay Stage 1 gaits in physics** (`mojito/sim/gait_replay.py`, `scripts/sim/gait_replay.py`, `tests/sim/test_gait_replay.py`, `results/gait/gait_replay.json`).
    The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
    closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
    then 4 trot cycles (0.5 s period) or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
@@ -451,10 +451,10 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Feet down.* Fewest feet carrying more than 0.5 N: 2 in every run, including the crawl, which Stage 1 designed to keep 3 down.
      Whether this is a brief unloading or a sustained lift was not examined. Mean feet down: trot 2.6, crawl 3.3.
    - *Heavy robot.* At 8 kg (legs near zero) the trot saturates the servos for more than 20% of the walking time and the run does not count as walked (test).
-   Animations: `scripts/make_gait_replay_demo.py` writes `results/trot_replay.gif` and `results/crawl_replay.gif` (side view of the
+   Animations: `scripts/sim/make_gait_replay_demo.py` writes `results/gait/trot_replay.gif` and `results/gait/crawl_replay.gif` (side view of the
    left legs, filled foot = loaded, dashed line = where the body would be at the commanded speed).
 
-   **Why the body falls short** (`scripts/gait_speed_diagnosis.py`, `results/gait_speed_diagnosis.json`; same model, one run
+   **Why the body falls short** (`scripts/sim/gait_speed_diagnosis.py`, `results/gait/gait_speed_diagnosis.json`; same model, one run
    per entry). A planted foot is fixed in the world, so one whose commanded body-frame velocity is v asks the body to move at -v.
    `ask` is that, averaged over the loaded feet weighted by normal force. Trot at 0.15 m/s:
 
@@ -482,7 +482,7 @@ Each is one branch-sized step. Tick them off here as they land.
    fix. 100 mm gave 0.186 (ideal servo) with 21° tilt: not a result I trust. Not tested: friction, body mass distribution, gait timing, or how the
    weight split (20% front, 30% rear for the default masses) feeds into this. The sag figures are the measured *mean* over loaded stance steps in one trot run.
 
-   **How the gait timing is set** (`mojito/gaits.py`, `Gait`). Four numbers, all per cycle:
+   **How the gait timing is set** (`mojito/robot/gaits.py`, `Gait`). Four numbers, all per cycle:
    - `period`: seconds per cycle. Trot 0.5 s, crawl 2.0 s.
    - `duty`: the fraction of the cycle a foot is on the ground. Trot 0.5, crawl 0.85. So stance lasts `duty * period` (`Gait.stance_time`)
      and swing `(1 - duty) * period` (`Gait.swing_time`): trot 0.25 s / 0.25 s, crawl 1.7 s / 0.3 s.
@@ -495,18 +495,18 @@ Each is one branch-sized step. Tick them off here as they land.
    Where each foot goes follows from these and the commanded velocity: a foot on the ground moves backward in the body frame at the body's
    velocity, so one stance covers `velocity * stance_time` (trot at 0.15 m/s: 37.5 mm; crawl at 0.04 m/s: 68 mm), and the swing carries the
    foot forward to where the next stance starts, with a sin² lift. The commanded stance and the measured foot load are drawn together in
-   the timing chart at the bottom of each isometric GIF (`results/trot_iso.gif`, `results/trot_turn_iso.gif`, `results/crawl_iso.gif`, from
-   `scripts/make_gait_iso_demos.py`).
+   the timing chart at the bottom of each isometric GIF (`results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif`, from
+   `scripts/sim/make_gait_iso_demos.py`).
 
-   **Live explorer** (`scripts/live_gait.py`, `mojito/live_sim.py`, `scripts/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
+   **Live explorer** (`scripts/sim/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/sim/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
 
-   **Trying variations** (`scripts/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
-   and the measured result, and writes `results/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
+   **Trying variations** (`scripts/sim/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
+   and the measured result, and writes `results/gait/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
    `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
    Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
    measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). See below for why the pace goes backward.
 
-   **Why the pace goes backward** (`scripts/pace_diagnosis.py`, `results/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
+   **Why the pace goes backward** (`scripts/sim/pace_diagnosis.py`, `results/gait/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
    - *Established for the base pace.* Only two feet on one side are commanded down, so the support is a line along that side, 125 mm from the
      centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 13.5°,
      against 13.7° for `2 atan(lift / track)` with the 30 mm lift and the 0.25 m foot track; with a 60 mm lift it is 25.6°, against 27.9°. The roll does not
