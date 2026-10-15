@@ -6,8 +6,8 @@
     python scripts/learning/train.py --backend torch       # PyTorch instead of NumPy
 
     # Build the network from a URDF instead of the built-in leg:
-    python scripts/learning/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
-    python scripts/learning/train.py --urdf robots/planar.urdf --out weights/ik_planar.npz
+    python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+    python scripts/learning/train.py --urdf robots/planar/planar.urdf --out weights/ik_planar.npz
 """
 import argparse
 import json

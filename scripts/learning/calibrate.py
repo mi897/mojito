@@ -10,7 +10,7 @@ and hand the fitted lengths to the same network. No retraining.
 With --urdf the network is checked against that URDF's limb, and the fitted
 lengths are written back into a copy of the URDF (--out-urdf):
 
-    python scripts/learning/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FL
+    python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FL
 """
 import argparse
 import json

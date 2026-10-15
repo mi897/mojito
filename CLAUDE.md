@@ -40,7 +40,7 @@ mojito/                the library, in four subpackages (each holds at most abou
   learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        stand.py, gait_replay.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
-robots/                example URDFs + manifests: quadruped, hexapod, planar
+robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
@@ -85,7 +85,7 @@ python scripts/website/build_site.py               # website data from results/;
 python scripts/website/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
 python scripts/website/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/gait/physics_sweep.json (needs mujoco)
 python scripts/body/make_body_demos.py          # body animations, results/body/body_metrics.json (add --no-gif for numbers only)
-python scripts/learning/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json   # network sized from a URDF
+python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # network sized from a URDF
 ```
 
 Every script takes `--backend numpy|torch`. The default is `$MOJITO_BACKEND`,
@@ -105,7 +105,7 @@ else NumPy.
   are `(..., 4, 3)`. `body.URDFRobot` instead uses dicts keyed by limb name
   (the hexapod has FL, FR, ML, MR, RL, RR) and has no gaits.
 - **The URDF is the source of truth for geometry.** Limb structure, axes,
-  limits and the number of free lengths come from `robots/*.urdf` (plus the
+  limits and the number of free lengths come from `robots/*/*.urdf` (plus the
   JSON manifest) via `mojito/geometry/spec.py`, not from Python constants. Weight files
   embed the limb spec; loading them against a different URDF raises
   `SpecMismatch`. The example URDFs in `robots/` come from the generators

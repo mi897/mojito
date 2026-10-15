@@ -173,7 +173,7 @@ the network is generated from it. Nothing about the limb (joint count, axes,
 limits, link lengths) is written in Python.
 
 ```
-robots/quadruped.urdf + quadruped.json   <- the definition (any tool can read the URDF)
+robots/quadruped/quadruped.urdf + .json   <- the definition (any tool can read the URDF)
         |  mojito.geometry.urdf     parse / write the URDF (pure Python, no NumPy)
         v
    RobotSpec / LimbSpec                  <- mojito.geometry.spec: the alignment layer
@@ -183,16 +183,16 @@ robots/quadruped.urdf + quadruped.json   <- the definition (any tool can read th
 ```
 
 ```bash
-python -m mojito.geometry.spec robots/quadruped.urdf --manifest robots/quadruped.json   # what the model will see
-python scripts/learning/train.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json
-python scripts/learning/calibrate.py --urdf robots/quadruped.urdf --manifest robots/quadruped.json --limb FR
+python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
+python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
 ```
 
 ```python
 import mojito
 from mojito import body, IKNet
 
-robot = mojito.load_robot("robots/hexapod.urdf", "robots/hexapod.json")   # 6 legs, one network
+robot = mojito.load_robot("robots/hexapod/hexapod.urdf", "robots/hexapod/hexapod.json")   # 6 legs, one network
 net = IKNet.load("weights/ik_leg.npz", spec=robot.groups["leg"].canonical) # fails with a diff if they disagree
 rig = body.URDFRobot(robot, net)
 q = rig.solve(rig.stance())                                                # joint values per limb
@@ -362,7 +362,7 @@ mojito/                the library, in four subpackages (each holds at most abou
   learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        stand.py, gait_replay.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
-robots/                example URDFs + manifests: quadruped, hexapod, planar
+robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo

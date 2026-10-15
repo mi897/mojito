@@ -110,11 +110,12 @@ def write_examples(directory: str = "robots") -> list:
         ("hexapod", hexapod_urdf(), HEXAPOD_MANIFEST),
         ("planar", planar_urdf(), {"length_tolerance": 0.10}),
     ):
-        write(model, os.path.join(directory, f"{stem}.urdf"))
-        with open(os.path.join(directory, f"{stem}.json"), "w") as f:
+        os.makedirs(os.path.join(directory, stem), exist_ok=True)
+        write(model, os.path.join(directory, stem, f"{stem}.urdf"))
+        with open(os.path.join(directory, stem, f"{stem}.json"), "w") as f:
             json.dump(manifest, f, indent=2)
             f.write("\n")
-        out += [f"{stem}.urdf", f"{stem}.json"]
+        out += [f"{stem}/{stem}.urdf", f"{stem}/{stem}.json"]
     return out
 
 
