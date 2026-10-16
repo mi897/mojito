@@ -81,18 +81,27 @@
   </div>
 
   <h2 id="s2c">Stage 2: walking in physics</h2>
-  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2.</p>
+  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2. The trot here has a 1.7&nbsp;s period (<a href="#trotperiod">why</a>); the crawl is 2&nbsp;s.</p>
   <div class="grid g2">
     <div class="card chart-card"><h4>Commanded against measured forward speed</h4><p class="sub">m/s; the dashed line is "does what it is told"</p><div id="c-speed"></div>
-      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed. Marching in place drifts backward.</p></div>
+      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed. Marching in place drifts backward (slightly, for the 1.7&nbsp;s trot).</p></div>
     <div class="card chart-card"><h4>Peak servo torque while walking</h4><p class="sub">fraction of the 5 V stall torque</p><div id="c-torque"></div>
       <p class="read">The crawl runs the servos at their limit; the reason was not traced. Standing with these masses peaks at 0.28.</p></div>
     <div class="card chart-card"><h4>Why the trot falls short of 0.15 m/s</h4><p class="sub">measured body speed, and the speed the loaded feet's commanded motion would give ("ask")</p><div id="c-diag"></div>
-      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely and part of the trot's. The rest is rear feet that still carry weight when commanded to swing, which no servo setting fixed.</p></div>
+      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely. For the 1.7&nbsp;s trot the body makes more than the "ask" (the speed the loaded feet's commanded motion would give), so that explanation, worked out at 0.5&nbsp;s, no longer accounts for the numbers; the reason was not traced. A taller swing made it worse.</p></div>
     <div class="card chart-card"><h4>Trot at 0.15 m/s: what the grid of runs says</h4><p class="sub">measured speed against servo stiffness, for three masses (swing 30 mm)</p><div id="c-sweep"><p class="muted small">Loading the recorded runs…</p></div>
       <p class="read">From the playground's 144 recorded runs, one run per point.</p></div>
   </div>
   <table id="t-diag"></table>
+
+  <h3 id="trotperiod">Finding: a 1&nbsp;s trot is too quick; 1.5 to 2&nbsp;s walks better</h3>
+  <p>The Stage 1 trot has a 0.5&nbsp;s period, and I first tried 1&nbsp;s. Here only the period changes (duty 0.5, diagonal pairs, 30&nbsp;mm swing) and the same physics is run for each. One run per cell.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Trot speed against period</h4><p class="sub">measured forward speed for three commanded speeds</p><div id="c-period"></div>
+      <p class="read" id="period-read"></p></div>
+    <div class="card"><h4>Period by period</h4><table id="t-period"></table></div>
+  </div>
+  <div class="callout limit"><b>What this does not show.</b> A longer period is not free: the body tilts more (about 9° marching in place at 1.5 to 2&nbsp;s against about 5° at 0.5&nbsp;s), the turn at 1.2&nbsp;rad/s falls over from 1.6&nbsp;s up, and 0.30&nbsp;m/s is not counted as walked from 1.9&nbsp;s (servos saturated more than 20% of the time). In the physics lab's nine kp-and-mass cells at 0.15&nbsp;m/s the 1.7&nbsp;s trot was faster and tilted more than the 0.5&nbsp;s trot in every one (up to 12.8° for the heaviest robot with kp&nbsp;10). 1.7&nbsp;s is a pick by a rule written after seeing the runs, not an optimum; neighbouring periods are within a few mm/s. Placeholder everything, one run per cell.</div>
   <div class="callout limit"><b>Not shown.</b> Any real robot's behaviour; other speeds, turn rates, terrain or disturbances; friction limits (slip was measured but not separated from the foot rolling); whether tuned gains or gait timing close the speed gap. The pace gait (left legs, then right) goes backward because the body rolls onto the feet it is lifting; see <a href="reports.html#STAGE2">the Stage 2 report</a>.</div>
 
   <h2 id="plots">Original plots</h2>
@@ -179,6 +188,15 @@
         series: [{ name: 'measured', color: B, values: variants.map(v => pick(v).measured_m_s) }, { name: 'ask', color: O, values: variants.map(v => pick(v).load_weighted_ask_m_s) }] });
       $('t-diag').innerHTML = '<tr><th>Trot at 0.15 m/s, variant</th><th class="num">measured m/s</th><th class="num">ask m/s</th><th class="num">load on feet commanded to swing</th><th class="num">tilt</th></tr>'
         + variants.map(v => { const r = pick(v); return `<tr><td>${v}</td><td class="num">${f(r.measured_m_s, 3)}</td><td class="num">${f(r.load_weighted_ask_m_s, 3)}</td><td class="num">${f(100 * r.load_share_on_feet_commanded_to_swing, 0)}%</td><td class="num">${f(r.max_tilt_deg, 1)}°</td></tr>`; }).join('');
+    }
+    const P = R.trot_period_sweep;
+    if (P) {
+      const at = (T, v, w = 0) => P.runs.find(r => r.period_s === T && r.commanded_velocity_m_s === v && r.commanded_yaw_rate_rad_s === w);
+      Charts.line($('c-period'), { x: { label: 'trot period, s' }, y: { label: 'measured m/s', fmt: v => f(v, 2), zero: false },
+        series: [[0.05, A], [0.15, B], [0.3, O]].map(([v, c]) => ({ name: `commanded ${v}`, color: c, markers: true, points: P.periods_s.map(T => [T, at(T, v).measured_velocity_m_s, at(T, v).walked ? 'solid' : 'open']) })) });
+      $('t-period').innerHTML = '<tr><th class="num">period s</th><th class="num">0.15 m/s: made</th><th class="num">tilt marching</th><th class="num">0.30 m/s walked</th><th class="num">turn 0.6 / 1.2 rad/s walked</th></tr>'
+        + P.periods_s.map(T => `<tr><td class="num">${T}</td><td class="num">${f(at(T, 0.15).measured_velocity_m_s, 3)}</td><td class="num">${f(at(T, 0).max_tilt_deg, 1)}°</td><td class="num">${at(T, 0.3).walked ? 'yes' : 'no'}</td><td class="num">${P.runs.find(r => r.period_s === T && r.commanded_yaw_rate_rad_s === 0.6).walked ? 'yes' : 'no'} / ${P.runs.find(r => r.period_s === T && r.commanded_yaw_rate_rad_s === 1.2).walked ? 'yes' : 'no'}</td></tr>`).join('');
+      $('period-read').textContent = `At 0.15 m/s the body makes ${f(at(0.5, 0.15).measured_velocity_m_s, 3)} m/s at 0.5 s, ${f(at(1, 0.15).measured_velocity_m_s, 3)} at 1 s and ${f(at(1.7, 0.15).measured_velocity_m_s, 3)} at 1.7 s. Open markers were not counted as walked (a fall, or servos saturated for more than 20% of the walk).`;
     }
     const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
     $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');

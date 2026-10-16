@@ -4,126 +4,126 @@
     "baseline (kp 10, kd 0.2, latency 20 ms, PCA9685 steps)": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.038,
+        "measured_m_s": -0.008,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.219,
-        "max_tilt_deg": 5.0,
+        "load_share_on_feet_commanded_to_swing": 0.288,
+        "max_tilt_deg": 9.1,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.041,
-        "load_weighted_ask_m_s": 0.103,
-        "load_share_on_feet_commanded_to_swing": 0.237,
-        "max_tilt_deg": 4.1,
+        "measured_m_s": 0.1,
+        "load_weighted_ask_m_s": 0.064,
+        "load_share_on_feet_commanded_to_swing": 0.323,
+        "max_tilt_deg": 5.2,
         "walked": true
       }
     ],
     "latency 0": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.038,
+        "measured_m_s": -0.007,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.222,
-        "max_tilt_deg": 5.0,
+        "load_share_on_feet_commanded_to_swing": 0.293,
+        "max_tilt_deg": 9.1,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.042,
-        "load_weighted_ask_m_s": 0.101,
-        "load_share_on_feet_commanded_to_swing": 0.232,
-        "max_tilt_deg": 4.1,
+        "measured_m_s": 0.101,
+        "load_weighted_ask_m_s": 0.064,
+        "load_share_on_feet_commanded_to_swing": 0.325,
+        "max_tilt_deg": 5.2,
         "walked": true
       }
     ],
     "fine command resolution": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.038,
+        "measured_m_s": -0.007,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.222,
-        "max_tilt_deg": 4.9,
+        "load_share_on_feet_commanded_to_swing": 0.293,
+        "max_tilt_deg": 8.9,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.038,
-        "load_weighted_ask_m_s": 0.104,
-        "load_share_on_feet_commanded_to_swing": 0.235,
-        "max_tilt_deg": 3.9,
+        "measured_m_s": 0.1,
+        "load_weighted_ask_m_s": 0.064,
+        "load_share_on_feet_commanded_to_swing": 0.322,
+        "max_tilt_deg": 5.0,
         "walked": true
       }
     ],
     "kp 100, kd 1": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.005,
+        "measured_m_s": -0.0,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.141,
-        "max_tilt_deg": 4.2,
+        "load_share_on_feet_commanded_to_swing": 0.196,
+        "max_tilt_deg": 9.8,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.095,
-        "load_weighted_ask_m_s": 0.116,
-        "load_share_on_feet_commanded_to_swing": 0.175,
-        "max_tilt_deg": 6.1,
+        "measured_m_s": 0.12,
+        "load_weighted_ask_m_s": 0.075,
+        "load_share_on_feet_commanded_to_swing": 0.267,
+        "max_tilt_deg": 8.9,
         "walked": true
       }
     ],
     "ideal servo (kp 100, kd 1, latency 0, fine, 10x stall torque)": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.005,
+        "measured_m_s": 0.001,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.164,
-        "max_tilt_deg": 3.4,
+        "load_share_on_feet_commanded_to_swing": 0.199,
+        "max_tilt_deg": 9.5,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.088,
-        "load_weighted_ask_m_s": 0.095,
-        "load_share_on_feet_commanded_to_swing": 0.235,
-        "max_tilt_deg": 6.0,
+        "measured_m_s": 0.128,
+        "load_weighted_ask_m_s": 0.074,
+        "load_share_on_feet_commanded_to_swing": 0.269,
+        "max_tilt_deg": 8.7,
         "walked": true
       }
     ],
     "swing height 60 mm": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.048,
+        "measured_m_s": -0.017,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.161,
-        "max_tilt_deg": 7.8,
+        "load_share_on_feet_commanded_to_swing": 0.314,
+        "max_tilt_deg": 20.1,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.079,
-        "load_weighted_ask_m_s": 0.12,
-        "load_share_on_feet_commanded_to_swing": 0.174,
-        "max_tilt_deg": 8.3,
+        "measured_m_s": 0.049,
+        "load_weighted_ask_m_s": 0.05,
+        "load_share_on_feet_commanded_to_swing": 0.348,
+        "max_tilt_deg": 18.6,
         "walked": true
       }
     ],
     "ideal servo, swing height 60 mm": [
       {
         "commanded_m_s": 0.0,
-        "measured_m_s": -0.024,
+        "measured_m_s": -0.005,
         "load_weighted_ask_m_s": -0.0,
-        "load_share_on_feet_commanded_to_swing": 0.262,
-        "max_tilt_deg": 8.3,
+        "load_share_on_feet_commanded_to_swing": 0.278,
+        "max_tilt_deg": 19.8,
         "walked": true
       },
       {
         "commanded_m_s": 0.15,
-        "measured_m_s": 0.079,
-        "load_weighted_ask_m_s": 0.093,
-        "load_share_on_feet_commanded_to_swing": 0.277,
-        "max_tilt_deg": 10.0,
+        "measured_m_s": 0.082,
+        "load_weighted_ask_m_s": 0.042,
+        "load_share_on_feet_commanded_to_swing": 0.351,
+        "max_tilt_deg": 19.9,
         "walked": true
       }
     ]

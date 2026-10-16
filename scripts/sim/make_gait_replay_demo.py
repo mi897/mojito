@@ -6,7 +6,7 @@ velocity from the end of the blend; the grey line is the body's actual position 
 panels show the largest joint torque as a fraction of the stall torque. Placeholder dimensions, masses,
 servo figures and friction. The turning run is drawn from the side, so only its drift is visible.
 
-    results/gait/trot_replay.gif    trot at 0, 0.05, 0.15, 0.30 m/s and turning at 1.2 rad/s
+    results/gait/trot_replay.gif    trot at 0, 0.05, 0.15, 0.30 m/s and turning at 0.6 rad/s (1.7 s period)
     results/gait/crawl_replay.gif   crawl at 0, 0.02, 0.04, 0.08 m/s
 
     python scripts/sim/make_gait_replay_demo.py
@@ -88,7 +88,7 @@ def animate(cases, path):
 
 
 def main():
-    animate([case(gaits.TROT, v, w, 4) for v, w in ((0.0, 0.0), (0.05, 0.0), (0.15, 0.0), (0.30, 0.0), (0.0, 1.2))],
+    animate([case(gaits.TROT_SLOW, v, w, 3) for v, w in ((0.0, 0.0), (0.05, 0.0), (0.15, 0.0), (0.30, 0.0), (0.0, 0.6))],
             os.path.join(OUT, "trot_replay.gif"))
     animate([case(gaits.CRAWL, v, 0.0, 2) for v in (0.0, 0.02, 0.04, 0.08)], os.path.join(OUT, "crawl_replay.gif"))
 
