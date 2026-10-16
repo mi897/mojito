@@ -1,7 +1,7 @@
 """Isometric animations of three gait replays, with the gait timing chart underneath.
 
-    results/gait/trot_iso.gif         trot at 0.15 m/s
-    results/gait/trot_turn_iso.gif    trot turning on the spot at 1.2 rad/s
+    results/gait/trot_iso.gif         trot (1.7 s period) at 0.15 m/s
+    results/gait/trot_turn_iso.gif    trot turning on the spot at 0.6 rad/s
     results/gait/crawl_iso.gif        crawl at 0.04 m/s
 
 Same model as scripts/sim/gait_replay.py (placeholder dimensions, masses, servo figures, friction).
@@ -18,8 +18,8 @@ from mojito.sim import gait_plots, gait_replay  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait")
 CASES = [
-    ("trot_iso", gaits.TROT, (0.15, 0.0), 0.0, 3, "Trot at 0.15 m/s commanded"),
-    ("trot_turn_iso", gaits.TROT, (0.0, 0.0), 1.2, 3, "Trot turning at 1.2 rad/s commanded"),
+    ("trot_iso", gaits.TROT_SLOW, (0.15, 0.0), 0.0, 3, "Trot (1.7 s period) at 0.15 m/s commanded"),
+    ("trot_turn_iso", gaits.TROT_SLOW, (0.0, 0.0), 0.6, 3, "Trot (1.7 s period) turning at 0.6 rad/s commanded"),
     ("crawl_iso", gaits.CRAWL, (0.04, 0.0), 0.0, 2, "Crawl at 0.04 m/s commanded"),
 ]
 

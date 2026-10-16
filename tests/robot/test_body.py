@@ -60,6 +60,13 @@ class TestBody(unittest.TestCase):
 
 
 class TestGaits(unittest.TestCase):
+    def test_slow_trot_only_changes_the_period(self):
+        self.assertEqual(gaits.TROT_SLOW.period, 1.7)
+        for field in ("duty", "offsets", "lift", "sway"):
+            self.assertEqual(getattr(gaits.TROT_SLOW, field), getattr(gaits.TROT, field))
+        # same foot path shape: a stance still covers velocity * stance_time, which grows with the period
+        self.assertAlmostEqual(gaits.TROT_SLOW.stance_time, 0.85)
+
     def test_sequence_offsets_reproduce_the_crawl_and_validate(self):
         g = gaits.CRAWL
         # lift order FR, RL, FL, RR with the first lift at phase 0.1 is the built-in crawl
