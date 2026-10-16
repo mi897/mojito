@@ -63,8 +63,8 @@ foot error at that instant.
 | Demo | Worst foot error | Median | Closest any joint gets to its limit | Feet down |
 |---|---|---|---|---|
 | Posture: roll ±18°, pitch ±14°, yaw ±22°, height ±30 mm | 0.22 mm | 0.11 mm | 15° | 4 |
-| Trot forward, 0.15 m/s | 0.25 mm | 0.14 mm | 23° | 2 |
-| Trot turning on the spot, 1.2 rad/s | 0.21 mm | 0.10 mm | 22° | 2 |
+| Trot forward, 0.15 m/s | 0.29 mm | 0.11 mm | 20° | 2 |
+| Trot turning on the spot, 1.2 rad/s | 0.21 mm | 0.10 mm | 10.8° | 2 |
 | Crawl forward, 0.04 m/s | 0.29 mm | 0.12 mm | 20° | 3 or 4 |
 
 - Every requested foot position in all four demos is inside the joint limits.
@@ -76,13 +76,13 @@ foot error at that instant.
   37 mm inside the triangle of grounded feet. This treats the body centre as
   the centre of mass, which is an assumption.
 
-These trot demos use the 0.5 s period set before any physics. Physics later showed that period was not optimal; the physics replays use 1.7 s (`docs/PHYSICS.md`, `docs/STAGE2.md`). The geometry numbers here do not depend on it.
+The trot demos have a 1.7 s period. They were first made at 0.5 s, a period set before any physics; the physics replays showed that was not optimal, a period sweep in MuJoCo gave 1.7 s (`docs/STAGE2.md`, "Longer trot periods"), and these demos were regenerated at 1.7 s. The geometry numbers changed with it: the worst forward-trot foot error went from 0.25 to 0.29 mm, the closest joint approach in the turn from 22° to 10.8°, and the body centre's distance from the line between grounded feet from 11 to 38 mm (the longer stance sweeps the feet through a larger angle).
 
 Known weaknesses of these motions:
 
 - The trot has two feet down, so it relies on dynamic balance that geometry
   cannot check. With two feet the body centre is never inside a support
-  polygon: in the forward trot it ends up as much as 11 mm off the line
+  polygon: in the forward trot it ends up as much as 38 mm off the line
   between the grounded feet (`body_centre_inside_support_mm_min` in
   `results/body/body_metrics.json`).
 - The crawl's lean is quick: the body shifts 50 mm in 0.2 s.

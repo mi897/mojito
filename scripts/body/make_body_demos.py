@@ -220,8 +220,8 @@ def main():
 
     demos = {
         "posture_demo": lambda: posture_script(robot),
-        "trot_forward": lambda: gait_script(robot, gaits.TROT, (0.15, 0.0), 0.0, 4, 30, "Trot, straight ahead at 0.15 m/s"),
-        "trot_turn": lambda: gait_script(robot, gaits.TROT, (0.0, 0.0), 1.2, 6, 30, "Trot, turning on the spot at 1.2 rad/s"),
+        "trot_forward": lambda: gait_script(robot, gaits.TROT, (0.15, 0.0), 0.0, 2, 20, "Trot, straight ahead at 0.15 m/s"),
+        "trot_turn": lambda: gait_script(robot, gaits.TROT, (0.0, 0.0), 1.2, 2, 20, "Trot, turning on the spot at 1.2 rad/s"),
         "crawl_forward": lambda: gait_script(robot, gaits.CRAWL, (0.04, 0.0), 0.0, 2, 20, "Crawl at 0.04 m/s, body leaning away from the lifted foot"),
     }
     os.makedirs("results/body", exist_ok=True)

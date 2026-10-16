@@ -30,7 +30,7 @@ HISTORY = 2.0              # s, window for the measured velocity
 CONTACT_FORCE = 0.5        # N, a foot carrying more is "down"
 
 DEFAULTS = dict(
-    period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0,
+    period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0,
     vx=0.15, vy=0.0, yaw_rate=0.0,
     kp=10.0, kd=0.2, mass=1.72, speed=1.0, walk=False,
     # robot design: these rebuild the model (like mass). Metres.
@@ -38,7 +38,7 @@ DEFAULTS = dict(
     voltage=5.0,
 )
 PRESETS = {
-    "trot": dict(period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0),
+    "trot": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0),
     "crawl": dict(period=2.0, duty=0.85, offsets=[0.75, 0.25, 0.5, 0.0], lift=0.03, sway=0.025, vx=0.04, vy=0.0, yaw_rate=0.0),
     "pace": dict(period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0),
 }

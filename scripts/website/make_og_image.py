@@ -14,7 +14,7 @@ import tempfile
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 SITE = os.path.abspath(os.path.join(ROOT, "site"))
 OUT = os.path.join(SITE, "assets", "og-image.png")
-STRIDE_TIME_S = 0.31  # seconds into the trot: two diagonal feet down, two swinging
+STRIDE_TIME_S = 1.05  # seconds into the 1.7 s trot (phase 0.62, as 0.31 s was in the 0.5 s trot): two diagonal feet down, two swinging
 MASK = "linear-gradient(to right,transparent 0,#000 16%),linear-gradient(to bottom,transparent 0,#000 14%,#000 82%,transparent 100%)"
 
 PAGE = """<!doctype html><html data-theme="light"><head><meta charset="utf-8">

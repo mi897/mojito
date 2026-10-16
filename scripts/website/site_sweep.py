@@ -31,7 +31,7 @@ from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
 
 PACE = gaits.Gait("pace", period=0.5, duty=0.5, offsets=(0.0, 0.5, 0.0, 0.5))
 GAITS = {  # name -> (gait, forward speeds in m/s, cycles)
-    "trot": (gaits.TROT_SLOW, (0.0, 0.15, 0.30), 3),
+    "trot": (gaits.TROT, (0.0, 0.15, 0.30), 3),
     "crawl": (gaits.CRAWL, (0.0, 0.04, 0.08), 2),
     "pace": (PACE, (0.0, 0.10), 4),
 }

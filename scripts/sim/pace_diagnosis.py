@@ -24,7 +24,7 @@ from mojito.robot import gaits
 from mojito.sim import actuators, gait_replay  # noqa: E402
 
 TIMESTEP = 0.002
-PACE = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
+PACE = dataclasses.replace(gaits.TROT_STAGE1, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
 Servo = actuators.ServoParams
 IDEAL = Servo(kp=100.0, kd=1.0, latency=0.0, resolution=1e-4, torque_scale=10.0)
 
@@ -59,7 +59,7 @@ def measure(gait, velocity=0.1, cycles=3, **kw):
 def main():
     out = {"what": __doc__.strip().split("\n")[0], "velocity_commanded_m_s": 0.1}
     out["trot_vs_pace"] = {f"{g.name} {n}": measure(g, **kw)
-                           for g in (gaits.TROT, PACE)
+                           for g in (gaits.TROT_STAGE1, PACE)
                            for n, kw in (("kp 10", {}), ("kp 100", dict(servo=Servo(kp=100.0, kd=1.0))), ("ideal servo", dict(servo=IDEAL)))}
     rows = {}
     for name, gait in (("pace period 0.5 (base)", PACE), ("period 1.0", dataclasses.replace(PACE, period=1.0)),

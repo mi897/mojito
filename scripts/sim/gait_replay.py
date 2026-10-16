@@ -1,4 +1,4 @@
-"""Replay the Stage 1 trot (1.7 s period, `gaits.TROT_SLOW`) and crawl in MuJoCo through the servo model.
+"""Replay the Stage 1 trot (1.7 s period, `gaits.TROT`) and crawl in MuJoCo through the servo model.
 
 Placeholder dimensions, masses (1.72 kg), servo figures (5 V, unverified), friction. Writes
 results/gait/gait_replay.json. Needs mujoco.
@@ -15,8 +15,8 @@ from mojito.sim import gait_replay  # noqa: E402
 
 # (gait, forward velocity m/s, yaw rate rad/s, cycles)
 CASES = [
-    (gaits.TROT_SLOW, 0.0, 0.0, 3), (gaits.TROT_SLOW, 0.05, 0.0, 3), (gaits.TROT_SLOW, 0.15, 0.0, 3), (gaits.TROT_SLOW, 0.30, 0.0, 3),
-    (gaits.TROT_SLOW, 0.0, 0.6, 3),
+    (gaits.TROT, 0.0, 0.0, 3), (gaits.TROT, 0.05, 0.0, 3), (gaits.TROT, 0.15, 0.0, 3), (gaits.TROT, 0.30, 0.0, 3),
+    (gaits.TROT, 0.0, 0.6, 3),
     (gaits.CRAWL, 0.0, 0.0, 2), (gaits.CRAWL, 0.02, 0.0, 2), (gaits.CRAWL, 0.04, 0.0, 2), (gaits.CRAWL, 0.08, 0.0, 2),
 ]
 

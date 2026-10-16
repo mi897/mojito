@@ -88,7 +88,7 @@ def animate(cases, path):
 
 
 def main():
-    animate([case(gaits.TROT_SLOW, v, w, 3) for v, w in ((0.0, 0.0), (0.05, 0.0), (0.15, 0.0), (0.30, 0.0), (0.0, 0.6))],
+    animate([case(gaits.TROT, v, w, 3) for v, w in ((0.0, 0.0), (0.05, 0.0), (0.15, 0.0), (0.30, 0.0), (0.0, 0.6))],
             os.path.join(OUT, "trot_replay.gif"))
     animate([case(gaits.CRAWL, v, 0.0, 2) for v in (0.0, 0.02, 0.04, 0.08)], os.path.join(OUT, "crawl_replay.gif"))
 

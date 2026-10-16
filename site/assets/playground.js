@@ -34,7 +34,7 @@
   const DEFAULTS = {
     la: 0.05, lu: 0.15, ll: 0.15, bl: 0.30, bw: 0.15, h: 0.2125, sFL: 1,
     px: 0, py: 0, pz: 0, roll: 0, pitch: 0, yaw: 0,
-    period: 0.5, duty: 0.5, lift: 0.03, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0,
+    period: 1.7, duty: 0.5, lift: 0.03, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0,
     vx: 0.15, vy: 0, wz: 0, mass: 1.5, volts: 5,
   };
   const kin = { st: Object.assign({}, DEFAULTS), mode: 'gait', gaitName: 'trot', t: 0, playing: true, speed: 1, ctl: {} };

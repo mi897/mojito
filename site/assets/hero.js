@@ -7,7 +7,7 @@
     if (!canvas) return;
     const view = new RobotView(canvas, { az: -40, el: 22, zoom: 1.15 }), robot = new M.Robot(), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let t = 0, last = performance.now(), mode = 'trot';
-    const gaits = { trot: [Object.assign({}, M.TROT, { period: 1.7 }), [0.15, 0]], crawl: [M.CRAWL, [0.04, 0]] };
+    const gaits = { trot: [M.TROT, [0.15, 0]], crawl: [M.CRAWL, [0.04, 0]] };
     function frame(now) {
       t += Math.min(0.1, (now - last) / 1000); last = now;
       const [gait, v] = gaits[mode], r = M.evaluate({ robot, gait, t, velocity: v, yawRate: 0, height: 0.2125, mass: 1.5, volts: 5 });

@@ -432,7 +432,7 @@ Each is one branch-sized step. Tick them off here as they land.
 4. [x] **Replay Stage 1 gaits in physics** (`mojito/sim/gait_replay.py`, `scripts/sim/gait_replay.py`, `tests/sim/test_gait_replay.py`, `results/gait/gait_replay.json`).
    The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
    closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
-   then 3 trot cycles (1.7 s period, `gaits.TROT_SLOW`; the first version of this package used the 0.5 s trot, see "Longer trot periods") or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
+   then 3 trot cycles (1.7 s period, `gaits.TROT`; the first version of this package used the original 0.5 s trot, see "Longer trot periods") or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
    PCA9685 command resolution, floor and pad friction as in `mjcf.py`. Measured velocity is the body displacement over
    the walking phase. A foot is planted if it carries more than 0.5 N in two consecutive 2 ms steps; slip is its
    horizontal movement per step.
@@ -501,7 +501,7 @@ Each is one branch-sized step. Tick them off here as they land.
    speed (0.100 at kp 10, 0.120 at kp 100, 0.128 ideal), latency and command resolution still do not matter, and a 60 mm swing still does not help (0.049; ideal servo 0.082).
 
    **How the gait timing is set** (`mojito/robot/gaits.py`, `Gait`). Four numbers, all per cycle:
-   - `period`: seconds per cycle. Trot 0.5 s (`gaits.TROT`, Stage 1 maths) or 1.7 s (`gaits.TROT_SLOW`, all the physics results), crawl 2.0 s.
+   - `period`: seconds per cycle. Trot 1.7 s (`gaits.TROT`; the original 0.5 s trot is `gaits.TROT_STAGE1`), crawl 2.0 s.
    - `duty`: the fraction of the cycle a foot is on the ground. Trot 0.5, crawl 0.85. So stance lasts `duty * period` (`Gait.stance_time`)
      and swing `(1 - duty) * period` (`Gait.swing_time`): trot 0.25 s / 0.25 s (1.7 s trot: 0.85 s / 0.85 s), crawl 1.7 s / 0.3 s.
    - `offsets` (FL, FR, RL, RR): the cycle phase at which each leg *starts its stance*. A leg's phase is `(t / period - offset) mod 1`;
@@ -517,7 +517,7 @@ Each is one branch-sized step. Tick them off here as they land.
    `scripts/sim/make_gait_iso_demos.py`).
 
    **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; `scripts/sim/trot_period_robustness.py`, `results/gait/trot_period_robustness.json`; finding).
-   The Stage 1 trot (0.5 s, `gaits.TROT`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
+   The original Stage 1 trot (0.5 s, now `gaits.TROT_STAGE1`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
    (duty 0.5, diagonal pairs, 30 mm swing); same physics as work package 4; one run per cell, 4 cycles at 0.5 s and 3 otherwise. Measured forward speed, m/s:
 
    | period | cmd 0.05 | cmd 0.15 | cmd 0.30 | tilt marching | turn 0.6 rad/s | turn 1.2 rad/s |
@@ -542,8 +542,8 @@ Each is one branch-sized step. Tick them off here as they land.
      **With the 60 mm swing the result reverses**: every period tilts 17° or more, the 1.7 s trot is faster than the 0.5 s trot in only 1 of 9 cells and walks in 6 of 9 (the 0.5 s trot walks in all 9), and 0.5 s makes the most speed in 6 of the 9 cells. The case for 1.7 s is therefore for the default 30 mm swing only.
      (An earlier version of this section said the 1.7 s trot was faster in all nine cells of `physics_sweep.json`; that compared against a 0.5 s run that was not kept in `results/`, and the committed grid shows 8 of 9.)
    - *Not shown.* Why a longer period helps (not traced); behaviour on a real robot; duty or offsets other than the defaults; speeds other than 0.15 m/s in the gain, mass and swing grid; periods between the ones listed beyond what the JSONs hold.
-   - *Use.* The physics replays, the demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab and the website's trot presets use 1.7 s (`gaits.TROT_SLOW`).
-     Stage 1 kinematics, `body_metrics.json` and the JavaScript port of `gaits.py` stay on the 0.5 s `gaits.TROT` because they are geometry and were made before this finding; the 0.5 s there is not a recommendation.
+   - *Use.* `gaits.TROT` is now 1.7 s everywhere: the physics replays, the physics demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab, the live explorer, the website's trot presets, and the Stage 1 geometry trot (JavaScript port, `body_metrics.json`, `trot_forward.gif`, `trot_turn.gif`).
+     The geometry demos were first made at 0.5 s and regenerated at 1.7 s after this finding. That changed their numbers: worst forward-trot foot error 0.25 to 0.29 mm, closest joint approach in the 1.2 rad/s turn 22° to 10.8° (forward trot 23° to 20°), body centre up to 38 mm instead of 11 mm off the line between grounded feet. The original is kept as `gaits.TROT_STAGE1` (used by the pace diagnosis, whose results are at 0.5 s).
 
    **Live explorer** (`scripts/sim/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/sim/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
 
