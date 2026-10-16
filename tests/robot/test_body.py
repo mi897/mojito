@@ -60,12 +60,13 @@ class TestBody(unittest.TestCase):
 
 
 class TestGaits(unittest.TestCase):
-    def test_slow_trot_only_changes_the_period(self):
-        self.assertEqual(gaits.TROT_SLOW.period, 1.7)
+    def test_trot_is_1p7_s_and_the_original_stage1_trot_only_differs_in_period(self):
+        self.assertEqual(gaits.TROT.period, 1.7)
+        self.assertEqual(gaits.TROT_STAGE1.period, 0.5)
         for field in ("duty", "offsets", "lift", "sway"):
-            self.assertEqual(getattr(gaits.TROT_SLOW, field), getattr(gaits.TROT, field))
+            self.assertEqual(getattr(gaits.TROT_STAGE1, field), getattr(gaits.TROT, field))
         # same foot path shape: a stance still covers velocity * stance_time, which grows with the period
-        self.assertAlmostEqual(gaits.TROT_SLOW.stance_time, 0.85)
+        self.assertAlmostEqual(gaits.TROT.stance_time, 0.85)
 
     def test_sequence_offsets_reproduce_the_crawl_and_validate(self):
         g = gaits.CRAWL

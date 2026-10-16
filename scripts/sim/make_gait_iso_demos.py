@@ -18,8 +18,8 @@ from mojito.sim import gait_plots, gait_replay  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait")
 CASES = [
-    ("trot_iso", gaits.TROT_SLOW, (0.15, 0.0), 0.0, 3, "Trot (1.7 s period) at 0.15 m/s commanded"),
-    ("trot_turn_iso", gaits.TROT_SLOW, (0.0, 0.0), 0.6, 3, "Trot (1.7 s period) turning at 0.6 rad/s commanded"),
+    ("trot_iso", gaits.TROT, (0.15, 0.0), 0.0, 3, "Trot (1.7 s period) at 0.15 m/s commanded"),
+    ("trot_turn_iso", gaits.TROT, (0.0, 0.0), 0.6, 3, "Trot (1.7 s period) turning at 0.6 rad/s commanded"),
     ("crawl_iso", gaits.CRAWL, (0.04, 0.0), 0.0, 2, "Crawl at 0.04 m/s commanded"),
 ]
 

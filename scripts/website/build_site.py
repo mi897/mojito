@@ -21,7 +21,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 
 # results/<name>.json -> key in window.MOJITO_RESULTS
 RESULT_FILES = ["metrics", "calibration", "body_metrics", "torque_envelope", "stand_test", "sit_to_stand", "gait_replay",
-                "gait_speed_diagnosis", "pace_diagnosis", "trot_period_sweep", "training_log"]
+                "gait_speed_diagnosis", "pace_diagnosis", "trot_period_sweep", "trot_period_robustness", "training_log"]
 DOCS = {"README": "README.md", "USAGE": "docs/USAGE.md", "RESULTS": "docs/RESULTS.md", "PHYSICS": "docs/PHYSICS.md", "PLAN": "docs/PLAN.md", "STAGE2": "docs/STAGE2.md", "NAMING": "docs/NAMING.md", "CLAUDE": "CLAUDE.md"}
 MEDIA_SUFFIXES = (".gif", ".png")
 

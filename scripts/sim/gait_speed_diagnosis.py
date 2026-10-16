@@ -66,7 +66,7 @@ def main():
                    "Placeholder dimensions, masses (1.72 kg), servo figures and friction; one run per entry.",
            "trot": {}, "crawl": {}}
     for name, kw in VARIANTS.items():
-        out["trot"][name] = [analyse(gaits.TROT_SLOW, v, **dict(kw)) for v in (0.0, 0.15)]
+        out["trot"][name] = [analyse(gaits.TROT, v, **dict(kw)) for v in (0.0, 0.15)]
     for name in ("baseline (kp 10, kd 0.2, latency 20 ms, PCA9685 steps)", "kp 100, kd 1"):
         out["crawl"][name] = [analyse(gaits.CRAWL, v, **dict(VARIANTS[name])) for v in (0.0, 0.04)]
     for gait in ("trot", "crawl"):

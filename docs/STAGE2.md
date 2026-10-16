@@ -432,7 +432,7 @@ Each is one branch-sized step. Tick them off here as they land.
 4. [x] **Replay Stage 1 gaits in physics** (`mojito/sim/gait_replay.py`, `scripts/sim/gait_replay.py`, `tests/sim/test_gait_replay.py`, `results/gait/gait_replay.json`).
    The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
    closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
-   then 3 trot cycles (1.7 s period, `gaits.TROT_SLOW`; the first version of this package used the 0.5 s trot, see "Longer trot periods") or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
+   then 3 trot cycles (1.7 s period, `gaits.TROT`; the first version of this package used the original 0.5 s trot, see "Longer trot periods") or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
    PCA9685 command resolution, floor and pad friction as in `mjcf.py`. Measured velocity is the body displacement over
    the walking phase. A foot is planted if it carries more than 0.5 N in two consecutive 2 ms steps; slip is its
    horizontal movement per step.
@@ -501,7 +501,7 @@ Each is one branch-sized step. Tick them off here as they land.
    speed (0.100 at kp 10, 0.120 at kp 100, 0.128 ideal), latency and command resolution still do not matter, and a 60 mm swing still does not help (0.049; ideal servo 0.082).
 
    **How the gait timing is set** (`mojito/robot/gaits.py`, `Gait`). Four numbers, all per cycle:
-   - `period`: seconds per cycle. Trot 0.5 s (`gaits.TROT`, Stage 1 maths) or 1.7 s (`gaits.TROT_SLOW`, all the physics results), crawl 2.0 s.
+   - `period`: seconds per cycle. Trot 1.7 s (`gaits.TROT`; the original 0.5 s trot is `gaits.TROT_STAGE1`), crawl 2.0 s.
    - `duty`: the fraction of the cycle a foot is on the ground. Trot 0.5, crawl 0.85. So stance lasts `duty * period` (`Gait.stance_time`)
      and swing `(1 - duty) * period` (`Gait.swing_time`): trot 0.25 s / 0.25 s (1.7 s trot: 0.85 s / 0.85 s), crawl 1.7 s / 0.3 s.
    - `offsets` (FL, FR, RL, RR): the cycle phase at which each leg *starts its stance*. A leg's phase is `(t / period - offset) mod 1`;
@@ -516,7 +516,8 @@ Each is one branch-sized step. Tick them off here as they land.
    the timing chart at the bottom of each isometric GIF (`results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif`, from
    `scripts/sim/make_gait_iso_demos.py`).
 
-   **Longer trot periods** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; finding). A 1 s trot is too quick for this model. Only `period` changes
+   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; `scripts/sim/trot_period_robustness.py`, `results/gait/trot_period_robustness.json`; finding).
+   The original Stage 1 trot (0.5 s, now `gaits.TROT_STAGE1`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
    (duty 0.5, diagonal pairs, 30 mm swing); same physics as work package 4; one run per cell, 4 cycles at 0.5 s and 3 otherwise. Measured forward speed, m/s:
 
    | period | cmd 0.05 | cmd 0.15 | cmd 0.30 | tilt marching | turn 0.6 rad/s | turn 1.2 rad/s |
@@ -535,11 +536,14 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Why 1.7 s.* The rule, written after seeing the runs: the longest period for which every forward run up to 0.30 m/s counts as walked, with tilt under 10° and at least two
      feet loaded at all times except at 0.30 m/s. 1.8 s fails it (tilt 11.7° at 0.30 m/s, one foot loaded at some moment at 0.15 m/s); 1.9 s and 2.0 s fail it at 0.30 m/s. It is not an optimum:
      1.5 to 2 s differ by only 0.02 m/s at 0.15 m/s, and I have no measure of how much a small change to the setup moves one run (the simulation is deterministic, so a repeat gives the same number).
-   - *Other masses and gains* (the website's physics lab, 3 masses x 3 gains, 0.15 m/s, 30 mm swing, `results/gait/physics_sweep.json`): the 1.7 s trot was faster than the 0.5 s trot in all nine cells and tilted
-     more in all nine (heaviest robot with kp 10: -0.014 to 0.028 m/s, tilt 4.5° to 12.8°).
-   - *Not shown.* Why a longer period helps (not traced); behaviour on a real robot; duty, offsets or swing heights other than the defaults at these periods; periods between the ones listed beyond what the JSON holds.
-   - *Use.* The physics replays, the demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab and the website's trot presets use 1.7 s (`gaits.TROT_SLOW`).
-     Stage 1 kinematics, `body_metrics.json` and the JavaScript port of `gaits.py` stay on the 0.5 s `gaits.TROT`.
+   - *Does the choice hold up?* `trot_period_robustness.py` repeats the period sweep over the physics lab's grid: 3 servo gains x 3 masses x 2 swing heights, 0.15 m/s, periods 0.5 to 4 s, 144 runs, one run per cell.
+     With the 30 mm swing, the 1.7 s trot made more speed than the 0.5 s trot in 8 of the 9 gain-and-mass cells (the exception: kp 30 with 1.75x mass, 0.075 against 0.091 m/s) and tilted more in all 9. Median speed over the nine cells: 0.090 m/s at 0.5 s, 0.073 at 1 s,
+     0.109 at 1.5 s, 0.116 at 1.7 s, 0.124 at 2 s, 0.118 at 2.5 s, 0.121 at 3 s; median tilt 5.7°, 7.2°, 7.6°, 8.0°, 8.5°, 9.2°, 9.7°. So 1.7 s sits on a plateau from about 1.5 s to 3 s: it is not a peak, and a longer period buys a little speed for more tilt. At 4 s no run counts as walked.
+     **With the 60 mm swing the result reverses**: every period tilts 17° or more, the 1.7 s trot is faster than the 0.5 s trot in only 1 of 9 cells and walks in 6 of 9 (the 0.5 s trot walks in all 9), and 0.5 s makes the most speed in 6 of the 9 cells. The case for 1.7 s is therefore for the default 30 mm swing only.
+     (An earlier version of this section said the 1.7 s trot was faster in all nine cells of `physics_sweep.json`; that compared against a 0.5 s run that was not kept in `results/`, and the committed grid shows 8 of 9.)
+   - *Not shown.* Why a longer period helps (not traced); behaviour on a real robot; duty or offsets other than the defaults; speeds other than 0.15 m/s in the gain, mass and swing grid; periods between the ones listed beyond what the JSONs hold.
+   - *Use.* `gaits.TROT` is now 1.7 s everywhere: the physics replays, the physics demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab, the live explorer, the website's trot presets, and the Stage 1 geometry trot (JavaScript port, `body_metrics.json`, `trot_forward.gif`, `trot_turn.gif`).
+     The geometry demos were first made at 0.5 s and regenerated at 1.7 s after this finding. That changed their numbers: worst forward-trot foot error 0.25 to 0.29 mm, closest joint approach in the 1.2 rad/s turn 22° to 10.8° (forward trot 23° to 20°), body centre up to 38 mm instead of 11 mm off the line between grounded feet. The original is kept as `gaits.TROT_STAGE1`. The pace (the trot with other offsets) moved to 1.7 s with it and its diagnosis was rerun (below).
 
    **Live explorer** (`scripts/sim/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/sim/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
 
@@ -547,22 +551,25 @@ Each is one branch-sized step. Tick them off here as they land.
    and the measured result, and writes `results/gait/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
    `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
    Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
-   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s stayed up with 6.9° tilt and measured -0.032 m/s (backward). See below for why the pace goes backward.
+   measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s (at the then-current 0.5 s period) stayed up with 6.9° tilt and measured -0.032 m/s (backward); at 1.7 s it measures -0.012 m/s (kp 10, 1.72 kg). See below for why the pace goes backward.
 
    **Why the pace goes backward** (`scripts/sim/pace_diagnosis.py`, `results/gait/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
+   The pace was first diagnosed at the original 0.5 s period and redone at 1.7 s, the trot period used everywhere now (see "Longer trot periods"); both are given where they differ.
    - *Established for the base pace.* Only two feet on one side are commanded down, so the support is a line along that side, 125 mm from the
-     centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 13.5°,
-     against 13.7° for `2 atan(lift / track)` with the 30 mm lift and the 0.25 m foot track; with a 60 mm lift it is 25.6°, against 27.9°. The roll does not
-     change with the period (13.4° at 1 s, 13.0° at 2 s). Load sits on the side commanded to swing: the left feet carry 39% while the left legs are
-     commanded down and 61% while the right legs are (for the trot: 53% / 47%). So 65% of the load is on feet commanded to swing (trot 23%).
-     A loaded swing foot moves forward in the body frame, so it pushes the body back: the load-weighted ask is -0.032 m/s and the body made -0.030. The
-     same holds with kp 100 (ask -0.055, measured -0.036) and the ideal servo (ask -0.064, measured -0.049), so it is not the servo softness of the trot.
-     Longer periods shrink the effect (period 2 s: ask -0.010, measured -0.012) because the swing foot then moves forward more slowly.
-   - *Not established.* Where the load is moved off the swing feet the prediction fails. Swing height 60 mm: ask +0.059, measured -0.058
-     (load now on the stance side, 82%, roll 25.6°). Duty 0.7: ask +0.013, measured -0.039. A lateral body shift of 30 mm toward the stance side (a quick
-     test with the crawl-style lean, sign found by trial) drops the swing-foot load to 13% and gives ask +0.084, but the body made -0.036 and rolled 26.7°;
-     60 mm tipped it past 36°. So the swing-foot load explains the base pace, but something else
-     also pushes the body back in these cases, probably tied to the large roll. I did not find it, and I did not find a pace that goes forward.
+     centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 12.8°
+     at 1.7 s (13.5° at 0.5 s), against 13.5° for `2 atan(lift / track)` with the 30 mm lift and the 0.25 m foot track; with a 60 mm lift it is 28.1°, against 26.9°.
+     Load sits on the side commanded to swing: at 1.7 s the left feet carry 46% while the left legs are commanded down and 54% while the right legs are
+     (51% / 50% for the trot; at 0.5 s: 39% / 61%). So 54% of the load is on feet commanded to swing (trot 31%; at 0.5 s: 65%, trot 23%).
+     A loaded swing foot moves forward in the body frame, so it pushes the body back: the load-weighted ask is -0.011 m/s and the body made -0.012 (at 0.5 s: ask -0.032, measured -0.030).
+     The same holds with kp 100 (ask -0.013, measured +0.001) and the ideal servo (ask -0.013, measured -0.017), so it is not the servo softness of the trot.
+     The effect shrinks with the period: measured -0.030 m/s at 0.5 s, -0.016 at 1 s, -0.012 at 1.7 s and -0.012 at 2 s, because the swing foot then moves forward more slowly.
+     The pace is much less backward at 1.7 s than at 0.5 s, but it still does not go forward: 15 of the 18 pace cells of the physics lab (0.1 m/s) end with the body moving backward (-0.006 to -0.060 m/s; one of them, kp 10 with 1.75x mass and a 60 mm swing, fell); the three that do not are kp 100 at 0.001 to 0.006 m/s.
+   - *Variants at 1.7 s.* Swing height 60 mm: ask -0.025, measured -0.022 (59% of the load on swing feet, roll 28.1°). Duty 0.6: ask -0.013, measured -0.015; duty 0.7: ask -0.015, measured -0.017
+     (swing-feet load 43% and 33%). In all of these the ask and the measured speed agree to within 0.003 m/s. At 0.5 s the explanation failed for three of these variants
+     (60 mm: ask +0.059, measured -0.058; duty 0.7: ask +0.013, measured -0.039; a lateral shift: ask +0.084, measured -0.036), and "something else also pushes the body back" was
+     the finding; at 1.7 s that is not seen in these runs, and why it differed at 0.5 s was not traced.
+   - *Not established.* The lateral body shift toward the stance side (the crawl's lean idea; sign and shape found by trial at 0.5 s) did not unload the swing feet at 1.7 s: they still carry 66% (30 mm shift, measured -0.032, roll 14.3°),
+     and the 60 mm shift tipped the robot over. So this quick test does not test the idea at 1.7 s; it would need tuning for that period. I did not find a pace that goes forward.
 
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run

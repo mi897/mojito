@@ -11,17 +11,17 @@
   "max_joint_difference_from_exact_deg": 0.13357440735880446
  },
  "trot_forward": {
-  "frames": 60,
+  "frames": 68,
   "all_targets_within_joint_limits": true,
   "foot_error_mm": {
-   "median": 0.1397394204933338,
-   "p95": 0.24710828015596803,
-   "max": 0.24911508918186254
+   "median": 0.11255193827706715,
+   "p95": 0.2704344996878254,
+   "max": 0.2892382629080317
   },
-  "joint_limit_margin_deg": 23.288497498738415,
-  "max_joint_difference_from_exact_deg": 0.09173549567369432,
+  "joint_limit_margin_deg": 20.153736726734515,
+  "max_joint_difference_from_exact_deg": 0.12167825135964266,
   "gait": "trot",
-  "period_s": 0.5,
+  "period_s": 1.7,
   "duty": 0.5,
   "velocity_m_s": [
    0.15,
@@ -29,21 +29,21 @@
   ],
   "yaw_rate_rad_s": 0.0,
   "feet_down_min": 2,
-  "stance_foot_drift_mm_per_frame_max": 0.06757460906966456,
-  "body_centre_inside_support_mm_min": -11.250000000000007
+  "stance_foot_drift_mm_per_frame_max": 0.09538735943744389,
+  "body_centre_inside_support_mm_min": -38.25
  },
  "trot_turn": {
-  "frames": 90,
+  "frames": 68,
   "all_targets_within_joint_limits": true,
   "foot_error_mm": {
-   "median": 0.10160572210586008,
-   "p95": 0.19779427509163822,
-   "max": 0.21290901655395167
+   "median": 0.10271122492962684,
+   "p95": 0.17234242713023915,
+   "max": 0.2083170060755965
   },
-  "joint_limit_margin_deg": 22.741888189233062,
-  "max_joint_difference_from_exact_deg": 0.07673682723744109,
+  "joint_limit_margin_deg": 10.793679656595858,
+  "max_joint_difference_from_exact_deg": 0.12424208500004151,
   "gait": "trot",
-  "period_s": 0.5,
+  "period_s": 1.7,
   "duty": 0.5,
   "velocity_m_s": [
    0.0,
@@ -51,7 +51,7 @@
   ],
   "yaw_rate_rad_s": 1.2,
   "feet_down_min": 2,
-  "stance_foot_drift_mm_per_frame_max": 0.06361662530792508,
+  "stance_foot_drift_mm_per_frame_max": 0.1107790030997356,
   "body_centre_inside_support_mm_min": -0.0
  },
  "crawl_forward": {

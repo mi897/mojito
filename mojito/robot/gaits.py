@@ -45,10 +45,10 @@ class Gait:
 
 
 # Diagonal pairs move together; two feet down at all times.
-TROT = Gait("trot", period=0.5, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0))
-# The same trot with a 1.7 s period: the physics replays, demos and website physics lab use this one (docs/STAGE2.md,
-# "Longer trot periods"). The kinematic Stage 1 maths and its JavaScript port stay on the 0.5 s trot above.
-TROT_SLOW = replace(TROT, period=1.7)
+# The period is 1.7 s. Stage 1 first used 0.5 s, set before any physics; a period sweep in MuJoCo showed that was not
+# optimal and 1.7 s was chosen from it (docs/STAGE2.md, "Longer trot periods"). TROT_STAGE1 keeps the original for comparison.
+TROT = Gait("trot", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0))
+TROT_STAGE1 = replace(TROT, period=0.5)
 # One foot in the air at a time, in the order RL, FL, RR, FR.
 # The body leans away from that foot while all four are down.
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)

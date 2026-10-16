@@ -94,14 +94,17 @@
   </div>
   <table id="t-diag"></table>
 
-  <h3 id="trotperiod">Finding: a 1&nbsp;s trot is too quick; 1.5 to 2&nbsp;s walks better</h3>
-  <p>The Stage 1 trot has a 0.5&nbsp;s period, and I first tried 1&nbsp;s. Here only the period changes (duty 0.5, diagonal pairs, 30&nbsp;mm swing) and the same physics is run for each. One run per cell.</p>
+  <h3 id="trotperiod">Finding: the 0.5&nbsp;s trot was not the best period; a sweep gave 1.7&nbsp;s</h3>
+  <p>The Stage 1 trot has a 0.5&nbsp;s period. It was chosen for the geometry demos, not tuned in physics, and it turned out to be a poor choice there. I first tried 1&nbsp;s, which was worse still, so the period was swept. Here only the period changes (duty 0.5, diagonal pairs, 30&nbsp;mm swing) and the same physics is run for each. One run per cell. 1.7&nbsp;s was picked from this sweep by a rule written after seeing the runs (the longest period where every forward run up to 0.30&nbsp;m/s walks with tilt under 10°; see <a href="reports.html#STAGE2">the Stage 2 report</a>).</p>
   <div class="grid g2">
     <div class="card chart-card"><h4>Trot speed against period</h4><p class="sub">measured forward speed for three commanded speeds</p><div id="c-period"></div>
       <p class="read" id="period-read"></p></div>
     <div class="card"><h4>Period by period</h4><table id="t-period"></table></div>
   </div>
-  <div class="callout limit"><b>What this does not show.</b> A longer period is not free: the body tilts more (about 9° marching in place at 1.5 to 2&nbsp;s against about 5° at 0.5&nbsp;s), the turn at 1.2&nbsp;rad/s falls over from 1.6&nbsp;s up, and 0.30&nbsp;m/s is not counted as walked from 1.9&nbsp;s (servos saturated more than 20% of the time). In the physics lab's nine kp-and-mass cells at 0.15&nbsp;m/s the 1.7&nbsp;s trot was faster and tilted more than the 0.5&nbsp;s trot in every one (up to 12.8° for the heaviest robot with kp&nbsp;10). 1.7&nbsp;s is a pick by a rule written after seeing the runs, not an optimum; neighbouring periods are within a few mm/s. Placeholder everything, one run per cell.</div>
+  <div class="callout limit"><b>What this does not show.</b> A longer period is not free: the body tilts more (about 9° marching in place at 1.5 to 2&nbsp;s against about 5° at 0.5&nbsp;s), the turn at 1.2&nbsp;rad/s falls over from 1.6&nbsp;s up, and 0.30&nbsp;m/s is not counted as walked from 1.9&nbsp;s (servos saturated more than 20% of the time). 1.7&nbsp;s is a pick by a rule written after seeing the runs, not an optimum; neighbouring periods are within a few mm/s. Placeholder everything, one run per cell. The next table checks it against other gains, masses and swing heights, and it holds only for the 30&nbsp;mm swing.</div>
+  <h4>Does 1.7&nbsp;s hold up? The same sweep over gain, mass and swing height</h4>
+  <p>Trot at 0.15&nbsp;m/s for 3 servo gains &times; 3 masses (nine cells) at each swing height. "Faster than 0.5&nbsp;s" counts the cells where that period made more speed than the 0.5&nbsp;s trot with the same gain, mass and swing.</p>
+  <div class="card"><table id="t-robust"></table><p class="read" id="robust-read"></p></div>
   <div class="callout limit"><b>Not shown.</b> Any real robot's behaviour; other speeds, turn rates, terrain or disturbances; friction limits (slip was measured but not separated from the foot rolling); whether tuned gains or gait timing close the speed gap. The pace gait (left legs, then right) goes backward because the body rolls onto the feet it is lifting; see <a href="reports.html#STAGE2">the Stage 2 report</a>.</div>
 
   <h2 id="plots">Original plots</h2>
@@ -197,6 +200,15 @@
       $('t-period').innerHTML = '<tr><th class="num">period s</th><th class="num">0.15 m/s: made</th><th class="num">tilt marching</th><th class="num">0.30 m/s walked</th><th class="num">turn 0.6 / 1.2 rad/s walked</th></tr>'
         + P.periods_s.map(T => `<tr><td class="num">${T}</td><td class="num">${f(at(T, 0.15).measured_velocity_m_s, 3)}</td><td class="num">${f(at(T, 0).max_tilt_deg, 1)}°</td><td class="num">${at(T, 0.3).walked ? 'yes' : 'no'}</td><td class="num">${P.runs.find(r => r.period_s === T && r.commanded_yaw_rate_rad_s === 0.6).walked ? 'yes' : 'no'} / ${P.runs.find(r => r.period_s === T && r.commanded_yaw_rate_rad_s === 1.2).walked ? 'yes' : 'no'}</td></tr>`).join('');
       $('period-read').textContent = `At 0.15 m/s the body makes ${f(at(0.5, 0.15).measured_velocity_m_s, 3)} m/s at 0.5 s, ${f(at(1, 0.15).measured_velocity_m_s, 3)} at 1 s and ${f(at(1.7, 0.15).measured_velocity_m_s, 3)} at 1.7 s. Open markers were not counted as walked (a fall, or servos saturated for more than 20% of the walk).`;
+    }
+    const Q = R.trot_period_robustness;
+    if (Q) {
+      const cells = (T, l) => Q.runs.filter(r => r.period_s === T && r.lift_m === l);
+      const med = a => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+      const faster = (T, l) => cells(T, l).filter(r => r.measured_velocity_m_s > Q.runs.find(b => b.period_s === 0.5 && b.lift_m === l && b.kp === r.kp && b.mass_scale === r.mass_scale).measured_velocity_m_s).length;
+      const head = Q.lift_m.map(l => `<th class="num">${f(1000 * l, 0)} mm: faster than 0.5 s</th><th class="num">walked</th><th class="num">median m/s</th><th class="num">median tilt</th>`).join('');
+      $('t-robust').innerHTML = `<tr><th class="num">period s</th>${head}</tr>` + Q.periods_s.map(T => `<tr><td class="num">${T}</td>` + Q.lift_m.map(l => { const c = cells(T, l); return `<td class="num">${faster(T, l)} / ${c.length}</td><td class="num">${c.filter(r => r.walked).length} / ${c.length}</td><td class="num">${f(med(c.map(r => r.measured_velocity_m_s)), 3)}</td><td class="num">${f(med(c.map(r => r.max_tilt_deg)), 1)}°</td>`; }).join('') + '</tr>').join('');
+      $('robust-read').textContent = `At the 30 mm swing the 1.7 s trot made more speed than the 0.5 s trot in ${faster(1.7, 0.03)} of 9 cells; at the 60 mm swing in ${faster(1.7, 0.06)} of 9, and ${cells(1.7, 0.06).filter(r => r.walked).length} of 9 walked (against ${cells(0.5, 0.06).filter(r => r.walked).length} of 9 at 0.5 s). Periods from about 1.5 s up to 3 s are close to each other at 30 mm, so 1.7 s is one point on a plateau, not a peak. The 4 s trot does not walk. Tilt is the largest value reached in the run (180° is a fall).`;
     }
     const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
     $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');
