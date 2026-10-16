@@ -516,7 +516,8 @@ Each is one branch-sized step. Tick them off here as they land.
    the timing chart at the bottom of each isometric GIF (`results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif`, from
    `scripts/sim/make_gait_iso_demos.py`).
 
-   **Longer trot periods** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; finding). A 1 s trot is too quick for this model. Only `period` changes
+   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; `scripts/sim/trot_period_robustness.py`, `results/gait/trot_period_robustness.json`; finding).
+   The Stage 1 trot (0.5 s, `gaits.TROT`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
    (duty 0.5, diagonal pairs, 30 mm swing); same physics as work package 4; one run per cell, 4 cycles at 0.5 s and 3 otherwise. Measured forward speed, m/s:
 
    | period | cmd 0.05 | cmd 0.15 | cmd 0.30 | tilt marching | turn 0.6 rad/s | turn 1.2 rad/s |
@@ -535,11 +536,14 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Why 1.7 s.* The rule, written after seeing the runs: the longest period for which every forward run up to 0.30 m/s counts as walked, with tilt under 10° and at least two
      feet loaded at all times except at 0.30 m/s. 1.8 s fails it (tilt 11.7° at 0.30 m/s, one foot loaded at some moment at 0.15 m/s); 1.9 s and 2.0 s fail it at 0.30 m/s. It is not an optimum:
      1.5 to 2 s differ by only 0.02 m/s at 0.15 m/s, and I have no measure of how much a small change to the setup moves one run (the simulation is deterministic, so a repeat gives the same number).
-   - *Other masses and gains* (the website's physics lab, 3 masses x 3 gains, 0.15 m/s, 30 mm swing, `results/gait/physics_sweep.json`): the 1.7 s trot was faster than the 0.5 s trot in all nine cells and tilted
-     more in all nine (heaviest robot with kp 10: -0.014 to 0.028 m/s, tilt 4.5° to 12.8°).
-   - *Not shown.* Why a longer period helps (not traced); behaviour on a real robot; duty, offsets or swing heights other than the defaults at these periods; periods between the ones listed beyond what the JSON holds.
+   - *Does the choice hold up?* `trot_period_robustness.py` repeats the period sweep over the physics lab's grid: 3 servo gains x 3 masses x 2 swing heights, 0.15 m/s, periods 0.5 to 4 s, 144 runs, one run per cell.
+     With the 30 mm swing, the 1.7 s trot made more speed than the 0.5 s trot in 8 of the 9 gain-and-mass cells (the exception: kp 30 with 1.75x mass, 0.075 against 0.091 m/s) and tilted more in all 9. Median speed over the nine cells: 0.090 m/s at 0.5 s, 0.073 at 1 s,
+     0.109 at 1.5 s, 0.116 at 1.7 s, 0.124 at 2 s, 0.118 at 2.5 s, 0.121 at 3 s; median tilt 5.7°, 7.2°, 7.6°, 8.0°, 8.5°, 9.2°, 9.7°. So 1.7 s sits on a plateau from about 1.5 s to 3 s: it is not a peak, and a longer period buys a little speed for more tilt. At 4 s no run counts as walked.
+     **With the 60 mm swing the result reverses**: every period tilts 17° or more, the 1.7 s trot is faster than the 0.5 s trot in only 1 of 9 cells and walks in 6 of 9 (the 0.5 s trot walks in all 9), and 0.5 s makes the most speed in 6 of the 9 cells. The case for 1.7 s is therefore for the default 30 mm swing only.
+     (An earlier version of this section said the 1.7 s trot was faster in all nine cells of `physics_sweep.json`; that compared against a 0.5 s run that was not kept in `results/`, and the committed grid shows 8 of 9.)
+   - *Not shown.* Why a longer period helps (not traced); behaviour on a real robot; duty or offsets other than the defaults; speeds other than 0.15 m/s in the gain, mass and swing grid; periods between the ones listed beyond what the JSONs hold.
    - *Use.* The physics replays, the demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab and the website's trot presets use 1.7 s (`gaits.TROT_SLOW`).
-     Stage 1 kinematics, `body_metrics.json` and the JavaScript port of `gaits.py` stay on the 0.5 s `gaits.TROT`.
+     Stage 1 kinematics, `body_metrics.json` and the JavaScript port of `gaits.py` stay on the 0.5 s `gaits.TROT` because they are geometry and were made before this finding; the 0.5 s there is not a recommendation.
 
    **Live explorer** (`scripts/sim/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/sim/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
 

@@ -75,16 +75,16 @@ resolving redundancy for limbs with more than 3 joints (Stage 2).
 
 ## Stage 2 — physics simulation
 
-**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/sim/mjcf.py`, foot positions tested against `mojito/geometry/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo model in `mojito/sim/actuators.py`, joint-sensor and IMU models in `mojito/sim/sensors.py`, tested against closed-form holding deflection) and 3 (stand test and sit-to-stand test: `mojito/sim/stand.py`, `results/stand/stand_test.json`, `results/stand/sit_to_stand.json`) and 4 (trot and crawl replayed in physics: `mojito/sim/gait_replay.py`, `results/gait/gait_replay.json`) are done; the design sweep is next. Work package 4 now uses a 1.7 s trot period, chosen from a period sweep (`docs/STAGE2.md`, "Longer trot periods").
+**Status: in progress, in detail in `docs/STAGE2.md`.** Work packages 0 (static mass bound) and 1 (MuJoCo model generated from the URDF, `mojito/sim/mjcf.py`, foot positions tested against `mojito/geometry/kinematics.py`-based `body.Robot` to 1e-9 m) and 2 (servo model in `mojito/sim/actuators.py`, joint-sensor and IMU models in `mojito/sim/sensors.py`, tested against closed-form holding deflection) and 3 (stand test and sit-to-stand test: `mojito/sim/stand.py`, `results/stand/stand_test.json`, `results/stand/sit_to_stand.json`) and 4 (trot and crawl replayed in physics: `mojito/sim/gait_replay.py`, `results/gait/gait_replay.json`) are done; the design sweep is next. Work package 4 now uses a 1.7 s trot period: the Stage 1 0.5 s trot was not optimal in physics, and 1.7 s was chosen from a period sweep and checked against other gains, masses and swing heights (`docs/STAGE2.md`, "Longer trot periods").
 No physical robot exists yet, so the stage opens as a design-exploration tool
 (try dimensions in simulation before fixing the design), with learning after it.
 Actuators are 20 kg·cm hobby servos ("DSServo DS3218 20KG", supply adjustable 5–6 V,
 listed figures unverified, no position feedback), with external joint-angle sensors on
 the first robot and DC motors with position, velocity and current feedback later (see
-`docs/STAGE2.md`). A first static bound on total mass is done: with the placeholder
+`docs/STAGE2.md`). A first static bound on total mass is done: with the Stage 2
 design placeholders (150 mm links, 1.25× the Stage 0–1 ones so the servos are not
-oversized), about 1.8–2.2 kg at most in trot and crawl at 5 V and half of stall
-torque, before leg and servo mass and gait dynamics; 1.5 kg is an upper limit.
+oversized), about 1.8 kg (trot) to 2.2 kg (crawl) at most at 5 V and half of stall
+torque, before leg and servo mass and gait dynamics; 1.5 kg is the working target, set below that bound.
 Stage 0–1 keeps its 120 mm placeholders until a design is chosen. Simulation ground truth (foot and base world positions) is used
 for evaluation and rewards, not as policy input.
 

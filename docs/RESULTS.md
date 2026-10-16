@@ -76,6 +76,8 @@ foot error at that instant.
   37 mm inside the triangle of grounded feet. This treats the body centre as
   the centre of mass, which is an assumption.
 
+These trot demos use the 0.5 s period set before any physics. Physics later showed that period was not optimal; the physics replays use 1.7 s (`docs/PHYSICS.md`, `docs/STAGE2.md`). The geometry numbers here do not depend on it.
+
 Known weaknesses of these motions:
 
 - The trot has two feet down, so it relies on dynamic balance that geometry

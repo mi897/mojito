@@ -38,7 +38,7 @@ the closed-form IK in JavaScript (`site/assets/mojito.js`), checked against the 
 | 0 | One network learns inverse kinematics for a leg, with link lengths as inputs | Done |
 | 1 | Whole body: posture control, trot and crawl, NumPy or PyTorch | Done |
 | – | Robots defined in URDF; the network is generated from it | Done |
-| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model and servo/sensor model built (work packages 0–3 of 8); gait replay in physics next |
+| 2 | Physics simulation (MuJoCo) and learned locomotion | In progress: MuJoCo model, servo/sensor model, stand tests and gait replay in physics done (work packages 0–4 of 8); design sweep next |
 | 3 | The real robot: measurement, calibration, per-leg correction | Planned |
 | 4 | The loop: real experience updates the simulator, retrain, redeploy | Planned |
 
@@ -55,6 +55,8 @@ joint limits are placeholders, not a real robot's:
 | Shoulder spacing, front to back / side to side | 240 / 100 mm |
 | Standing height of the shoulders | 170 mm |
 | Joint limits: abduction / hip pitch / knee | ±0.6 / 0 to 1.5 / −2.3 to −0.3 rad |
+
+These are the Stage 0–1 (geometry) placeholders. The Stage 2 physics results use larger ones, so the servos are not oversized: 50 / 150 / 150 mm links, 300 × 150 mm shoulder spacing, 212.5 mm standing height (`docs/STAGE2.md`). The physics trot has a 1.7 s period; the Stage 1 geometry demos still use 0.5 s, which the physics sweep found was not optimal (`docs/PHYSICS.md`).
 
 ## Quick start
 
@@ -116,9 +118,9 @@ site/                  website: pages, assets/mojito.js (JS port of leg, body, g
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
-  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis,
-                       make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
-  website/             build_site, serve_site, site_sweep
+  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis, trot_period_sweep,
+                       trot_period_robustness, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
