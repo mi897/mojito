@@ -129,7 +129,7 @@
         <tr><th>Gait</th><th>Period</th><th>Duty</th><th>Offsets (FL, FR, RL, RR)</th><th>Idea</th></tr>
         <tr><td>Trot</td><td>1.7 s (first 0.5 s; changed after the physics period sweep)</td><td>0.5</td><td>0, 0.5, 0.5, 0</td><td>Diagonal pairs together; two feet down at all times</td></tr>
         <tr><td>Crawl</td><td>2.0 s</td><td>0.85</td><td>0.75, 0.25, 0.5, 0</td><td>One foot up at a time (RL, FL, RR, FR); body leans away from it</td></tr>
-        <tr><td>Pace</td><td>0.5 s</td><td>0.5</td><td>0, 0.5, 0, 0.5</td><td>Left legs together, then right (a test case: it goes backward in physics)</td></tr>
+        <tr><td>Pace</td><td>1.7 s (first 0.5 s)</td><td>0.5</td><td>0, 0.5, 0, 0.5</td><td>Left legs together, then right (a test case: it goes backward in physics)</td></tr>
       </table>
       <h3>Stance: the foot is fixed in the world</h3>
       <p>A grounded foot does not move in the world, so in the body frame it moves opposite to the body. For constant planar motion the heading after time \(s\) is \(\omega s\) and the displacement is the integral of the rotated velocity:</p>

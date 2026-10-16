@@ -29,11 +29,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.robot import gaits
 from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
 
-PACE = gaits.Gait("pace", period=0.5, duty=0.5, offsets=(0.0, 0.5, 0.0, 0.5))
+PACE = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # the trot with left legs, then right
 GAITS = {  # name -> (gait, forward speeds in m/s, cycles)
     "trot": (gaits.TROT, (0.0, 0.15, 0.30), 3),
     "crawl": (gaits.CRAWL, (0.0, 0.04, 0.08), 2),
-    "pace": (PACE, (0.0, 0.10), 4),
+    "pace": (PACE, (0.0, 0.10), 3),
 }
 KP = {10: 0.2, 30: 0.5, 100: 1.0}  # kp -> kd
 MASS_SCALE = (0.6, 1.0, 1.75)  # times the placeholder masses (1.72 kg)

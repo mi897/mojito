@@ -40,7 +40,7 @@ DEFAULTS = dict(
 PRESETS = {
     "trot": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0),
     "crawl": dict(period=2.0, duty=0.85, offsets=[0.75, 0.25, 0.5, 0.0], lift=0.03, sway=0.025, vx=0.04, vy=0.0, yaw_rate=0.0),
-    "pace": dict(period=0.5, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0),
+    "pace": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0),
 }
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
