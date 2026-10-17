@@ -81,14 +81,14 @@
   </div>
 
   <h2 id="s2c">Stage 2: walking in physics</h2>
-  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2. The trot here has a 1.7&nbsp;s period (<a href="#trotperiod">why</a>); the crawl is 2&nbsp;s.</p>
+  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V. The trot uses the tuned settings (kp 50, kd 0.9, 0.16&nbsp;m stance, 22&nbsp;mm swing; <a href="#trotcombined">why</a>); the crawl keeps kp 10, kd 0.2 and a 0.2125&nbsp;m stance. The trot has a 1.7&nbsp;s period (<a href="#trotperiod">why</a>); the crawl is 2&nbsp;s.</p>
   <div class="grid g2">
     <div class="card chart-card"><h4>Commanded against measured forward speed</h4><p class="sub">m/s; the dashed line is "does what it is told"</p><div id="c-speed"></div>
-      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed. Marching in place drifts backward (slightly, for the 1.7&nbsp;s trot).</p></div>
+      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed (the tuned trot comes closest). The 0.30&nbsp;m/s trot is not counted as walked: its servos are saturated for more than 20% of the walk. Marching in place drifts backward for the crawl; the tuned trot does not.</p></div>
     <div class="card chart-card"><h4>Peak servo torque while walking</h4><p class="sub">fraction of the 5 V stall torque</p><div id="c-torque"></div>
       <p class="read">The crawl runs the servos at their limit; the reason was not traced. Standing with these masses peaks at 0.28.</p></div>
     <div class="card chart-card"><h4>Why the trot falls short of 0.15 m/s</h4><p class="sub">measured body speed, and the speed the loaded feet's commanded motion would give ("ask")</p><div id="c-diag"></div>
-      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely. For the 1.7&nbsp;s trot the body makes more than the "ask" (the speed the loaded feet's commanded motion would give), so that explanation, worked out at 0.5&nbsp;s, no longer accounts for the numbers; the reason was not traced. A taller swing made it worse.</p></div>
+      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely. For the 1.7&nbsp;s trot with the original settings (30&nbsp;mm swing, 0.2125&nbsp;m stance, kp 10) the body makes more than the "ask" (the speed the loaded feet's commanded motion would give), so that explanation, worked out at 0.5&nbsp;s, no longer accounts for the numbers; the reason was not traced. A taller swing made it worse.</p></div>
     <div class="card chart-card"><h4>Trot at 0.15 m/s: what the grid of runs says</h4><p class="sub">measured speed against servo stiffness, for three masses (swing 30 mm)</p><div id="c-sweep"><p class="muted small">Loading the recorded runs…</p></div>
       <p class="read">From the playground's 144 recorded runs, one run per point.</p></div>
   </div>

@@ -64,7 +64,7 @@ foot error at that instant.
 |---|---|---|---|---|
 | Posture: roll ±18°, pitch ±14°, yaw ±22°, height ±30 mm | 0.22 mm | 0.11 mm | 15° | 4 |
 | Trot forward, 0.15 m/s | 0.29 mm | 0.11 mm | 20° | 2 |
-| Trot turning on the spot, 1.2 rad/s | 0.21 mm | 0.10 mm | 10.8° | 2 |
+| Trot turning on the spot, 1.2 rad/s | 0.21 mm | 0.10 mm | 10.9° | 2 |
 | Crawl forward, 0.04 m/s | 0.29 mm | 0.12 mm | 20° | 3 or 4 |
 
 - Every requested foot position in all four demos is inside the joint limits.
@@ -76,7 +76,7 @@ foot error at that instant.
   37 mm inside the triangle of grounded feet. This treats the body centre as
   the centre of mass, which is an assumption.
 
-The trot demos have a 1.7 s period. They were first made at 0.5 s, a period set before any physics; the physics replays showed that was not optimal, a period sweep in MuJoCo gave 1.7 s (`docs/STAGE2.md`, "Longer trot periods"), and these demos were regenerated at 1.7 s. The geometry numbers changed with it: the worst forward-trot foot error went from 0.25 to 0.29 mm, the closest joint approach in the turn from 22° to 10.8°, and the body centre's distance from the line between grounded feet from 11 to 38 mm (the longer stance sweeps the feet through a larger angle).
+The trot demos have a 1.7 s period. They were first made at 0.5 s, a period set before any physics; the physics replays showed that was not optimal, a period sweep in MuJoCo gave 1.7 s (`docs/STAGE2.md`, "Longer trot periods"), and these demos were regenerated at 1.7 s. The geometry numbers changed with it: the worst forward-trot foot error went from 0.25 to 0.29 mm, the closest joint approach in the turn from 22° to 10.8°, and the body centre's distance from the line between grounded feet from 11 to 38 mm (the longer stance sweeps the feet through a larger angle). The swing height was later lowered from 30 mm to 22 mm (the physics sweeps in `docs/STAGE2.md`, "Pushing the best settings further"), and the demos were regenerated once more: the forward-trot joint margin went from 20.15° to 20.27°, the turn's from 10.79° to 10.89°, the median foot error from 0.1126 to 0.1129 mm; the worst error and the 38 mm figure did not change. The original 0.5 s, 30 mm trot is `gaits.TROT_STAGE1`.
 
 Known weaknesses of these motions:
 
