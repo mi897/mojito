@@ -126,6 +126,21 @@
   <figure class="card"><img src="media/trot_1p7_one_at_a_time.png" alt="Speed ratio, tilt and walked count against kp, kd, swing height and stance height" loading="lazy" style="width:100%"><figcaption>All 420 runs (original matplotlib plot, <code>results/gait/sweeps/trot_1p7_one_at_a_time.png</code>): mean &plusmn; 1 sd, dots are runs, the dotted line is the baseline value.</figcaption></figure>
   <div class="callout limit"><b>What this does not show.</b> Each parameter was changed alone from one baseline, so the best values were not run together. Duty, commanded speed and mass were not varied. At stance heights of 0.15&nbsp;m and below the commanded feet leave the joint limits (the run is not counted as walked, though the robot did not fall); the speed ratio there is not a valid test of the gait. At kd&nbsp;2 the body moves backward, yet the walked flag (upright and finished) is still true. Why each effect occurs was not traced. Placeholder dimensions, masses, servo figures and friction.</div>
 
+  <h3 id="trotkd">kd at each kp: the damping sweep at 14 servo gains</h3>
+  <p>The kp sweep above tied kd to kp, which could have hidden a better kd at high kp. Here kp (20 to 150 in steps of 10) is crossed with kd (0 to 3 N&middot;m&middot;s/rad, 17 values, denser from 0.5 to 2), at the same baseline (1.7&nbsp;s, duty 0.5, 0.15&nbsp;m/s, 0.19&nbsp;m stance, 30&nbsp;mm swing), 10 runs per cell with the same random mass (&plusmn;5%) and latency (18 to 22&nbsp;ms) draws as before: 2380 runs. The spread is from those draws only.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Speed ratio against kd</h4><p class="sub">mean of 10 runs; five of the 14 kp values</p><div id="c-kd-ratio"></div></div>
+    <div class="card chart-card"><h4>Largest tilt against kd</h4><p class="sub">mean of 10 runs, degrees</p><div id="c-kd-tilt"></div></div>
+  </div>
+  <p class="read" id="kd-read"></p>
+  <h4>Best kd at each kp</h4>
+  <div class="card"><table id="t-kd-best"></table></div>
+  <h4>Mean speed ratio, every kp and kd</h4>
+  <div class="card"><table id="t-kd-ratio"></table></div>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_lines.png" alt="Speed ratio and tilt against kd for every kp" loading="lazy" style="width:100%"><figcaption>All 14 kp values (<code>results/gait/sweeps/trot_1p7_kp_kd_lines.png</code>): mean &plusmn; 1 sd.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_maps.png" alt="Heat maps of speed ratio and tilt over kp and kd" loading="lazy" style="width:100%"><figcaption>kp against kd (<code>results/gait/sweeps/trot_1p7_kp_kd_maps.png</code>); the star marks the kd with the highest mean speed ratio at each kp.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> The cliff and the plateau edges are placed to the grid (0.1 steps near the cliff), and why the cliff is there was not traced. One baseline: other speeds, masses and swing heights may move the plateau. The spread is from the mass and latency draws only. The replay's "walked" flag was true for all 2380 runs, including those that went backward, so it does not filter anything here. Placeholder dimensions, masses, servo figures and friction.</div>
+
   <h2 id="plots">Original plots</h2>
   <div class="gallery" id="plots-g"></div>
 </main>
@@ -280,6 +295,22 @@
       const bestOf = k => rowsOT(k).filter(r => r.inLimits === r.n).sort((a, b) => b.rm - a.rm)[0];
       const bk = bestOf('kp'), bl = bestOf('lift'), bh = bestOf('height');
       $('oat-read').textContent = `${OT.runs.filter(r => r.walked).length} of ${OT.runs.length} runs walked. Highest mean speed ratio among values where every target is reachable: kp ${fmtv(bk.v)} (${f(bk.rm, 3)}, sd ${f(bk.rs, 3)}), swing ${f(1000 * bl.v, 0)} mm (${f(bl.rm, 3)}, sd ${f(bl.rs, 3)}), stance ${fmtv(bh.v)} m (${f(bh.rm, 3)}, sd ${f(bh.rs, 3)}). Differences of about one sd between neighbouring values are not evidence of a real difference. kd was flat from 0.1 to 1.25.`;
+    }
+    const KG = R.trot_1p7_kp_kd_grid_summary;
+    if (KG) {
+      const cell = (kp, kd) => KG.cells.find(c => c.kp === kp && c.kd === kd);
+      const kps = [...new Set(KG.cells.map(c => c.kp))], kdsAll = [...new Set(KG.cells.map(c => c.kd))];
+      const shown = [20, 50, 80, 110, 150], cols = [B, A, O, V, 'var(--muted)'];
+      Charts.line($('c-kd-ratio'), { x: { label: 'kd, N·m·s/rad', fmt: v => +(+v).toPrecision(3), zero: false }, y: { label: 'speed ratio', domain: [-1, 1], fmt: v => f(v, 1) }, hlines: [{ y: 1, label: 'commanded', color: 'var(--muted)' }],
+        series: shown.map((kp, i) => ({ name: `kp ${kp}`, color: cols[i], markers: true, points: kdsAll.map(kd => [kd, cell(kp, kd).ratio_mean]) })) });
+      Charts.line($('c-kd-tilt'), { x: { label: 'kd, N·m·s/rad', fmt: v => +(+v).toPrecision(3), zero: false }, y: { label: 'largest tilt, °', fmt: v => f(v, 1), zero: false },
+        series: shown.map((kp, i) => ({ name: `kp ${kp}`, color: cols[i], markers: true, points: kdsAll.map(kd => [kd, cell(kp, kd).tilt_mean_deg]) })) });
+      const b50 = KG.best_per_kp.find(b => b.kp === 50), b150 = KG.best_per_kp.find(b => b.kp === 150), top = [...KG.best_per_kp].sort((a, b) => b.ratio_mean - a.ratio_mean)[0];
+      $('kd-read').textContent = `The curve is not a bell: at each kp the speed rises with kd to a plateau, then falls sharply above kd 1.4 (to about 0.3 of the commanded speed at kd 1.7, backward at 2 and 3). The highest mean speed ratio is ${f(top.ratio_mean, 3)} at kp ${top.kp}, kd ${top.best_kd}. At kp 150 the best kd (${b150.best_kd}) gives ${f(b150.ratio_mean, 3)}, so no kd rescues a high kp. Tilt at kp 150 is ${f(Math.min(...KG.cells.filter(c => c.kp === 150).map(c => c.tilt_mean_deg)), 1)} to ${f(Math.max(...KG.cells.filter(c => c.kp === 150).map(c => c.tilt_mean_deg)), 1)}° at every kd, so it is set by kp, not kd.`;
+      $('t-kd-best').innerHTML = '<tr><th class="num">kp</th><th class="num">best kd</th><th class="num">speed ratio mean</th><th class="num">sd</th><th class="num">tilt</th><th class="num">torque / stall</th><th class="num">kd within 0.01 of the peak</th><th class="num">first kd 0.05 below it</th></tr>'
+        + KG.best_per_kp.map(b => `<tr><td class="num">${b.kp}</td><td class="num">${b.best_kd}</td><td class="num">${f(b.ratio_mean, 3)}</td><td class="num">${f(b.ratio_sd, 3)}</td><td class="num">${f(b.tilt_mean_deg, 1)}°</td><td class="num">${f(b.torque_mean, 2)}</td><td class="num">${b.plateau_kd_min} to ${b.plateau_kd_max}</td><td class="num">${b.cliff_kd == null ? '–' : b.cliff_kd}</td></tr>`).join('');
+      $('t-kd-ratio').innerHTML = '<tr><th class="num">kp \\ kd</th>' + kdsAll.map(kd => `<th class="num">${kd}</th>`).join('') + '</tr>'
+        + kps.map(kp => `<tr><td class="num">${kp}</td>` + kdsAll.map(kd => `<td class="num">${f(cell(kp, kd).ratio_mean, 2)}</td>`).join('') + '</tr>').join('');
     }
     const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
     $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');

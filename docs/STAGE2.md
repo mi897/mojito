@@ -643,6 +643,81 @@ Each is one branch-sized step. Tick them off here as they land.
      | 0.19 | 10/10 | 10/10 | 0.848 | 0.004 | 0.84 | 0.85 | 7.9 | 0.0 | 0.85 | 0.01 |
      At 0.15 m and below, none of the 70 runs counts as walked, and the reason is that the commanded foot path leaves the joint limits (0 of 10 "in limits"), not that the robot fell: the largest tilt is 2 to 7.5°. At 0.09 to 0.11 m the servos are saturated almost the whole walk (torque 1.00) and the speed ratio collapses to 0.17 to 0.43. The ratio at 0.14 and 0.15 m (0.875, 0.879) is higher than at 0.19 m (0.848), but those runs asked for foot positions the joints cannot reach, so I do not count them as a valid test of the gait. Among heights where every target is reachable (0.16 m and above) the ratio rises as the body gets lower: 0.870 at 0.16 m against 0.848 at 0.19 m, with 8.1° against 7.9° tilt.
      *What this does and does not show.* One parameter at a time from one baseline: the best value of each is not necessarily the best together (for example kp 45, 20 to 24 mm swing and 0.16 m stance were not run together). The baseline's duty 0.5, 0.15 m/s command and mass were not changed. The perturbation spread is small, and the model's own uncertainty (friction, damping, servo figures) is not in it. Everything is placeholder.
+   - *kp and kd varied independently, 14 values of kp times 17 values of kd, 10 runs per cell* (`scripts/gait/sweeps/trot_1p7_kp_kd_grid.py`, `results/gait/sweeps/trot_1p7_kp_kd_grid.json`; means, standard deviations and the best kd per kp in `trot_1p7_kp_kd_grid_summary.json`; plots `trot_1p7_kp_kd_lines.png` and `trot_1p7_kp_kd_maps.png` from `scripts/gait/sweeps/plot_trot_1p7_kp_kd_grid.py`; website: Results, "kd at each kp"). Why: the kp sweep above tied kd to kp, which could have hidden a better kd at high kp (tilt rose with kp), so kp 20 to 150 in steps of 10 was crossed with kd 0, 0.03, 0.06, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 2.0, 3.0 (denser where the speed falls away). Everything else is the baseline (1.7 s, duty 0.5, 0.15 m/s, 0.19 m stance, 30 mm swing, 1.72 kg). 2380 runs, 3 cycles each, the same 10 random mass (+-5%) and latency (18 to 22 ms) draws in every cell as before; the spread is from those draws only. Speed ratio is over all 10 runs; tilt and torque are over runs with tilt under 30 degrees (all 2380 stayed upright).
+     *The curve is not bell-shaped.* At each kp, speed rises with kd from a low value, sits on a plateau, then falls off a cliff above kd 1.4. At kd 1.5 the mean ratio is 0.02 (kp 20) to 0.26 (kp 150) below its peak, at 1.7 it is 0.30 to 0.34 at every kp, at 2.0 it is negative (the body goes backward) for kp up to 90 and 0.01 to 0.09 above that, and at 3.0 it is negative for every kp (-0.19 to -0.88). The cliff is at about the same kd for every kp from 20 to 150 (the ratio first falls more than 0.05 below the peak at 1.5, or at 1.7 for kp 20 and 30, where it is gentler at 1.5), so it does not scale with kp as the tied rule assumed. Why it is there was not traced (the servo model has a 20 ms latency and the simulation is stepped at 2 ms; I did not test whether it is a stability limit of those). The standard deviation grows at and beyond it (0.013 to 0.046 at kd 1.5 and above, against mostly 0.002 to 0.006 on the plateau).
+     *Best kd per kp* (highest mean speed ratio; the plateau is the kd range within 0.01 of that peak; the cliff is the first kd above the peak that is more than 0.05 below it):
+     | kp | best kd | speed ratio mean | sd | tilt (deg) | torque / stall | kd within 0.01 of the peak | first kd 0.05 below it (cliff) |
+     |---|---|---|---|---|---|---|---|
+     | 20 | 0.06 | 0.830 | 0.003 | 7.9 | 0.89 | 0.03 to 0.3 | 1.7 |
+     | 30 | 0.1 | 0.859 | 0.002 | 8.1 | 0.96 | 0.1 to 1.4 | 1.7 |
+     | 40 | 0.3 | 0.863 | 0.002 | 8.2 | 0.88 | 0.1 to 1.4 | 1.5 |
+     | 50 | 1.4 | 0.865 | 0.003 | 8.1 | 0.99 | 0.2 to 1.4 | 1.5 |
+     | 60 | 1.4 | 0.865 | 0.003 | 8.3 | 1.00 | 0.7 to 1.4 | 1.5 |
+     | 70 | 1.4 | 0.862 | 0.002 | 8.4 | 1.00 | 1.2 to 1.4 | 1.5 |
+     | 80 | 1.4 | 0.855 | 0.002 | 8.6 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 90 | 1.4 | 0.846 | 0.001 | 8.7 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 100 | 1.4 | 0.837 | 0.002 | 8.7 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 110 | 1.4 | 0.826 | 0.005 | 8.8 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 120 | 1.4 | 0.813 | 0.003 | 8.9 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 130 | 1.4 | 0.802 | 0.004 | 8.9 | 1.00 | 1.3 to 1.4 | 1.5 |
+     | 140 | 1.4 | 0.788 | 0.009 | 9.0 | 1.00 | 1.2 to 1.4 | 1.5 |
+     | 150 | 1.3 | 0.778 | 0.004 | 9.0 | 1.00 | 1.2 to 1.3 | 1.5 |
+     *Mean speed ratio* (rows kp, columns kd):
+     mean speed ratio (rows kp, columns kd)
+     | kp \ kd | 0 | 0.03 | 0.06 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 | 1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 1.7 | 2 | 3 |
+     |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+     | 20 | 0.80 | 0.82 | 0.83 | 0.83 | 0.83 | 0.82 | 0.82 | 0.81 | 0.81 | 0.81 | 0.81 | 0.81 | 0.81 | 0.81 | 0.30 | -0.32 | -0.88 |
+     | 30 | 0.79 | 0.83 | 0.85 | 0.86 | 0.85 | 0.85 | 0.85 | 0.85 | 0.84 | 0.84 | 0.85 | 0.85 | 0.85 | 0.81 | 0.33 | -0.18 | -0.61 |
+     | 40 | 0.78 | 0.81 | 0.83 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.78 | 0.32 | -0.13 | -0.50 |
+     | 50 | 0.76 | 0.80 | 0.82 | 0.85 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.87 | 0.74 | 0.32 | -0.10 | -0.43 |
+     | 60 | 0.76 | 0.78 | 0.79 | 0.81 | 0.84 | 0.85 | 0.85 | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.87 | 0.71 | 0.32 | -0.08 | -0.39 |
+     | 70 | 0.71 | 0.75 | 0.78 | 0.80 | 0.83 | 0.84 | 0.85 | 0.85 | 0.85 | 0.85 | 0.85 | 0.86 | 0.86 | 0.69 | 0.32 | -0.06 | -0.36 |
+     | 80 | 0.70 | 0.74 | 0.78 | 0.80 | 0.82 | 0.83 | 0.84 | 0.84 | 0.84 | 0.84 | 0.84 | 0.85 | 0.85 | 0.64 | 0.32 | -0.04 | -0.33 |
+     | 90 | 0.70 | 0.74 | 0.76 | 0.78 | 0.80 | 0.82 | 0.82 | 0.83 | 0.83 | 0.83 | 0.83 | 0.84 | 0.85 | 0.60 | 0.32 | -0.01 | -0.31 |
+     | 100 | 0.67 | 0.71 | 0.73 | 0.75 | 0.78 | 0.80 | 0.81 | 0.82 | 0.82 | 0.82 | 0.82 | 0.83 | 0.84 | 0.58 | 0.33 | 0.01 | -0.28 |
+     | 110 | 0.68 | 0.67 | 0.70 | 0.73 | 0.76 | 0.79 | 0.79 | 0.80 | 0.80 | 0.81 | 0.81 | 0.82 | 0.83 | 0.57 | 0.32 | 0.02 | -0.26 |
+     | 120 | 0.67 | 0.68 | 0.70 | 0.72 | 0.74 | 0.77 | 0.78 | 0.79 | 0.79 | 0.80 | 0.80 | 0.81 | 0.81 | 0.55 | 0.33 | 0.04 | -0.24 |
+     | 130 | 0.61 | 0.63 | 0.68 | 0.69 | 0.73 | 0.76 | 0.77 | 0.77 | 0.78 | 0.79 | 0.79 | 0.80 | 0.80 | 0.54 | 0.34 | 0.06 | -0.23 |
+     | 140 | 0.57 | 0.58 | 0.62 | 0.64 | 0.71 | 0.74 | 0.75 | 0.76 | 0.77 | 0.78 | 0.78 | 0.79 | 0.79 | 0.53 | 0.34 | 0.08 | -0.20 |
+     | 150 | 0.54 | 0.57 | 0.58 | 0.61 | 0.69 | 0.72 | 0.74 | 0.74 | 0.75 | 0.77 | 0.77 | 0.78 | 0.76 | 0.52 | 0.34 | 0.09 | -0.19 |
+     *Standard deviation of the speed ratio* (10 runs per cell):
+     sd of speed ratio
+     | kp \ kd | 0 | 0.03 | 0.06 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 | 1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 1.7 | 2 | 3 |
+     |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+     | 20 | 0.004 | 0.003 | 0.003 | 0.003 | 0.003 | 0.004 | 0.004 | 0.004 | 0.003 | 0.003 | 0.003 | 0.004 | 0.004 | 0.013 | 0.029 | 0.043 | 0.031 |
+     | 30 | 0.011 | 0.005 | 0.004 | 0.002 | 0.004 | 0.004 | 0.004 | 0.004 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.027 | 0.025 | 0.041 | 0.025 |
+     | 40 | 0.006 | 0.004 | 0.004 | 0.004 | 0.002 | 0.002 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.002 | 0.034 | 0.025 | 0.038 | 0.034 |
+     | 50 | 0.004 | 0.003 | 0.002 | 0.003 | 0.003 | 0.003 | 0.002 | 0.003 | 0.002 | 0.003 | 0.003 | 0.003 | 0.003 | 0.033 | 0.023 | 0.038 | 0.033 |
+     | 60 | 0.007 | 0.006 | 0.005 | 0.005 | 0.003 | 0.003 | 0.002 | 0.003 | 0.003 | 0.002 | 0.002 | 0.002 | 0.003 | 0.035 | 0.025 | 0.036 | 0.028 |
+     | 70 | 0.016 | 0.004 | 0.004 | 0.006 | 0.003 | 0.003 | 0.004 | 0.003 | 0.002 | 0.003 | 0.003 | 0.003 | 0.002 | 0.034 | 0.023 | 0.031 | 0.030 |
+     | 80 | 0.009 | 0.008 | 0.006 | 0.004 | 0.003 | 0.004 | 0.002 | 0.003 | 0.003 | 0.002 | 0.002 | 0.003 | 0.002 | 0.043 | 0.025 | 0.033 | 0.030 |
+     | 90 | 0.014 | 0.008 | 0.005 | 0.005 | 0.004 | 0.003 | 0.005 | 0.002 | 0.003 | 0.002 | 0.002 | 0.002 | 0.001 | 0.026 | 0.027 | 0.046 | 0.025 |
+     | 100 | 0.016 | 0.012 | 0.006 | 0.007 | 0.004 | 0.005 | 0.004 | 0.003 | 0.003 | 0.003 | 0.002 | 0.001 | 0.002 | 0.022 | 0.023 | 0.037 | 0.027 |
+     | 110 | 0.029 | 0.016 | 0.012 | 0.006 | 0.003 | 0.006 | 0.003 | 0.003 | 0.003 | 0.003 | 0.002 | 0.002 | 0.005 | 0.030 | 0.020 | 0.031 | 0.028 |
+     | 120 | 0.026 | 0.021 | 0.010 | 0.007 | 0.004 | 0.006 | 0.004 | 0.004 | 0.002 | 0.003 | 0.003 | 0.002 | 0.003 | 0.024 | 0.024 | 0.034 | 0.022 |
+     | 130 | 0.029 | 0.025 | 0.012 | 0.012 | 0.005 | 0.005 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.004 | 0.020 | 0.022 | 0.028 | 0.036 |
+     | 140 | 0.017 | 0.019 | 0.016 | 0.019 | 0.009 | 0.008 | 0.005 | 0.004 | 0.003 | 0.002 | 0.002 | 0.002 | 0.009 | 0.018 | 0.024 | 0.026 | 0.030 |
+     | 150 | 0.019 | 0.013 | 0.014 | 0.011 | 0.010 | 0.007 | 0.003 | 0.003 | 0.003 | 0.003 | 0.003 | 0.004 | 0.019 | 0.021 | 0.027 | 0.033 | 0.030 |
+     *Mean largest tilt in degrees:*
+     mean tilt (deg, upright runs)
+     | kp \ kd | 0 | 0.03 | 0.06 | 0.1 | 0.2 | 0.3 | 0.5 | 0.7 | 0.9 | 1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 1.7 | 2 | 3 |
+     |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+     | 20 | 8.2 | 7.9 | 7.9 | 7.8 | 7.6 | 7.4 | 7.0 | 6.8 | 6.5 | 6.3 | 6.2 | 6.1 | 6.0 | 6.2 | 6.5 | 5.9 | 5.4 |
+     | 30 | 8.5 | 8.4 | 8.4 | 8.1 | 8.0 | 8.0 | 7.9 | 7.7 | 7.5 | 7.4 | 7.3 | 7.2 | 7.2 | 7.5 | 7.7 | 7.1 | 6.7 |
+     | 40 | 8.8 | 8.8 | 8.5 | 8.4 | 8.3 | 8.2 | 8.2 | 8.1 | 8.0 | 7.9 | 7.9 | 7.8 | 7.7 | 8.1 | 8.2 | 7.8 | 7.4 |
+     | 50 | 8.8 | 8.7 | 8.5 | 8.7 | 8.4 | 8.4 | 8.4 | 8.3 | 8.3 | 8.2 | 8.2 | 8.1 | 8.1 | 8.5 | 8.5 | 8.2 | 7.9 |
+     | 60 | 9.0 | 9.0 | 9.0 | 8.9 | 8.6 | 8.6 | 8.5 | 8.5 | 8.4 | 8.4 | 8.3 | 8.3 | 8.3 | 8.7 | 8.7 | 8.4 | 8.3 |
+     | 70 | 8.9 | 8.8 | 8.9 | 8.8 | 8.8 | 8.7 | 8.7 | 8.6 | 8.5 | 8.5 | 8.5 | 8.5 | 8.4 | 8.8 | 8.8 | 8.6 | 8.4 |
+     | 80 | 9.0 | 9.1 | 8.9 | 8.9 | 9.0 | 8.9 | 8.8 | 8.7 | 8.6 | 8.6 | 8.6 | 8.6 | 8.6 | 8.9 | 8.9 | 8.7 | 8.7 |
+     | 90 | 9.0 | 9.0 | 9.0 | 9.0 | 9.0 | 9.0 | 8.9 | 8.8 | 8.7 | 8.7 | 8.7 | 8.7 | 8.7 | 9.0 | 9.0 | 8.8 | 8.7 |
+     | 100 | 9.1 | 9.1 | 9.1 | 9.1 | 9.1 | 9.0 | 8.9 | 8.9 | 8.8 | 8.8 | 8.8 | 8.7 | 8.7 | 9.0 | 9.0 | 8.9 | 8.8 |
+     | 110 | 9.2 | 9.2 | 9.1 | 9.2 | 9.2 | 9.2 | 9.0 | 8.9 | 8.9 | 8.8 | 8.8 | 8.8 | 8.8 | 9.0 | 9.0 | 9.0 | 8.9 |
+     | 120 | 9.1 | 9.2 | 9.2 | 9.2 | 9.2 | 9.2 | 9.1 | 9.0 | 8.9 | 8.9 | 8.9 | 8.8 | 8.9 | 9.1 | 9.1 | 9.0 | 8.9 |
+     | 130 | 9.2 | 9.2 | 9.2 | 9.2 | 9.2 | 9.2 | 9.2 | 9.0 | 9.0 | 8.9 | 8.9 | 8.9 | 8.9 | 9.1 | 9.1 | 9.0 | 9.0 |
+     | 140 | 9.3 | 9.2 | 9.2 | 9.2 | 9.2 | 9.3 | 9.2 | 9.1 | 9.0 | 9.0 | 9.0 | 8.9 | 9.0 | 9.2 | 9.1 | 9.1 | 9.1 |
+     | 150 | 9.3 | 9.2 | 9.2 | 9.2 | 9.2 | 9.3 | 9.3 | 9.1 | 9.1 | 9.0 | 9.0 | 9.0 | 9.1 | 9.2 | 9.1 | 9.1 | 9.1 |
+     *What it shows.* (1) At kp 50 to 60 the speed ratio is 0.865 on the plateau (kd 0.2 to 1.4 at kp 50, 0.7 to 1.4 at kp 60), the best in this grid; kp 40 to 70 are within 0.003 of it (0.862 to 0.865), so I would not call one of them the optimum. (2) The highest kd below the cliff (1.4) (1.3 at kp 150) is the best at every kp from 50 up, so for high kp more damping helps up to the cliff and not beyond. But it helps little: at kp 150 the best is 0.778 (kd 1.3), against 0.768 for the tied rule (kd 1.12) and 0.865 at kp 50 to 60. So the tied rule was not what made high kp slow; no kd rescues it. (3) Tilt depends mostly on kp, not kd: at kp 150 it is 9.0 to 9.3 degrees for every kd from 0 to 3, while at kp 20 it falls from 8.2 (kd 0) to 6.0 (kd 1.4) and at kp 40 from 8.8 to 7.7. Raising kd from 0 to 1.4 lowers the tilt by 2.2 degrees at kp 20 and by 0.2 at kp 150; that is the whole effect. So the tilt at high kp is not a damping problem in this model. (4) The torque is at its stall limit (peak 1.00 of stall) at the best kd for every kp from 60 up, consistent with a stiff servo saturating, but I did not test that as the cause of the slowdown. (5) The low-kd side matters more at high kp: kd 0 costs 0.03 (kp 20), 0.07 (kp 30) and 0.24 (kp 150) of the mean ratio against the peak. For use: a mid-plateau kd (about 0.7 to 1.1) at kp 50 to 60 gives 0.86 with margin from the cliff; kd 1.4 gives the same or a hair more but sits one grid step from a sharp drop.
+     *Not shown.* The cliff and plateau edges are located to the grid (0.1 steps near the cliff), not exactly. One baseline (0.15 m/s, 0.19 m, 30 mm, duty 0.5, 1.72 kg); other speeds, masses and swing heights may move the plateau. The spread is from the mass and latency draws only. "Walked" was true for all 2380 runs, including those that went backward, so it is not a useful filter here. Placeholder dimensions, masses, servo figures and friction.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.
