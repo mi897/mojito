@@ -377,7 +377,7 @@ Each is one branch-sized step. Tick them off here as they land.
    offset, and an IMU (gyro and accelerometer noise, drifting bias), behind an actuator interface that a motor model can fill later. Test against a closed form: a servo holding a known mass at a
    known lever arm should settle at the expected deflection when the torque is
    below the limit, and saturate when it is above.
-3. [x] **Stand test** (`mojito/sim/stand.py`, `scripts/sim/stand_test.py`, `tests/sim/test_stand.py`, `results/stand/stand_test.json`).
+3. [x] **Stand test** (`mojito/sim/stand.py`, `scripts/stand/stand_test.py`, `tests/sim/test_stand.py`, `results/stand/stand_test.json`).
    The IK standing posture (design placeholders: 50, 150, 150 mm legs, 212.5 mm, 300 × 150 mm) is commanded
    through the servo model into the actuated MuJoCo model; the last 0.5 s of a 3 s run is reported.
    What was measured, all at 5 V with the unverified listed stall torque (1.86 N·m) and placeholder
@@ -402,8 +402,8 @@ Each is one branch-sized step. Tick them off here as they land.
    collapse mass moved from 4.5 to 6 kg between two gain settings); anything about walking; friction limits and foot slip (not
    measured here). After a collapse the body passes through the floor, because only
    the foot pads collide, so the "height drop" of about 450 mm in the failed runs is not a physical height.
-   **Sit to stand** (`stand.run_sit_to_stand`, `scripts/sim/sit_to_stand.py`, `results/stand/sit_to_stand.json` and `.png`,
-   `scripts/sim/make_stand_demo.py` for the animations). Same model, 5 V, near-weightless legs. Start crouched
+   **Sit to stand** (`stand.run_sit_to_stand`, `scripts/stand/sit_to_stand.py`, `results/stand/sit_to_stand.json` and `.png`,
+   `scripts/stand/make_stand_demo.py` for the animations). Same model, 5 V, near-weightless legs. Start crouched
    at 140 mm (the placeholder knee limit of -2.3 rad stops the 150 mm legs at about 130 mm, so this is a deep
    crouch and not sitting down), hold 1 s, rise to 212.5 mm over 0.5 to 4 s along a minimum-jerk profile, hold 1 s.
    - Per newton of foot load the crouch needs 25% more knee torque than standing (0.325 against 0.260 N·m per kg of
@@ -429,7 +429,7 @@ Each is one branch-sized step. Tick them off here as they land.
    backwards, so the shank and foot masses sit behind the hips and move the centre of mass rearward, and the
    knee-bend direction makes front and rear legs not mirror images. Only the second of these applies to the near-weightless legs.
 
-4. [x] **Replay Stage 1 gaits in physics** (`mojito/sim/gait_replay.py`, `scripts/sim/gait_replay.py`, `tests/sim/test_gait_replay.py`, `results/gait/gait_replay.json`).
+4. [x] **Replay Stage 1 gaits in physics** (`mojito/sim/gait_replay.py`, `scripts/gait/gait_replay.py`, `tests/sim/test_gait_replay.py`, `results/gait/gait_replay.json`).
    The trot and crawl foot targets (`gaits.foot_targets`, plus `gaits.body_sway` for the crawl) go through the
    closed-form IK and the servo model into the actuated MuJoCo model. The body is free: 1 s standing, 0.5 s blend,
    then 3 trot cycles (1.7 s period, `gaits.TROT`; the first version of this package used the original 0.5 s trot, see "Longer trot periods") or 2 crawl cycles. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2,
@@ -451,10 +451,10 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Feet down.* Fewest feet carrying more than 0.5 N: 2 in every run (1 in the trot at 0.30 m/s), including the crawl, which Stage 1 designed to keep 3 down.
      Whether this is a brief unloading or a sustained lift was not examined. Mean feet down: trot 2.9 to 3.3, crawl 3.3.
    - *Heavy robot.* At 8 kg (legs near zero) the trot saturates the servos for more than 20% of the walking time and the run does not count as walked (test).
-   Animations: `scripts/sim/make_gait_replay_demo.py` writes `results/gait/trot_replay.gif` and `results/gait/crawl_replay.gif` (side view of the
+   Animations: `scripts/gait/make_gait_replay_demo.py` writes `results/gait/trot_replay.gif` and `results/gait/crawl_replay.gif` (side view of the
    left legs, filled foot = loaded, dashed line = where the body would be at the commanded speed).
 
-   **Why the body falls short** (`scripts/sim/gait_speed_diagnosis.py`, `results/gait/gait_speed_diagnosis.json`; same model, one run
+   **Why the body falls short** (`scripts/gait/gait_speed_diagnosis.py`, `results/gait/gait_speed_diagnosis.json`; same model, one run
    per entry). A planted foot is fixed in the world, so one whose commanded body-frame velocity is v asks the body to move at -v.
    `ask` is that, averaged over the loaded feet weighted by normal force. **The table below is the first version, at the Stage 1 trot period of 0.5 s;
    `results/gait/gait_speed_diagnosis.json` now holds the same variants at 1.7 s (table after the two causes).** Trot at 0.15 m/s, 0.5 s period:
@@ -514,9 +514,9 @@ Each is one branch-sized step. Tick them off here as they land.
    velocity, so one stance covers `velocity * stance_time` (trot at 0.15 m/s: 37.5 mm at 0.5 s, 128 mm at 1.7 s; crawl at 0.04 m/s: 68 mm), and the swing carries the
    foot forward to where the next stance starts, with a sin² lift. The commanded stance and the measured foot load are drawn together in
    the timing chart at the bottom of each isometric GIF (`results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif`, from
-   `scripts/sim/make_gait_iso_demos.py`).
+   `scripts/gait/make_gait_iso_demos.py`).
 
-   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`; `scripts/sim/trot_period_robustness.py`, `results/gait/trot_period_robustness.json`; finding).
+   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/gait/trot_period_sweep.py`, `results/gait/sweeps/trot_period_sweep.json`; `scripts/gait/trot_period_robustness.py`, `results/gait/sweeps/trot_period_robustness.json`; finding).
    The original Stage 1 trot (0.5 s, now `gaits.TROT_STAGE1`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
    (duty 0.5, diagonal pairs, 30 mm swing); same physics as work package 4; one run per cell, 4 cycles at 0.5 s and 3 otherwise. Measured forward speed, m/s:
 
@@ -545,15 +545,15 @@ Each is one branch-sized step. Tick them off here as they land.
    - *Use.* `gaits.TROT` is now 1.7 s everywhere: the physics replays, the physics demos (`trot_replay.gif`, `trot_iso.gif`, `trot_turn_iso.gif`, the last turning at 0.6 rad/s because 1.2 rad/s falls over at 1.7 s), the physics lab, the live explorer, the website's trot presets, and the Stage 1 geometry trot (JavaScript port, `body_metrics.json`, `trot_forward.gif`, `trot_turn.gif`).
      The geometry demos were first made at 0.5 s and regenerated at 1.7 s after this finding. That changed their numbers: worst forward-trot foot error 0.25 to 0.29 mm, closest joint approach in the 1.2 rad/s turn 22° to 10.8° (forward trot 23° to 20°), body centre up to 38 mm instead of 11 mm off the line between grounded feet. The original is kept as `gaits.TROT_STAGE1`. The pace (the trot with other offsets) moved to 1.7 s with it and its diagnosis was rerun (below).
 
-   **Live explorer** (`scripts/sim/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/sim/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
+   **Live explorer** (`scripts/gait/live_gait.py`, `mojito/sim/live_sim.py`, `scripts/gait/live_gait.html`): a local browser page with sliders for every timing and servo parameter, a draggable isometric view and the timing strips, driven by the same physics. Setup is in the README. With constant parameters it matches `run_gait` to 2 mm after 3 s (`tests/sim/test_live_sim.py`); changing parameters live is eased (phase accumulated, velocity and lift low-passed, foot targets speed-limited), which `run_gait` does not do.
 
-   **Trying variations** (`scripts/sim/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
+   **Trying variations** (`scripts/gait/try_gait.py`). Starts from the trot or crawl and overrides any timing, runs it through the same physics, prints the timing table
    and the measured result, and writes `results/gait/try/<name>_timing.png`, `_iso.gif` and `.json` (not committed). For example
    `--base trot --offsets 0,0.5,0,0.5` (pace), `--duty 0.4` (a flight phase), `--base crawl --order FL,RR,FR,RL`, `--period 1.2 --duty 0.8 --kp 100 --kd 1`.
    Two runs so far, only to check the tool, one run each (3 cycles at most, see output of the script): crawl lifting FL, RR, FR, RL at 0.04 m/s stayed up and
    measured 0.028 m/s (same as the built-in order); a pace at 0.1 m/s (at the then-current 0.5 s period) stayed up with 6.9° tilt and measured -0.032 m/s (backward); at 1.7 s it measures -0.012 m/s (kp 10, 1.72 kg). See below for why the pace goes backward.
 
-   **Why the pace goes backward** (`scripts/sim/pace_diagnosis.py`, `results/gait/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
+   **Why the pace goes backward** (`scripts/gait/pace_diagnosis.py`, `results/gait/pace_diagnosis.json`; pace = FL and RL together, then FR and RR; 0.1 m/s commanded; one run per entry).
    The pace was first diagnosed at the original 0.5 s period and redone at 1.7 s, the trot period used everywhere now (see "Longer trot periods"); both are given where they differ.
    - *Established for the base pace.* Only two feet on one side are commanded down, so the support is a line along that side, 125 mm from the
      centre of mass. The body is not held up sideways: it rolls toward the lifted side until the lifted feet touch the floor. Evidence: the roll range is 12.8°
@@ -574,7 +574,14 @@ Each is one branch-sized step. Tick them off here as they land.
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
    of each case, no randomisation.
-   - *Other parameters at 1.7 s* (`scripts/sim/trot_1p7_parameter_sweep.py`, `results/gait/trot_1p7_parameter_sweep.json`): 192 runs, 3 cycles each, 1.72 kg, one run per cell. Grid: duty 0.5, 0.55, 0.6, 0.7; commanded speed 0.05 to 0.2 m/s; stance height 0.19, 0.2125, 0.23 m; kp 10 or 30; swing height 30 or 60 mm. 183 of 192 walked ("walked" means upright, not too low, run finished; it does not mean the speed was met). All 9 failures had 60 mm swing height and duty 0.55 or more, at 0.15 or 0.2 m/s, and tipped over (tilt above 130 degrees). Measured speed divided by commanded: 0.89 at best (duty 0.55, 0.2 m/s, 0.19 m height, kp 30, 30 mm swing); mean 0.57 at 0.15 m/s and 0.34 at 0.05 m/s over the runs that walked. In this grid, 30 mm swing (mean ratio 0.60, mean tilt 6.8 degrees) beat 60 mm (0.38, 33.5 degrees); kp 30 beat kp 10 (0.58 vs 0.40); lower stance beat higher (0.54 at 0.19 m, 0.45 at 0.23 m); duty barely changed the ratio (0.48 to 0.50) but raised tilt and failures above 0.5. Not shown: interactions beyond what the table lists, mass (see the robustness sweep), friction, turning, terrain, or whether the speed shortfall at low commanded speed is a fixed offset; the cause was not traced.
+   - *Other parameters at 1.7 s* (`scripts/gait/trot_1p7_parameter_sweep.py`, `results/gait/sweeps/trot_1p7_parameter_sweep.json`; plot `results/gait/sweeps/trot_1p7_parameter_effects.png` from `scripts/gait/plot_trot_1p7_parameter_sweep.py`; website: Results, "What each parameter does to the 1.7 s trot"): 192 runs, 3 cycles each, 1.72 kg, one run per cell. Grid: duty 0.5, 0.55, 0.6, 0.7; commanded speed 0.05, 0.1, 0.15, 0.2 m/s; stance height 0.19, 0.2125, 0.23 m; kp 10 or 30; swing height 30 or 60 mm. 183 of 192 walked ("walked" means upright, not too low, run finished; it does not mean the speed was met). All 9 falls had a 60 mm swing and duty 0.55 or more, at 0.15 or 0.2 m/s. Below, "speed ratio" is measured over commanded forward speed and each figure is the median over the runs that walked, with every other parameter varied across its grid; a ratio of 1 would be the commanded speed.
+     - *Swing height* mattered most. 30 mm: speed ratio 0.64, tilt 7.3°, peak torque 0.78 of stall, no falls. 60 mm: ratio 0.42, tilt 18.7°, torque 0.98, 9 of 96 fell.
+     - *Servo gain.* kp 30 against kp 10: ratio 0.55 against 0.38, 3 against 6 falls out of 96, but a larger tilt (9.3° against 6.9°).
+     - *Commanded speed.* The ratio rises with it: 0.32 at 0.05 m/s, 0.42 at 0.1, 0.54 at 0.15, 0.58 at 0.2. Absolute speed rises too, so the shortfall looks like a roughly fixed amount rather than a fixed fraction; I did not fit or trace it. Falls only at 0.15 and 0.2 m/s (3 and 6 of 48).
+     - *Stance height.* Lower gave more speed and fewer falls: ratio 0.55, 0.48, 0.42 and falls 0, 3, 6 of 64 for 0.19, 0.2125, 0.23 m. The walked runs tilted more at 0.19 m (11.4°) than at 0.23 m (9.1°). A lower body also changes joint angles, and I did not separate that from the height itself.
+     - *Duty.* No effect on speed (median ratio 0.47 to 0.50). Falls rose with it (0, 1, 2, 6 of 48 at 0.5, 0.55, 0.6, 0.7). Median tilt was 13.6° at 0.5 and 8.4 to 9.3° above it; I did not trace that. Duty 0.5 has moments with only one foot down in some runs (`feet_down_min` 1).
+     - *Best cell:* duty 0.55, 0.2 m/s, 0.19 m, kp 30, 30 mm swing: 0.178 m/s measured (ratio 0.89), tilt 8.1°, peak torque 0.84.
+     Not shown: interactions beyond the grid, mass (see the robustness sweep), friction, turning, terrain, or why these effects occur (not traced). The medians mix other parameters, so they describe this grid, not each parameter alone, and one run per cell gives no spread.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.

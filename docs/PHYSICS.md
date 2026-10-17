@@ -13,7 +13,7 @@ This counts weight on vertical foot loads only. It leaves out leg and servo mass
 is an upper bound, not a mass the robot can walk with. Details and the
 length-to-width result are in `docs/STAGE2.md`.
 
-`python scripts/sim/stand_test.py` (needs MuJoCo) then holds the standing posture in
+`python scripts/stand/stand_test.py` (needs MuJoCo) then holds the standing posture in
 physics through the servo model and writes `results/stand/stand_test.json`. With the
 same placeholders, 5 V and servo gains that are also placeholders, a 1.5 kg robot
 with near-weightless legs stands with the servo torques within 0.5% of the static
@@ -23,19 +23,19 @@ to 8% off. The sweep stood up to 4 kg and fell at 4.5 kg with the default gain,
 and stood up to 5.5 kg and fell at 6 kg with a stiffer one: below the 7.18 kg
 static bound either way, and the answer moves with gains that are placeholders.
 
-`python scripts/sim/sit_to_stand.py` rises from a 140 mm crouch to the 212.5 mm stand over 0.5 to 4 s and
-writes `results/stand/sit_to_stand.json` and `.png`; `python scripts/sim/make_stand_demo.py` writes the animations
+`python scripts/stand/sit_to_stand.py` rises from a 140 mm crouch to the 212.5 mm stand over 0.5 to 4 s and
+writes `results/stand/sit_to_stand.json` and `.png`; `python scripts/stand/make_stand_demo.py` writes the animations
 `results/stand/stand_demo.gif` and `results/stand/sit_to_stand_demo.gif`. The crouch is the hardest pose (25% more knee
 torque per newton than standing). With fine command resolution a 2 s rise peaks where the crouch hold does, 0.54 of
 the stall torque for 3 kg and 0.72 for 4 kg; 5 kg does not rise. The weight is not shared equally: 24% on each front foot and 26% on each rear foot
 for near-weightless legs, 20% and 30% with the default placeholder masses.
 The masses, gains and servo figures are placeholders, so these show how the model behaves, not what a built robot can do.
 
-`python scripts/sim/gait_replay.py` (needs MuJoCo) replays the trot (1.7 s period, `gaits.TROT`) and crawl through the servo model with a free body and
+`python scripts/gait/gait_replay.py` (needs MuJoCo) replays the trot (1.7 s period, `gaits.TROT`) and crawl through the servo model with a free body and
 writes `results/gait/gait_replay.json`. With the default placeholder masses (1.72 kg) all nine runs stay upright (tilt at most
 12.1°, in the turning trot). The body does not reach the commanded speed: trot at 0.15 m/s
 measured 0.100 m/s, at 0.30 m/s 0.248 m/s, and marching in place drifted back at 0.008 m/s; crawl at 0.04 m/s measured
-0.028 m/s. Peak torque is 0.61 to 0.93 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything. The trot period matters, and the original Stage 1 period of 0.5 s was not optimal in physics: the same 0.15 m/s command made 0.041 m/s, and a sweep from 0.5 to 2 s found 1.5 to 2 s did best, so 1.7 s is used (`scripts/sim/trot_period_sweep.py`, `results/gait/trot_period_sweep.json`). That holds for the 30 mm swing only: repeated over 3 gains, 3 masses and 2 swing heights (`scripts/sim/trot_period_robustness.py`, `results/gait/trot_period_robustness.json`), 1.7 s beat 0.5 s in 8 of 9 cells at 30 mm and in 1 of 9 at 60 mm, and 1.5 to 3 s is a plateau rather than a peak (`docs/STAGE2.md`, "Longer trot periods"). `scripts/sim/gait_speed_diagnosis.py` splits the shortfall: the crawl is the soft servos (kp 10; it reaches its 0.04 m/s at kp 100); the trot is partly that and partly feet that still carry weight when commanded to swing, but at 1.7 s the body makes more than that second effect predicts and the reason was not traced (`docs/STAGE2.md`). Animations: `results/gait/trot_replay.gif`, `results/gait/crawl_replay.gif` (side view) and `results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif` (isometric, with a gait timing chart). The pace (left legs, then right) goes backward, slowly (-0.012 m/s at 0.1 m/s commanded at the 1.7 s period; -0.030 at the original 0.5 s), because the body rolls onto the feet it is lifting (`scripts/sim/pace_diagnosis.py`, `docs/STAGE2.md`). `python scripts/sim/try_gait.py --help` tries other timings (period, duty, offsets, lift order); how the timing is set is in `docs/STAGE2.md`.
+0.028 m/s. Peak torque is 0.61 to 0.93 of the 5 V stall limit for the trot and 0.94 to 0.99 for the crawl. One run per case, placeholder everything. The trot period matters, and the original Stage 1 period of 0.5 s was not optimal in physics: the same 0.15 m/s command made 0.041 m/s, and a sweep from 0.5 to 2 s found 1.5 to 2 s did best, so 1.7 s is used (`scripts/gait/trot_period_sweep.py`, `results/gait/sweeps/trot_period_sweep.json`). That holds for the 30 mm swing only: repeated over 3 gains, 3 masses and 2 swing heights (`scripts/gait/trot_period_robustness.py`, `results/gait/sweeps/trot_period_robustness.json`), 1.7 s beat 0.5 s in 8 of 9 cells at 30 mm and in 1 of 9 at 60 mm, and 1.5 to 3 s is a plateau rather than a peak (`docs/STAGE2.md`, "Longer trot periods"). At the 1.7 s period, a 192-run sweep of duty, commanded speed, stance height, servo gain and swing height (`scripts/gait/trot_1p7_parameter_sweep.py`, `results/gait/sweeps/trot_1p7_parameter_sweep.json`, plot `results/gait/sweeps/trot_1p7_parameter_effects.png`) found the swing height mattered most: the 30 mm swing made a median 0.64 of the commanded speed and the 60 mm swing 0.42, with all 9 falls at 60 mm (the best cell, 0.19 m stance, kp 30, 30 mm swing, made 0.89 of 0.2 m/s); details and limits in `docs/STAGE2.md`. `scripts/gait/gait_speed_diagnosis.py` splits the shortfall: the crawl is the soft servos (kp 10; it reaches its 0.04 m/s at kp 100); the trot is partly that and partly feet that still carry weight when commanded to swing, but at 1.7 s the body makes more than that second effect predicts and the reason was not traced (`docs/STAGE2.md`). Animations: `results/gait/trot_replay.gif`, `results/gait/crawl_replay.gif` (side view) and `results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif` (isometric, with a gait timing chart). The pace (left legs, then right) goes backward, slowly (-0.012 m/s at 0.1 m/s commanded at the 1.7 s period; -0.030 at the original 0.5 s), because the body rolls onto the feet it is lifting (`scripts/gait/pace_diagnosis.py`, `docs/STAGE2.md`). `python scripts/gait/try_gait.py --help` tries other timings (period, duty, offsets, lift order); how the timing is set is in `docs/STAGE2.md`.
 
 ## Running the live gait explorer on your machine
 
@@ -69,4 +69,4 @@ Parameters (all apply while it runs; speed, yaw rate, lift and sway are eased in
 Experiments that match results in `docs/STAGE2.md` (placeholder everything, one run each, so look for the same direction, not the same numbers):
 trot at 0.15 m/s with kp 10, then kp 100 and kd 1 (the body should get much closer to the commanded speed); the **pace** preset (rolls onto the feet it lifts and goes backward);
 lift 0.03 against 0.06 on the pace (roll about doubles); the **crawl** with sway 0 against 0.025; raising mass until the servos saturate (torque/stall reaches 1).
-Playing with the sliders is exploration, not a measurement: for numbers use `scripts/sim/try_gait.py` and put them in `results/`.
+Playing with the sliders is exploration, not a measurement: for numbers use `scripts/gait/try_gait.py` and put them in `results/`.

@@ -4,13 +4,13 @@ Hypothesis: with only two feet on one side down, the support is a line along tha
 mass. The body is not held up laterally, so it rolls onto the lifted feet until they touch the floor, they carry
 the load although commanded to swing, and a loaded swing foot moves forward in the body frame, pushing the body back.
 Checks, each from a MuJoCo run (placeholder dimensions, masses, servo figures, friction; one run per entry):
-  1. load share on feet commanded to swing, and the 'ask' of scripts/sim/gait_speed_diagnosis.py, pace against trot;
+  1. load share on feet commanded to swing, and the 'ask' of scripts/gait/gait_speed_diagnosis.py, pace against trot;
   2. roll range of the body against the roll that lifts the swing foot back to the floor, 2 atan(lift / track);
   3. whether load sits on the swing side (mean left-load share while the left legs are commanded to stand);
   4. variants: period, duty, swing height;
   5. a lateral body shift toward the stance side (the crawl's lean idea), which should unload the swing feet.
 
-    python scripts/sim/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
+    python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
 """
 import dataclasses
 import json

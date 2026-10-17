@@ -6,7 +6,7 @@ Nothing is interpolated between runs, and each cell is one run with no randomisa
 
 Grid: gait and forward speed, servo gain (kd = kp/10 except kp 10 where kd = 0.2, as in docs/STAGE2.md),
 total mass (the placeholder masses scaled together), swing height. Everything else is as in
-`scripts/sim/gait_replay.py`: placeholder 50/150/150 mm legs, 300 x 150 mm body, 5 V, unverified servo figures.
+`scripts/gait/gait_replay.py`: placeholder 50/150/150 mm legs, 300 x 150 mm body, 5 V, unverified servo figures.
 
     python scripts/website/site_sweep.py            # writes results/gait/physics_sweep.json (about 2 minutes)
 

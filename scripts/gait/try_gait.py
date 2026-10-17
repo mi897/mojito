@@ -3,11 +3,11 @@
 Start from the built-in trot or crawl and override any timing. Outputs go to results/gait/try/<name>.* (not committed).
 Needs mujoco and matplotlib.
 
-    python scripts/sim/try_gait.py --base trot --name slow_trot --period 0.8 --velocity 0.1
-    python scripts/sim/try_gait.py --base trot --name pace --offsets 0,0.5,0,0.5        # left legs together, then right
-    python scripts/sim/try_gait.py --base trot --name short_flight --duty 0.4            # all feet in the air for 0.1 of the cycle
-    python scripts/sim/try_gait.py --base crawl --name crawl_diag --order FL,RR,FR,RL    # lift order; offsets are worked out
-    python scripts/sim/try_gait.py --base crawl --name fast_crawl --period 1.2 --duty 0.8 --velocity 0.06 --kp 100 --kd 1
+    python scripts/gait/try_gait.py --base trot --name slow_trot --period 0.8 --velocity 0.1
+    python scripts/gait/try_gait.py --base trot --name pace --offsets 0,0.5,0,0.5        # left legs together, then right
+    python scripts/gait/try_gait.py --base trot --name short_flight --duty 0.4            # all feet in the air for 0.1 of the cycle
+    python scripts/gait/try_gait.py --base crawl --name crawl_diag --order FL,RR,FR,RL    # lift order; offsets are worked out
+    python scripts/gait/try_gait.py --base crawl --name fast_crawl --period 1.2 --duty 0.8 --velocity 0.06 --kp 100 --kd 1
 
 Timing, all as fractions of the cycle (see gaits.Gait): `period` seconds per cycle; `duty` the fraction of it a foot is
 on the ground; `offsets` the cycle phase at which each leg (FL, FR, RL, RR) starts its stance. The leg lifts at

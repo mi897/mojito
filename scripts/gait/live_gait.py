@@ -5,8 +5,8 @@ slider changes. Drag with the mouse to rotate the view, wheel to zoom. Needs muj
 (the server listens on 127.0.0.1 only).
 
     pip install numpy scipy mujoco
-    python scripts/sim/live_gait.py             # then open http://127.0.0.1:8765
-    python scripts/sim/live_gait.py --port 9000 --preset crawl
+    python scripts/gait/live_gait.py             # then open http://127.0.0.1:8765
+    python scripts/gait/live_gait.py --port 9000 --preset crawl
 
 Placeholder dimensions, masses, servo figures and friction (docs/STAGE2.md); the model is the one the replays use.
 """

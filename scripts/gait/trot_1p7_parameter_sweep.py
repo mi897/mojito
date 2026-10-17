@@ -1,10 +1,10 @@
-"""Which other parameters matter for the 1.7 s trot? Writes results/gait/trot_1p7_parameter_sweep.json.
+"""Which other parameters matter for the 1.7 s trot? Writes results/gait/sweeps/trot_1p7_parameter_sweep.json.
 
 Period stays 1.7 s (offsets diagonal). Varied together: duty, commanded speed, stance height, servo gain and swing
 height. Mass stays at the placeholder 1.72 kg (`trot_period_robustness.py` covers mass). One run per cell, 3 cycles,
 no randomisation.
 
-    python scripts/sim/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
+    python scripts/gait/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
 """
 import dataclasses
 import itertools
@@ -48,7 +48,7 @@ def main():
                    "Placeholder dimensions, masses (1.72 kg), servo figures and friction. One run per cell, 3 cycles.",
            "period_s": PERIOD, "duty": list(DUTY), "speed_m_s": list(SPEED), "height_m": list(HEIGHT),
            "kp": list(KP), "kd": KP, "lift_m": list(LIFT), "runs": runs}
-    with open("results/gait/trot_1p7_parameter_sweep.json", "w") as f:
+    with open("results/gait/sweeps/trot_1p7_parameter_sweep.json", "w") as f:
         json.dump(out, f, indent=1)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 

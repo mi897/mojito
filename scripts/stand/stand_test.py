@@ -3,7 +3,7 @@
 Placeholder dimensions (Stage 2 design set), placeholder masses, unverified servo
 figures. Writes results/stand/stand_test.json.
 
-    python scripts/sim/stand_test.py
+    python scripts/stand/stand_test.py
 """
 import json
 import os

@@ -7,7 +7,7 @@ limit stops the 150 mm legs lower than about 130 mm.
     results/stand/sit_to_stand.json
     results/stand/sit_to_stand.png
 
-    python scripts/sim/sit_to_stand.py
+    python scripts/stand/sit_to_stand.py
 """
 import json
 import os

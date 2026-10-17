@@ -1,10 +1,10 @@
-"""Trot period sweep in physics: 0.5 s (the Stage 1 trot) against 1.0 to 2.0 s. Writes results/gait/trot_period_sweep.json.
+"""Trot period sweep in physics: 0.5 s (the Stage 1 trot) against 1.0 to 2.0 s. Writes results/gait/sweeps/trot_period_sweep.json.
 
-Same model as scripts/sim/gait_replay.py (placeholder dimensions, masses 1.72 kg, 5 V, kp 10, kd 0.2, unverified servo
+Same model as scripts/gait/gait_replay.py (placeholder dimensions, masses 1.72 kg, 5 V, kp 10, kd 0.2, unverified servo
 figures). Duty 0.5 and the diagonal offsets stay as in `gaits.TROT`; only `period` changes. One run per cell, no
 randomisation. The baseline runs 4 cycles, the longer periods 3 (so each walks 6 s or more).
 
-    python scripts/sim/trot_period_sweep.py        # needs mujoco; a few minutes
+    python scripts/gait/trot_period_sweep.py        # needs mujoco; a few minutes
 """
 import dataclasses
 import json
@@ -40,7 +40,7 @@ def main():
             out["runs"].append(s)
             print(f"T={period} v={vx} w={yaw_rate} walked={s['walked']} v={s['measured_velocity_m_s']:+.3f} yaw={s['measured_yaw_rate_rad_s']:+.2f} "
                   f"tilt={s['max_tilt_deg']} torque={s['peak_torque_fraction_of_limit']} sat={s['fraction_of_walking_saturated']}", flush=True)
-    with open("results/gait/trot_period_sweep.json", "w") as f:
+    with open("results/gait/sweeps/trot_period_sweep.json", "w") as f:
         json.dump(out, f, indent=2)
 
 

@@ -3,7 +3,7 @@
 Placeholder dimensions, masses (1.72 kg), servo figures (5 V, unverified), friction. Writes
 results/gait/gait_replay.json. Needs mujoco.
 
-    python scripts/sim/gait_replay.py
+    python scripts/gait/gait_replay.py
 """
 import json
 import os

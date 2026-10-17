@@ -1,4 +1,4 @@
-"""A gait replay you can steer while it runs (used by scripts/sim/live_gait.py).
+"""A gait replay you can steer while it runs (used by scripts/gait/live_gait.py).
 
 Same model as `gait_replay.run_gait` (closed-form IK, `actuators.Servo`, actuated MuJoCo model), but advanced a
 few steps at a time, with the gait and servo parameters changeable between steps.

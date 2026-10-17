@@ -4,10 +4,10 @@
     results/gait/trot_turn_iso.gif    trot turning on the spot at 0.6 rad/s
     results/gait/crawl_iso.gif        crawl at 0.04 m/s
 
-Same model as scripts/sim/gait_replay.py (placeholder dimensions, masses, servo figures, friction).
-For other timings use scripts/sim/try_gait.py.
+Same model as scripts/gait/gait_replay.py (placeholder dimensions, masses, servo figures, friction).
+For other timings use scripts/gait/try_gait.py.
 
-    python scripts/sim/make_gait_iso_demos.py
+    python scripts/gait/make_gait_iso_demos.py
 """
 import os
 import sys

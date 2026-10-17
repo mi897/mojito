@@ -45,8 +45,9 @@ site/                  website: pages, assets/mojito.js (JS port of leg, body, g
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
-  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis, trot_period_sweep, trot_period_robustness,
-                       make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  stand/               stand_test, sit_to_stand, make_stand_demo
+  gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep,
+                       plot_trot_1p7_parameter_sweep, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
@@ -79,12 +80,12 @@ python scripts/learning/evaluate.py                 # results/learning/metrics.j
 python scripts/learning/calibrate.py                # results/learning/calibration.json
 python scripts/learning/make_demo.py                # results/learning/step_demo.gif, docs/demo.html
 python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
-python scripts/sim/stand_test.py               # results/stand/stand_test.json (needs mujoco)
-python scripts/sim/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
-python scripts/sim/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
-python scripts/sim/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
-python scripts/sim/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
-python scripts/sim/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
+python scripts/stand/stand_test.py               # results/stand/stand_test.json (needs mujoco)
+python scripts/stand/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
+python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
+python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
+python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
+python scripts/gait/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
 python scripts/website/build_site.py               # website data from results/; then: python -m http.server -d site
 python scripts/website/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
 python scripts/website/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/gait/physics_sweep.json (needs mujoco)

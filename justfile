@@ -35,20 +35,20 @@ torque:
 
 # Stand and sit-to-stand in MuJoCo
 stand:
-    {{py}} scripts/sim/stand_test.py
-    {{py}} scripts/sim/sit_to_stand.py
+    {{py}} scripts/stand/stand_test.py
+    {{py}} scripts/stand/sit_to_stand.py
 
 # Replay trot and crawl in physics
 gait:
-    {{py}} scripts/sim/gait_replay.py
+    {{py}} scripts/gait/gait_replay.py
 
 # Try other gait timings: just try-gait --help
 try-gait *args:
-    {{py}} scripts/sim/try_gait.py {{args}}
+    {{py}} scripts/gait/try_gait.py {{args}}
 
 # Live gait explorer at http://127.0.0.1:8765
 live *args:
-    {{py}} scripts/sim/live_gait.py {{args}}
+    {{py}} scripts/gait/live_gait.py {{args}}
 
 # Build the website data from results/
 site-build:

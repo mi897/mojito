@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "sim"))  # live_gait
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "gait"))  # live_gait
 from live_gait import Runner, make_handler  # noqa: E402
 from mojito.sim import live_sim  # noqa: E402
 
