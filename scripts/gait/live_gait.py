@@ -66,7 +66,8 @@ class Runner:
 
     def preset(self, name):
         with self.lock:
-            self.sim.set_params(**live_sim.PRESETS[name])
+            if self.sim.set_params(**live_sim.PRESETS[name]):
+                self.sim.reset()  # a preset with another stance height needs a new model
 
     def reset(self):
         with self.lock:

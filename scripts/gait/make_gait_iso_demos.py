@@ -26,7 +26,7 @@ CASES = [
 
 def main():
     for name, gait, velocity, yaw_rate, cycles, title in CASES:
-        r = gait_replay.run_gait(gait, velocity, yaw_rate, cycles=cycles, record_every=20)
+        r = gait_replay.run_gait(gait, velocity, yaw_rate, cycles=cycles, record_every=20, **gait_replay.settings_for(gait))
         path = os.path.join(OUT, name + ".gif")
         gait_plots.save_isometric(r, path, title)
         print(path)

@@ -23,8 +23,23 @@ def light(total):
 class TestGaitReplay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.trot = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=2)
-        cls.crawl = gait_replay.run_gait(gaits.CRAWL, (0.04, 0.0), cycles=1)
+        cls.trot = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=2, **gait_replay.settings_for(gaits.TROT))
+        cls.crawl = gait_replay.run_gait(gaits.CRAWL, (0.04, 0.0), cycles=1, **gait_replay.settings_for(gaits.CRAWL))
+
+    def test_settings_for_gives_the_tuned_trot_and_the_original_everything_else(self):
+        trot, crawl = gait_replay.settings_for(gaits.TROT), gait_replay.settings_for(gaits.CRAWL)
+        self.assertEqual((trot["height"], trot["servo"].kp, trot["servo"].kd), (0.16, 50.0, 0.9))
+        self.assertEqual((crawl["height"], crawl["servo"].kp, crawl["servo"].kd), (0.2125, 10.0, 0.2))
+        self.assertEqual(gaits.TROT.lift, 0.022)
+
+    def test_tuned_trot_makes_more_forward_speed_than_the_original_trot_settings(self):
+        # docs/STAGE2.md: against the original default (30 mm swing, 0.2125 m stance, kp 10, kd 0.2) at 0.15 m/s the tuned trot makes more
+        # speed (about 0.13 against 0.10 m/s); its tilt is not lower than that default's (about 5.9 against 5.2 degrees), only than kp 30's
+        import dataclasses
+
+        original = gait_replay.run_gait(dataclasses.replace(gaits.TROT, lift=0.03), (0.15, 0.0), cycles=2)
+        self.assertGreater(self.trot["measured_velocity_m_s"][0], original["measured_velocity_m_s"][0] + 0.02)
+        self.assertLess(self.trot["max_tilt_deg"], 8.0)
 
     def test_default_robot_stays_up_in_both_gaits(self):
         for r in (self.trot, self.crawl):
@@ -72,7 +87,7 @@ class TestGaitReplay(unittest.TestCase):
         # until the lifted feet reach the floor: roll range about 2 atan(lift / track), here lift 0.03 m, track about 0.25 m
         import dataclasses
 
-        pace = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))
+        pace = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5), lift=0.03)  # measured at 30 mm
         r = gait_replay.run_gait(pace, (0.1, 0.0), cycles=2)
         walking = r["time_s"] >= r["walk_start_s"]
         rotation = r["rotation"]

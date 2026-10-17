@@ -29,7 +29,7 @@ STAND, RAMP = 1.0, 0.5
 
 def case(gait, vx, yaw_rate, cycles):
     r = gait_replay.run_gait(gait, (vx, 0.0), yaw_rate, cycles=cycles, stand_time=STAND, ramp_time=RAMP,
-                             record_every=EVERY)
+                             record_every=EVERY, **gait_replay.settings_for(gait))
     title = f"{gait.name} {vx:g} m/s" if yaw_rate == 0 else f"{gait.name}, turn {yaw_rate:g} rad/s"
     idx = np.arange(0, len(r["time_s"]), EVERY)
     trace = r["torque_nm"].max(1)[idx] / r["servo_limit_nm"]

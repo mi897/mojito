@@ -26,7 +26,7 @@ def main():
                    "(4 at 0.5 s, 3 otherwise). Placeholder dimensions, masses, servo figures and friction. One run per cell.",
            "periods_s": list(PERIODS), "runs": []}
     for period in PERIODS:
-        gait = dataclasses.replace(gaits.TROT, period=period)
+        gait = dataclasses.replace(gaits.TROT, period=period, lift=0.03)  # 30 mm, as when the sweep was made
         for vx, yaw_rate in COMMANDS:
             r = gait_replay.run_gait(gait, (vx, 0.0), yaw_rate, cycles=4 if period < 1.0 else 3)
             s = {"period_s": period, "commanded_velocity_m_s": vx, "commanded_yaw_rate_rad_s": yaw_rate,

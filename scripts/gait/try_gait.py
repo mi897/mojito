@@ -42,8 +42,8 @@ def parse_args():
     p.add_argument("--velocity", type=float, nargs="+", default=[0.1], help="vx [vy] in m/s")
     p.add_argument("--yaw-rate", type=float, default=0.0, help="rad/s")
     p.add_argument("--cycles", type=int, default=3)
-    p.add_argument("--kp", type=float, help="servo position gain, N·m/rad (default 10)")
-    p.add_argument("--kd", type=float, help="servo damping (default 0.2)")
+    p.add_argument("--kp", type=float, help="servo position gain, N·m/rad (default: 50 for the trot, 10 for the crawl)")
+    p.add_argument("--kd", type=float, help="servo damping (default: 0.9 for the trot, 0.2 for the crawl)")
     p.add_argument("--mass", type=float, help="total mass, kg, all in the body (default: placeholder masses, 1.72 kg)")
     p.add_argument("--no-gif", action="store_true")
     return p.parse_args()
@@ -85,11 +85,12 @@ def main():
     gait = build_gait(a)
     velocity = (a.velocity[0], a.velocity[1] if len(a.velocity) > 1 else 0.0)
     describe(gait, velocity, a.yaw_rate)
-    servo = actuators.ServoParams(**{k: v for k, v in dict(kp=a.kp, kd=a.kd).items() if v is not None})
+    base = gait_replay.settings_for(gaits.TROT if a.base == "trot" else gaits.CRAWL)
+    servo = dataclasses.replace(base["servo"], **{k: v for k, v in dict(kp=a.kp, kd=a.kd).items() if v is not None})
     masses = None
     if a.mass:
         masses = {"body": a.mass - 4 * 4e-4, "hip": 1e-4, "thigh": 1e-4, "shank": 1e-4, "foot": 1e-4}
-    r = gait_replay.run_gait(gait, velocity, a.yaw_rate, cycles=a.cycles, servo=servo, masses=masses,
+    r = gait_replay.run_gait(gait, velocity, a.yaw_rate, cycles=a.cycles, servo=servo, masses=masses, height=base["height"],
                              record_every=0 if a.no_gif else 20)
     print(f"result: walked={r['walked']}  tilt max {r['max_tilt_deg']:.1f}°  measured velocity "
           f"{r['measured_velocity_m_s'][0]:+.3f}, {r['measured_velocity_m_s'][1]:+.3f} m/s (commanded {velocity[0]:+.3f}, {velocity[1]:+.3f})  "

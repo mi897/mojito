@@ -46,9 +46,11 @@ class Gait:
 
 # Diagonal pairs move together; two feet down at all times.
 # The period is 1.7 s. Stage 1 first used 0.5 s, set before any physics; a period sweep in MuJoCo showed that was not
-# optimal and 1.7 s was chosen from it (docs/STAGE2.md, "Longer trot periods"). TROT_STAGE1 keeps the original for comparison.
-TROT = Gait("trot", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0))
-TROT_STAGE1 = replace(TROT, period=0.5)
+# optimal and 1.7 s was chosen from it (docs/STAGE2.md, "Longer trot periods"). The swing height is 22 mm, from the one-at-a-time
+# and combined sweeps ("Pushing the best settings further", "Do the best values add up?"); it was 30 mm before.
+# TROT_STAGE1 keeps the original 0.5 s and 30 mm for comparison.
+TROT = Gait("trot", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0), lift=0.022)
+TROT_STAGE1 = replace(TROT, period=0.5, lift=0.03)
 # One foot in the air at a time, in the order RL, FL, RR, FR.
 # The body leans away from that foot while all four are down.
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)
