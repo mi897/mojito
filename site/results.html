@@ -112,8 +112,19 @@
   <div class="grid g2" id="params-grid"></div>
   <p class="read" id="params-read"></p>
   <ul id="params-list" class="small"></ul>
+  <h4>Best settings in this grid</h4>
+  <p>For each commanded speed, the run that walked with the highest speed ratio. Three of the four winning values (30&nbsp;mm swing, kp&nbsp;30, 0.19&nbsp;m stance) are the edge of the range tested, so the optimum may lie beyond them; the next section tests that. One run per cell, so these are the best of 48 single runs, not proven optima.</p>
+  <div class="card"><table id="t-best"></table></div>
   <figure class="card"><img src="media/trot_1p7_parameter_effects.png" alt="Speed ratio and tilt against each parameter" loading="lazy" style="width:100%"><figcaption>All 192 runs (original matplotlib plot, <code>results/gait/sweeps/trot_1p7_parameter_effects.png</code>): dots are runs, the line is the median.</figcaption></figure>
   <div class="callout limit"><b>What this does not show.</b> Why each parameter has its effect (not traced); interactions between parameters; mass, friction, turning or terrain; any real robot. The speed shortfall looks like a roughly fixed amount rather than a fixed fraction (the ratio rises with commanded speed), but I did not fit or trace it. One run per cell, no randomisation, so there is no spread to quote.</div>
+
+  <h3 id="trotpush">Pushing the best settings further: one parameter at a time, 10 runs per value</h3>
+  <p>The grid above had its best values at the edge of what was tried, so each of four parameters was swept further from the best baseline (1.7&nbsp;s, duty 0.5, 0.15&nbsp;m/s, 0.19&nbsp;m stance, 30&nbsp;mm swing, kp&nbsp;30, kd&nbsp;0.5): kp up to 150 (kd tied to kp as 0.5&nbsp;&times;&nbsp;&radic;(kp/30)), kd from 0.1 to 2, swing height down to 10&nbsp;mm, stance height down to 0.09&nbsp;m. The simulation is deterministic, so each value was run 10 times with a random draw of body masses (&plusmn;5%) and servo latency (18 to 22&nbsp;ms), the same 10 draws at every value. The mean and standard deviation below are over those 10 runs. The spread comes from those perturbations only: it is small because they are small, it says nothing about a real robot, and it leaves out model error.</p>
+  <div class="grid g2" id="oat-grid"></div>
+  <p class="read" id="oat-read"></p>
+  <div id="oat-tables"></div>
+  <figure class="card"><img src="media/trot_1p7_one_at_a_time.png" alt="Speed ratio, tilt and walked count against kp, kd, swing height and stance height" loading="lazy" style="width:100%"><figcaption>All 420 runs (original matplotlib plot, <code>results/gait/sweeps/trot_1p7_one_at_a_time.png</code>): mean &plusmn; 1 sd, dots are runs, the dotted line is the baseline value.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> Each parameter was changed alone from one baseline, so the best values were not run together. Duty, commanded speed and mass were not varied. At stance heights of 0.15&nbsp;m and below the commanded feet leave the joint limits (the run is not counted as walked, though the robot did not fall); the speed ratio there is not a valid test of the gait. At kd&nbsp;2 the body moves backward, yet the walked flag (upright and finished) is still true. Why each effect occurs was not traced. Placeholder dimensions, masses, servo figures and friction.</div>
 
   <h2 id="plots">Original plots</h2>
   <div class="gallery" id="plots-g"></div>
@@ -235,8 +246,40 @@
       });
       const L = PS.lift_m, d = (k, v, fld) => stat(k, v, fld);
       $('params-read').textContent = `${PS.runs.filter(r => r.walked).length} of ${PS.runs.length} runs walked. Swing height mattered most: at ${f(1000 * L[0], 0)} mm the median speed ratio was ${f(d('lift_m', L[0], 'velocity_ratio'), 2)} with ${fell('lift_m', L[0])} of ${count('lift_m', L[0])} falls; at ${f(1000 * L[1], 0)} mm it was ${f(d('lift_m', L[1], 'velocity_ratio'), 2)}, median tilt ${f(d('lift_m', L[1], 'max_tilt_deg'), 1)}° and ${fell('lift_m', L[1])} of ${count('lift_m', L[1])} fell. The best single run made ${f(Math.max(...PS.runs.filter(r => r.walked).map(r => r.velocity_ratio)), 2)} of its commanded speed.`;
+      $('t-best').innerHTML = '<tr><th class="num">commanded m/s</th><th class="num">duty</th><th class="num">height m</th><th class="num">kp</th><th class="num">swing mm</th><th class="num">measured m/s</th><th class="num">speed ratio</th><th class="num">tilt</th><th class="num">peak torque / stall</th></tr>'
+        + PS.speed_m_s.map(sp => { const r = PS.runs.filter(q => q.speed_m_s === sp && q.walked).sort((a, b) => b.velocity_ratio - a.velocity_ratio)[0];
+          return `<tr><td class="num">${sp}</td><td class="num">${r.duty}</td><td class="num">${r.height_m}</td><td class="num">${r.kp}</td><td class="num">${f(1000 * r.lift_m, 0)}</td><td class="num">${f(r.measured_velocity_m_s, 3)}</td><td class="num">${f(r.velocity_ratio, 2)}</td><td class="num">${f(r.max_tilt_deg, 1)}°</td><td class="num">${f(r.peak_torque_fraction_of_limit, 2)}</td></tr>`; }).join('');
       $('params-list').innerHTML = params.map(([k, l, sh]) => { const vals = [...new Set(PS.runs.map(r => r[k]))].sort((a, b) => a - b);
         return `<li><b>${l}:</b> ` + vals.map(v => `${+(+sh(v)).toPrecision(4)}: ratio ${f(stat(k, v, 'velocity_ratio'), 2)}, tilt ${f(stat(k, v, 'max_tilt_deg'), 1)}°, fell ${fell(k, v)}/${count(k, v)}`).join('; ') + '</li>'; }).join('');
+    }
+    const OT = R.trot_1p7_one_at_a_time;
+    if (OT) {
+      const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+      const sd = a => a.length < 2 ? 0 : Math.sqrt(a.reduce((x, y) => x + (y - mean(a)) ** 2, 0) / (a.length - 1));
+      const sweepsOT = [['kp', 'servo gain kp, N·m/rad (kd tied)', v => v], ['kd', 'servo damping kd, N·m·s/rad (kp 30)', v => v], ['lift', 'swing height, mm', v => 1000 * v], ['height', 'stance height, m', v => v]];
+      const rowsOT = k => OT.sweeps[k].map(v => {
+        const rs = OT.runs.filter(r => r.sweep === k && r.value === v), up = rs.filter(r => r.max_tilt_deg < 30), ratio = rs.map(r => r.velocity_ratio);
+        return { v, n: rs.length, walked: rs.filter(r => r.walked).length, inLimits: rs.filter(r => r.within_joint_limits).length, rm: mean(ratio), rs: sd(ratio), rmin: Math.min(...ratio), rmax: Math.max(...ratio),
+          tm: up.length ? mean(up.map(r => r.max_tilt_deg)) : null, ts: up.length ? sd(up.map(r => r.max_tilt_deg)) : null, qm: up.length ? mean(up.map(r => r.peak_torque_fraction_of_limit)) : null };
+      });
+      $('oat-grid').innerHTML = sweepsOT.map(([k, l]) => `<div class="card chart-card"><h4>${l}</h4><p class="sub">mean speed ratio and mean tilt over 10 runs per value; dashed lines are mean &plusmn; 1 sd</p><div id="op-${k}"></div><div id="ot-${k}"></div></div>`).join('');
+      $('oat-tables').innerHTML = sweepsOT.map(([k, l, sh]) => `<h4>${l}</h4><div class="card"><table id="tt-${k}"></table></div>`).join('');
+      const fmtv = v => +(+v).toPrecision(4), fx = (x, d) => x == null ? '–' : f(x, d);
+      sweepsOT.forEach(([k, l, sh]) => {
+        const rows = rowsOT(k), x = { label: l, fmt: fmtv, zero: false };
+        Charts.line($('op-' + k), { legend: false, x, y: { label: 'speed ratio', fmt: v => f(v, 2), zero: false }, hlines: [{ y: 1, label: 'commanded', color: 'var(--muted)' }],
+          series: [{ name: 'mean', color: B, markers: true, points: rows.map(r => [sh(r.v), r.rm]) },
+                   { name: '+1 sd', color: B, dashed: true, width: 1, points: rows.map(r => [sh(r.v), r.rm + r.rs]) }, { name: '-1 sd', color: B, dashed: true, width: 1, points: rows.map(r => [sh(r.v), r.rm - r.rs]) }] });
+        const tr = rows.filter(r => r.tm != null);
+        Charts.line($('ot-' + k), { legend: false, x, y: { label: 'largest tilt, °', fmt: v => f(v, 1), zero: false },
+          series: [{ name: 'mean', color: O, markers: true, points: tr.map(r => [sh(r.v), r.tm]) },
+                   { name: '+1 sd', color: O, dashed: true, width: 1, points: tr.map(r => [sh(r.v), r.tm + r.ts]) }, { name: '-1 sd', color: O, dashed: true, width: 1, points: tr.map(r => [sh(r.v), r.tm - r.ts]) }] });
+        $('tt-' + k).innerHTML = `<tr><th class="num">${l}</th><th class="num">walked</th><th class="num">in limits</th><th class="num">speed ratio mean</th><th class="num">sd</th><th class="num">min</th><th class="num">max</th><th class="num">tilt mean</th><th class="num">sd</th><th class="num">torque / stall</th></tr>`
+          + rows.map(r => `<tr><td class="num">${fmtv(sh(r.v))}</td><td class="num">${r.walked}/${r.n}</td><td class="num">${r.inLimits}/${r.n}</td><td class="num">${f(r.rm, 3)}</td><td class="num">${f(r.rs, 3)}</td><td class="num">${f(r.rmin, 2)}</td><td class="num">${f(r.rmax, 2)}</td><td class="num">${fx(r.tm, 1)}°</td><td class="num">${fx(r.ts, 1)}</td><td class="num">${fx(r.qm, 2)}</td></tr>`).join('');
+      });
+      const bestOf = k => rowsOT(k).filter(r => r.inLimits === r.n).sort((a, b) => b.rm - a.rm)[0];
+      const bk = bestOf('kp'), bl = bestOf('lift'), bh = bestOf('height');
+      $('oat-read').textContent = `${OT.runs.filter(r => r.walked).length} of ${OT.runs.length} runs walked. Highest mean speed ratio among values where every target is reachable: kp ${fmtv(bk.v)} (${f(bk.rm, 3)}, sd ${f(bk.rs, 3)}), swing ${f(1000 * bl.v, 0)} mm (${f(bl.rm, 3)}, sd ${f(bl.rs, 3)}), stance ${fmtv(bh.v)} m (${f(bh.rm, 3)}, sd ${f(bh.rs, 3)}). Differences of about one sd between neighbouring values are not evidence of a real difference. kd was flat from 0.1 to 1.25.`;
     }
     const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
     $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');

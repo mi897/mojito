@@ -516,7 +516,7 @@ Each is one branch-sized step. Tick them off here as they land.
    the timing chart at the bottom of each isometric GIF (`results/gait/trot_iso.gif`, `results/gait/trot_turn_iso.gif`, `results/gait/crawl_iso.gif`, from
    `scripts/gait/make_gait_iso_demos.py`).
 
-   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/gait/trot_period_sweep.py`, `results/gait/sweeps/trot_period_sweep.json`; `scripts/gait/trot_period_robustness.py`, `results/gait/sweeps/trot_period_robustness.json`; finding).
+   **Longer trot periods: the 0.5 s trot was not optimal, and the period was found by sweeping** (`scripts/gait/sweeps/trot_period_sweep.py`, `results/gait/sweeps/trot_period_sweep.json`; `scripts/gait/sweeps/trot_period_robustness.py`, `results/gait/sweeps/trot_period_robustness.json`; finding).
    The original Stage 1 trot (0.5 s, now `gaits.TROT_STAGE1`) was set for the geometry demos and never tuned in physics. The first physics replay used it and the body made 0.041 m/s of a 0.15 m/s command; a first try at 1 s was worse (0.032), so the period was swept instead of guessed. Only `period` changes
    (duty 0.5, diagonal pairs, 30 mm swing); same physics as work package 4; one run per cell, 4 cycles at 0.5 s and 3 otherwise. Measured forward speed, m/s:
 
@@ -574,14 +574,75 @@ Each is one branch-sized step. Tick them off here as they land.
    Not shown: any real robot's behaviour (dimensions, masses, gains, latency, servo figures and friction are placeholders);
    other speeds, turn rates, terrain or disturbances; whether higher gains or a tuned gait close the speed gap; one run
    of each case, no randomisation.
-   - *Other parameters at 1.7 s* (`scripts/gait/trot_1p7_parameter_sweep.py`, `results/gait/sweeps/trot_1p7_parameter_sweep.json`; plot `results/gait/sweeps/trot_1p7_parameter_effects.png` from `scripts/gait/plot_trot_1p7_parameter_sweep.py`; website: Results, "What each parameter does to the 1.7 s trot"): 192 runs, 3 cycles each, 1.72 kg, one run per cell. Grid: duty 0.5, 0.55, 0.6, 0.7; commanded speed 0.05, 0.1, 0.15, 0.2 m/s; stance height 0.19, 0.2125, 0.23 m; kp 10 or 30; swing height 30 or 60 mm. 183 of 192 walked ("walked" means upright, not too low, run finished; it does not mean the speed was met). All 9 falls had a 60 mm swing and duty 0.55 or more, at 0.15 or 0.2 m/s. Below, "speed ratio" is measured over commanded forward speed and each figure is the median over the runs that walked, with every other parameter varied across its grid; a ratio of 1 would be the commanded speed.
+   - *Other parameters at 1.7 s* (`scripts/gait/sweeps/trot_1p7_parameter_sweep.py`, `results/gait/sweeps/trot_1p7_parameter_sweep.json`; plot `results/gait/sweeps/trot_1p7_parameter_effects.png` from `scripts/gait/sweeps/plot_trot_1p7_parameter_sweep.py`; website: Results, "What each parameter does to the 1.7 s trot"): 192 runs, 3 cycles each, 1.72 kg, one run per cell. Grid: duty 0.5, 0.55, 0.6, 0.7; commanded speed 0.05, 0.1, 0.15, 0.2 m/s; stance height 0.19, 0.2125, 0.23 m; kp 10 or 30; swing height 30 or 60 mm. 183 of 192 walked ("walked" means upright, not too low, run finished; it does not mean the speed was met). All 9 falls had a 60 mm swing and duty 0.55 or more, at 0.15 or 0.2 m/s. Below, "speed ratio" is measured over commanded forward speed and each figure is the median over the runs that walked, with every other parameter varied across its grid; a ratio of 1 would be the commanded speed.
      - *Swing height* mattered most. 30 mm: speed ratio 0.64, tilt 7.3°, peak torque 0.78 of stall, no falls. 60 mm: ratio 0.42, tilt 18.7°, torque 0.98, 9 of 96 fell.
      - *Servo gain.* kp 30 against kp 10: ratio 0.55 against 0.38, 3 against 6 falls out of 96, but a larger tilt (9.3° against 6.9°).
      - *Commanded speed.* The ratio rises with it: 0.32 at 0.05 m/s, 0.42 at 0.1, 0.54 at 0.15, 0.58 at 0.2. Absolute speed rises too, so the shortfall looks like a roughly fixed amount rather than a fixed fraction; I did not fit or trace it. Falls only at 0.15 and 0.2 m/s (3 and 6 of 48).
      - *Stance height.* Lower gave more speed and fewer falls: ratio 0.55, 0.48, 0.42 and falls 0, 3, 6 of 64 for 0.19, 0.2125, 0.23 m. The walked runs tilted more at 0.19 m (11.4°) than at 0.23 m (9.1°). A lower body also changes joint angles, and I did not separate that from the height itself.
      - *Duty.* No effect on speed (median ratio 0.47 to 0.50). Falls rose with it (0, 1, 2, 6 of 48 at 0.5, 0.55, 0.6, 0.7). Median tilt was 13.6° at 0.5 and 8.4 to 9.3° above it; I did not trace that. Duty 0.5 has moments with only one foot down in some runs (`feet_down_min` 1).
-     - *Best cell:* duty 0.55, 0.2 m/s, 0.19 m, kp 30, 30 mm swing: 0.178 m/s measured (ratio 0.89), tilt 8.1°, peak torque 0.84.
+     - *Best settings in this grid* (highest speed ratio among the runs that walked, per commanded speed; all four were at 30 mm swing, kp 30 and 0.19 m stance, and the other duties were within 0.03 of them). At 0.05 m/s: duty 0.5, 0.034 m/s measured, ratio 0.68, tilt 8.8°, peak torque 0.75 of stall. At 0.1 m/s: duty 0.55, 0.080 m/s, ratio 0.80, 7.8°, 0.80. At 0.15 m/s: duty 0.55, 0.128 m/s, ratio 0.86, 7.7°, 0.85. At 0.2 m/s: duty 0.55, 0.178 m/s, ratio 0.89, 8.1°, 0.84. So within the grid the best is a 30 mm swing, kp 30, a 0.19 m stance and a duty of 0.5 to 0.55. Duty 0.5 at 0.19 m, kp 30, 30 mm made ratios 0.68, 0.78, 0.85, 0.88 at the four speeds with at least two feet down in every run. Duty 0.7 at 0.2 m/s with the same settings made ratio 0.5 with servos saturated 36% of the walk. Three of the four winning values (30 mm, kp 30, 0.19 m) are the edge of the range tested, so the optimum may lie beyond them; the next sweep tests that. Not shown: that these are optima (one run per cell, no spread), or that they hold at other masses.
      Not shown: interactions beyond the grid, mass (see the robustness sweep), friction, turning, terrain, or why these effects occur (not traced). The medians mix other parameters, so they describe this grid, not each parameter alone, and one run per cell gives no spread.
+   - *Pushing the best settings further, one parameter at a time, with repeats* (`scripts/gait/sweeps/trot_1p7_one_at_a_time.py`, `results/gait/sweeps/trot_1p7_one_at_a_time.json`; means and standard deviations in `trot_1p7_one_at_a_time_summary.json` and the plot `trot_1p7_one_at_a_time.png`, both from `scripts/gait/sweeps/plot_trot_1p7_one_at_a_time.py`; website: Results, "Pushing the best settings further"). Baseline: period 1.7 s, duty 0.5, diagonal offsets, 0.15 m/s commanded, 0.19 m stance, 30 mm swing, kp 30, kd 0.5, 1.72 kg. Four sweeps, each changing one thing: kp 15 to 150 in 10 steps with kd tied as 0.5 x sqrt(kp / 30); kd 0.1 to 2.0 in 10 values at kp 30; swing 10 to 30 mm in 11 values; stance height 0.09 to 0.19 m in 11 values. 420 runs, 3 cycles each.
+     *What "10 iterations" means here.* The simulation is deterministic, so repeating an identical run gives an identical number. Each value was run 10 times with a random draw of two small perturbations: every body mass times a uniform factor in 0.95 to 1.05, and the servo latency uniform in 18 to 22 ms. Draw i uses seed i, and the same 10 draws are used at every value. So the standard deviations below are the spread from those perturbations only. They are small because the perturbations are small, they say nothing about a real robot, and they do not include model error, so a difference of one or two standard deviations between neighbouring values is not evidence of a real difference. Speed ratio is measured over commanded forward speed, over all 10 runs (a run that fell counts with the speed it made); tilt and torque are over the runs that stayed upright (tilt under 30 degrees). "walked" is the replay's flag: upright, not too low, and every commanded foot target inside the joint limits; "in limits" counts that last condition. sd is the sample standard deviation (n - 1). 350 of 420 runs walked; the 70 that did not are the stance heights 0.09 to 0.15 m, below.
+     **Servo gain kp** (kd tied):
+     | servo gain kp [N·m/rad] (kd tied) | walked | in limits | speed ratio mean | sd | min | max | tilt mean (deg) | sd | torque / stall mean | sd |
+     |---|---|---|---|---|---|---|---|---|---|---|
+     | 15 | 10/10 | 10/10 | 0.789 | 0.003 | 0.78 | 0.79 | 6.4 | 0.1 | 0.79 | 0.02 |
+     | 30 | 10/10 | 10/10 | 0.848 | 0.004 | 0.84 | 0.85 | 7.9 | 0.0 | 0.85 | 0.01 |
+     | 45 | 10/10 | 10/10 | 0.860 | 0.003 | 0.85 | 0.86 | 8.2 | 0.0 | 0.87 | 0.02 |
+     | 60 | 10/10 | 10/10 | 0.856 | 0.003 | 0.85 | 0.86 | 8.5 | 0.0 | 0.94 | 0.01 |
+     | 75 | 10/10 | 10/10 | 0.845 | 0.003 | 0.84 | 0.85 | 8.6 | 0.0 | 1.00 | 0.00 |
+     | 90 | 10/10 | 10/10 | 0.830 | 0.003 | 0.82 | 0.83 | 8.7 | 0.0 | 1.00 | 0.00 |
+     | 105 | 10/10 | 10/10 | 0.812 | 0.003 | 0.81 | 0.82 | 8.8 | 0.0 | 1.00 | 0.00 |
+     | 120 | 10/10 | 10/10 | 0.792 | 0.004 | 0.79 | 0.80 | 8.9 | 0.0 | 1.00 | 0.00 |
+     | 135 | 10/10 | 10/10 | 0.779 | 0.003 | 0.78 | 0.79 | 9.0 | 0.0 | 1.00 | 0.00 |
+     | 150 | 10/10 | 10/10 | 0.768 | 0.003 | 0.76 | 0.77 | 9.0 | 0.0 | 1.00 | 0.00 |
+     The ratio peaks at kp 45 (0.860, sd 0.003) and falls to 0.768 at kp 150. kp 45 against kp 60 (0.860 against 0.856) is about one sd, so I would not call the peak sharper than "somewhere from 30 to 60". Peak torque reaches the stall limit (1.00) from kp 75 up, and tilt rises steadily (6.4° at 15, 9.0° at 150). So a stiffer servo beyond about 45 made the trot slower here, not faster. Why was not traced; saturation from the torque limit is one candidate I did not test.
+     **Servo damping kd** (kp 30):
+     | servo damping kd [N·m·s/rad] (kp 30) | walked | in limits | speed ratio mean | sd | min | max | tilt mean (deg) | sd | torque / stall mean | sd |
+     |---|---|---|---|---|---|---|---|---|---|---|
+     | 0.1 | 10/10 | 10/10 | 0.859 | 0.002 | 0.85 | 0.86 | 8.1 | 0.0 | 0.96 | 0.02 |
+     | 0.25 | 10/10 | 10/10 | 0.853 | 0.003 | 0.85 | 0.86 | 8.0 | 0.0 | 0.89 | 0.01 |
+     | 0.4 | 10/10 | 10/10 | 0.849 | 0.004 | 0.84 | 0.85 | 7.9 | 0.0 | 0.86 | 0.01 |
+     | 0.55 | 10/10 | 10/10 | 0.848 | 0.004 | 0.84 | 0.85 | 7.8 | 0.0 | 0.85 | 0.01 |
+     | 0.7 | 10/10 | 10/10 | 0.847 | 0.004 | 0.84 | 0.85 | 7.7 | 0.0 | 0.84 | 0.01 |
+     | 0.85 | 10/10 | 10/10 | 0.845 | 0.003 | 0.84 | 0.85 | 7.6 | 0.0 | 0.83 | 0.01 |
+     | 1 | 10/10 | 10/10 | 0.845 | 0.003 | 0.84 | 0.85 | 7.5 | 0.0 | 0.80 | 0.00 |
+     | 1.25 | 10/10 | 10/10 | 0.846 | 0.003 | 0.84 | 0.85 | 7.3 | 0.0 | 0.79 | 0.02 |
+     | 1.5 | 10/10 | 10/10 | 0.812 | 0.027 | 0.77 | 0.84 | 7.5 | 0.1 | 1.00 | 0.00 |
+     | 2 | 10/10 | 10/10 | -0.180 | 0.041 | -0.24 | -0.13 | 7.1 | 0.1 | 1.00 | 0.00 |
+     Flat from 0.1 to 1.25 (0.845 to 0.859, a spread of 0.014; tilt falls from 8.1° to 7.3° as kd rises). At 1.5 the mean drops to 0.812 with a larger sd (0.027) and the torque saturates. At 2.0 the body goes backward (mean speed ratio -0.180): all 10 of those runs still count as "walked", because the flag checks uprightness, not direction. I did not trace why heavy damping reverses the motion.
+     **Swing height**:
+     | swing height [mm] | walked | in limits | speed ratio mean | sd | min | max | tilt mean (deg) | sd | torque / stall mean | sd |
+     |---|---|---|---|---|---|---|---|---|---|---|
+     | 10 | 10/10 | 10/10 | 0.748 | 0.003 | 0.74 | 0.75 | 1.3 | 0.0 | 0.81 | 0.01 |
+     | 12 | 10/10 | 10/10 | 0.800 | 0.003 | 0.79 | 0.80 | 2.0 | 0.0 | 0.79 | 0.01 |
+     | 14 | 10/10 | 10/10 | 0.823 | 0.003 | 0.82 | 0.83 | 2.6 | 0.0 | 0.77 | 0.01 |
+     | 16 | 10/10 | 10/10 | 0.837 | 0.003 | 0.83 | 0.84 | 3.2 | 0.0 | 0.80 | 0.01 |
+     | 18 | 10/10 | 10/10 | 0.844 | 0.003 | 0.84 | 0.85 | 3.9 | 0.0 | 0.83 | 0.01 |
+     | 20 | 10/10 | 10/10 | 0.858 | 0.003 | 0.85 | 0.86 | 4.6 | 0.0 | 0.80 | 0.02 |
+     | 22 | 10/10 | 10/10 | 0.859 | 0.003 | 0.85 | 0.86 | 5.2 | 0.0 | 0.81 | 0.02 |
+     | 24 | 10/10 | 10/10 | 0.859 | 0.003 | 0.85 | 0.86 | 5.9 | 0.0 | 0.82 | 0.01 |
+     | 26 | 10/10 | 10/10 | 0.858 | 0.003 | 0.85 | 0.86 | 6.5 | 0.0 | 0.81 | 0.01 |
+     | 28 | 10/10 | 10/10 | 0.854 | 0.003 | 0.85 | 0.86 | 7.2 | 0.0 | 0.82 | 0.01 |
+     | 30 | 10/10 | 10/10 | 0.848 | 0.004 | 0.84 | 0.85 | 7.9 | 0.0 | 0.85 | 0.01 |
+     The speed ratio is highest from 20 to 26 mm (0.858 to 0.859, within about one sd of each other) and lower at both ends: 0.748 at 10 mm and 0.848 at 30 mm. Tilt falls almost linearly as the swing drops, from 7.9° at 30 mm to 1.3° at 10 mm. So 20 mm gives about the speed of 30 mm (0.858 against 0.848) with 4.6° of tilt instead of 7.9°.
+     **Stance height**:
+     | stance height [m] | walked | in limits | speed ratio mean | sd | min | max | tilt mean (deg) | sd | torque / stall mean | sd |
+     |---|---|---|---|---|---|---|---|---|---|---|
+     | 0.09 | 0/10 | 0/10 | 0.172 | 0.007 | 0.16 | 0.18 | 2.5 | 0.0 | 1.00 | 0.00 |
+     | 0.1 | 0/10 | 0/10 | 0.229 | 0.008 | 0.21 | 0.24 | 2.0 | 0.0 | 1.00 | 0.00 |
+     | 0.11 | 0/10 | 0/10 | 0.434 | 0.003 | 0.43 | 0.44 | 2.2 | 0.0 | 1.00 | 0.00 |
+     | 0.12 | 0/10 | 0/10 | 0.684 | 0.001 | 0.68 | 0.69 | 2.8 | 0.1 | 1.00 | 0.00 |
+     | 0.13 | 0/10 | 0/10 | 0.785 | 0.002 | 0.78 | 0.79 | 4.7 | 0.0 | 1.00 | 0.00 |
+     | 0.14 | 0/10 | 0/10 | 0.875 | 0.002 | 0.87 | 0.88 | 6.3 | 0.0 | 0.99 | 0.00 |
+     | 0.15 | 0/10 | 0/10 | 0.879 | 0.002 | 0.88 | 0.88 | 7.5 | 0.0 | 0.84 | 0.01 |
+     | 0.16 | 10/10 | 10/10 | 0.870 | 0.003 | 0.87 | 0.87 | 8.1 | 0.0 | 0.86 | 0.02 |
+     | 0.17 | 10/10 | 10/10 | 0.864 | 0.003 | 0.86 | 0.87 | 8.0 | 0.0 | 0.84 | 0.01 |
+     | 0.18 | 10/10 | 10/10 | 0.855 | 0.003 | 0.85 | 0.86 | 8.0 | 0.0 | 0.83 | 0.01 |
+     | 0.19 | 10/10 | 10/10 | 0.848 | 0.004 | 0.84 | 0.85 | 7.9 | 0.0 | 0.85 | 0.01 |
+     At 0.15 m and below, none of the 70 runs counts as walked, and the reason is that the commanded foot path leaves the joint limits (0 of 10 "in limits"), not that the robot fell: the largest tilt is 2 to 7.5°. At 0.09 to 0.11 m the servos are saturated almost the whole walk (torque 1.00) and the speed ratio collapses to 0.17 to 0.43. The ratio at 0.14 and 0.15 m (0.875, 0.879) is higher than at 0.19 m (0.848), but those runs asked for foot positions the joints cannot reach, so I do not count them as a valid test of the gait. Among heights where every target is reachable (0.16 m and above) the ratio rises as the body gets lower: 0.870 at 0.16 m against 0.848 at 0.19 m, with 8.1° against 7.9° tilt.
+     *What this does and does not show.* One parameter at a time from one baseline: the best value of each is not necessarily the best together (for example kp 45, 20 to 24 mm swing and 0.16 m stance were not run together). The baseline's duty 0.5, 0.15 m/s command and mass were not changed. The perturbation spread is small, and the model's own uncertainty (friction, damping, servo figures) is not in it. Everything is placeholder.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.

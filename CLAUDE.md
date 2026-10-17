@@ -46,8 +46,8 @@ scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
   stand/               stand_test, sit_to_stand, make_stand_demo
-  gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep,
-                       plot_trot_1p7_parameter_sweep, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, plot_trot_1p7_parameter_sweep
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
