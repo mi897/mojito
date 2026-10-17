@@ -1,4 +1,4 @@
-"""Does the 1.7 s trot hold up away from the default servo, mass and swing height? Writes results/gait/sweeps/trot_period_robustness.json.
+"""Does the 1.7 s trot hold up away from the default servo, mass and swing height? Writes results/gait/sweeps/period/trot_period_robustness.json.
 
 `trot_period_sweep.py` chose 1.7 s at one setting (kp 10, 1.72 kg, 30 mm swing). Here the same period sweep is repeated
 over the physics lab's grid: 3 servo gains x 3 masses x 2 swing heights, trot at 0.15 m/s, duty 0.5, diagonal offsets.
@@ -44,7 +44,7 @@ def main():
                    "trot_period_sweep.json. Placeholder dimensions, masses, servo figures and friction. One run per cell.",
            "commanded_velocity_m_s": SPEED, "periods_s": list(PERIODS), "kp": list(KP), "kd": KP,
            "mass_scale": list(MASS_SCALE), "lift_m": list(LIFT), "runs": runs}
-    with open("results/gait/sweeps/trot_period_robustness.json", "w") as f:
+    with open("results/gait/sweeps/period/trot_period_robustness.json", "w") as f:
         json.dump(out, f, indent=1)
 
 

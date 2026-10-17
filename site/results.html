@@ -115,7 +115,7 @@
   <h4>Best settings in this grid</h4>
   <p>For each commanded speed, the run that walked with the highest speed ratio. Three of the four winning values (30&nbsp;mm swing, kp&nbsp;30, 0.19&nbsp;m stance) are the edge of the range tested, so the optimum may lie beyond them; the next section tests that. One run per cell, so these are the best of 48 single runs, not proven optima.</p>
   <div class="card"><table id="t-best"></table></div>
-  <figure class="card"><img src="media/trot_1p7_parameter_effects.png" alt="Speed ratio and tilt against each parameter" loading="lazy" style="width:100%"><figcaption>All 192 runs (original matplotlib plot, <code>results/gait/sweeps/trot_1p7_parameter_effects.png</code>): dots are runs, the line is the median.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_parameter_effects.png" alt="Speed ratio and tilt against each parameter" loading="lazy" style="width:100%"><figcaption>All 192 runs (original matplotlib plot, <code>results/gait/sweeps/parameters/trot_1p7_parameter_effects.png</code>): dots are runs, the line is the median.</figcaption></figure>
   <div class="callout limit"><b>What this does not show.</b> Why each parameter has its effect (not traced); interactions between parameters; mass, friction, turning or terrain; any real robot. The speed shortfall looks like a roughly fixed amount rather than a fixed fraction (the ratio rises with commanded speed), but I did not fit or trace it. One run per cell, no randomisation, so there is no spread to quote.</div>
 
   <h3 id="trotpush">Pushing the best settings further: one parameter at a time, 10 runs per value</h3>
@@ -123,7 +123,7 @@
   <div class="grid g2" id="oat-grid"></div>
   <p class="read" id="oat-read"></p>
   <div id="oat-tables"></div>
-  <figure class="card"><img src="media/trot_1p7_one_at_a_time.png" alt="Speed ratio, tilt and walked count against kp, kd, swing height and stance height" loading="lazy" style="width:100%"><figcaption>All 420 runs (original matplotlib plot, <code>results/gait/sweeps/trot_1p7_one_at_a_time.png</code>): mean &plusmn; 1 sd, dots are runs, the dotted line is the baseline value.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_one_at_a_time.png" alt="Speed ratio, tilt and walked count against kp, kd, swing height and stance height" loading="lazy" style="width:100%"><figcaption>All 420 runs (original matplotlib plot, <code>results/gait/sweeps/parameters/trot_1p7_one_at_a_time.png</code>): mean &plusmn; 1 sd, dots are runs, the dotted line is the baseline value.</figcaption></figure>
   <div class="callout limit"><b>What this does not show.</b> Each parameter was changed alone from one baseline, so the best values were not run together. Duty, commanded speed and mass were not varied. At stance heights of 0.15&nbsp;m and below the commanded feet leave the joint limits (the run is not counted as walked, though the robot did not fall); the speed ratio there is not a valid test of the gait. At kd&nbsp;2 the body moves backward, yet the walked flag (upright and finished) is still true. Why each effect occurs was not traced. Placeholder dimensions, masses, servo figures and friction.</div>
 
   <h3 id="trotkd">kd at each kp: the damping sweep at 14 servo gains</h3>
@@ -137,8 +137,8 @@
   <div class="card"><table id="t-kd-best"></table></div>
   <h4>Mean speed ratio, every kp and kd</h4>
   <div class="card"><table id="t-kd-ratio"></table></div>
-  <figure class="card"><img src="media/trot_1p7_kp_kd_lines.png" alt="Speed ratio and tilt against kd for every kp" loading="lazy" style="width:100%"><figcaption>All 14 kp values (<code>results/gait/sweeps/trot_1p7_kp_kd_lines.png</code>): mean &plusmn; 1 sd.</figcaption></figure>
-  <figure class="card"><img src="media/trot_1p7_kp_kd_maps.png" alt="Heat maps of speed ratio and tilt over kp and kd" loading="lazy" style="width:100%"><figcaption>kp against kd (<code>results/gait/sweeps/trot_1p7_kp_kd_maps.png</code>); the star marks the kd with the highest mean speed ratio at each kp.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_lines.png" alt="Speed ratio and tilt against kd for every kp" loading="lazy" style="width:100%"><figcaption>All 14 kp values (<code>results/gait/sweeps/servo_gains/trot_1p7_kp_kd_lines.png</code>): mean &plusmn; 1 sd.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_maps.png" alt="Heat maps of speed ratio and tilt over kp and kd" loading="lazy" style="width:100%"><figcaption>kp against kd (<code>results/gait/sweeps/servo_gains/trot_1p7_kp_kd_maps.png</code>); the star marks the kd with the highest mean speed ratio at each kp.</figcaption></figure>
   <div class="callout limit"><b>What this does not show.</b> The cliff and the plateau edges are placed to the grid (0.1 steps near the cliff), and why the cliff is there was not traced. One baseline: other speeds, masses and swing heights may move the plateau. The spread is from the mass and latency draws only. The replay's "walked" flag was true for all 2380 runs, including those that went backward, so it does not filter anything here. Placeholder dimensions, masses, servo figures and friction.</div>
 
   <h2 id="plots">Original plots</h2>

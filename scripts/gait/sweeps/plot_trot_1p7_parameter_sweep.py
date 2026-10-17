@@ -1,5 +1,5 @@
-"""Plot what each parameter did to the 1.7 s trot. Reads results/gait/sweeps/trot_1p7_parameter_sweep.json, writes
-results/gait/sweeps/trot_1p7_parameter_effects.png.
+"""Plot what each parameter did to the 1.7 s trot. Reads results/gait/sweeps/parameters/trot_1p7_parameter_sweep.json, writes
+results/gait/sweeps/parameters/trot_1p7_parameter_effects.png.
 
 One column per parameter. Top row: measured speed / commanded speed for every run that walked (dots) and their median
 (line). Bottom row: largest body tilt of those runs and their median. Runs that fell are not drawn; the number that fell
@@ -23,7 +23,7 @@ PARAMETERS = (("duty", "duty (fraction on ground)", "{:g}"), ("speed_m_s", "comm
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps")
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "parameters")
     runs = json.load(open(os.path.join(root, "trot_1p7_parameter_sweep.json")))["runs"]
     fig, axes = plt.subplots(2, len(PARAMETERS), figsize=(15, 6.2), sharey="row")
     for col, (key, label, fmt) in enumerate(PARAMETERS):

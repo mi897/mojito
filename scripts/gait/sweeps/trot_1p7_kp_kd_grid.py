@@ -1,4 +1,4 @@
-"""kd sweeps at 14 values of kp for the 1.7 s trot, 10 runs per cell. Writes results/gait/sweeps/trot_1p7_kp_kd_grid.json.
+"""kd sweeps at 14 values of kp for the 1.7 s trot, 10 runs per cell. Writes results/gait/sweeps/servo_gains/trot_1p7_kp_kd_grid.json.
 
 The earlier kp sweep tied kd to kp (kd = 0.5 * sqrt(kp / 30)). Here kp and kd are independent: kp 20 to 150 in steps of 10,
 and for each kp a kd grid wide enough to show where the trot gets worse on both sides (0 to 3 N·m·s/rad, denser from 0.5 to 2 where
@@ -58,7 +58,7 @@ def main():
                    "Through closed-form IK and the servo model into the actuated MuJoCo model, body free. Placeholder dimensions, "
                    "masses (1.72 kg nominal), servo figures and friction.",
            "iterations": ITERATIONS, "mass_spread": MASS_SPREAD, "latency_s_range": list(LATENCY), "kp": KP, "kd": KD, "runs": runs}
-    with open("results/gait/sweeps/trot_1p7_kp_kd_grid.json", "w") as f:
+    with open("results/gait/sweeps/servo_gains/trot_1p7_kp_kd_grid.json", "w") as f:
         json.dump(out, f, indent=1)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 

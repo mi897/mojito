@@ -1,4 +1,4 @@
-"""Means, standard deviations, best kd per kp, and plots for the kp x kd grid. Reads results/gait/sweeps/trot_1p7_kp_kd_grid.json,
+"""Means, standard deviations, best kd per kp, and plots for the kp x kd grid. Reads results/gait/sweeps/servo_gains/trot_1p7_kp_kd_grid.json,
 writes trot_1p7_kp_kd_grid_summary.json, trot_1p7_kp_kd_lines.png and trot_1p7_kp_kd_maps.png next to it, and prints the tables.
 
 Per cell (10 runs): mean and sample standard deviation (n - 1) of the speed ratio over all 10 runs (a run that fell counts with the
@@ -53,7 +53,7 @@ def summarise(data):
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps")
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "servo_gains")
     data = json.load(open(os.path.join(root, "trot_1p7_kp_kd_grid.json")))
     cells, best = summarise(data)
     kps, kds = data["kp"], data["kd"]

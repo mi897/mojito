@@ -1,5 +1,5 @@
 """Push the best 1.7 s trot settings further, one parameter at a time, with repeats. Writes
-results/gait/sweeps/trot_1p7_one_at_a_time.json.
+results/gait/sweeps/parameters/trot_1p7_one_at_a_time.json.
 
 Baseline (everything not being swept): period 1.7 s, duty 0.5, diagonal offsets, commanded 0.15 m/s, stance height 0.19 m,
 swing height 30 mm, kp 30 with kd 0.5, 1.72 kg. Four sweeps, each changing only the named parameter:
@@ -88,7 +88,7 @@ def main():
                         "lift_m": BASE["lift"], "height_m": BASE["height"]},
            "kd_rule": "kd = 0.5 * sqrt(kp / 30) in the kp sweep", "iterations": ITERATIONS,
            "mass_spread": MASS_SPREAD, "latency_s_range": list(LATENCY), "sweeps": SWEEPS, "runs": runs}
-    with open("results/gait/sweeps/trot_1p7_one_at_a_time.json", "w") as f:
+    with open("results/gait/sweeps/parameters/trot_1p7_one_at_a_time.json", "w") as f:
         json.dump(out, f, indent=1)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 

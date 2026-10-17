@@ -1,4 +1,4 @@
-"""Means, standard deviations and plots for the one-at-a-time sweep. Reads results/gait/sweeps/trot_1p7_one_at_a_time.json,
+"""Means, standard deviations and plots for the one-at-a-time sweep. Reads results/gait/sweeps/parameters/trot_1p7_one_at_a_time.json,
 writes trot_1p7_one_at_a_time_summary.json and trot_1p7_one_at_a_time.png next to it, and prints the tables as Markdown.
 
 Per value (10 runs): mean, sample standard deviation (n - 1), minimum and maximum of the speed ratio over all 10 runs
@@ -59,7 +59,7 @@ def table(sweep, rows):
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps")
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "parameters")
     data = json.load(open(os.path.join(root, "trot_1p7_one_at_a_time.json")))
     runs, sweeps = data["runs"], data["sweeps"]
     summary = summarise(runs, sweeps)

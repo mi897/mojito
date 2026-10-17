@@ -47,11 +47,12 @@ scripts/               entry points, one folder per topic
   body/                make_body_demos, torque_envelope
   stand/               stand_test, sit_to_stand, make_stand_demo
   gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
-  gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, plot_trot_1p7_parameter_sweep
+  gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
+                       and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
-results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
+results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
 docs/USAGE.md  RESULTS.md  PHYSICS.md   usage, geometry results, physics results
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
