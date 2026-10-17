@@ -56,7 +56,7 @@ joint limits are placeholders, not a real robot's:
 | Standing height of the shoulders | 170 mm |
 | Joint limits: abduction / hip pitch / knee | ±0.6 / 0 to 1.5 / −2.3 to −0.3 rad |
 
-These are the Stage 0–1 (geometry) placeholders. The Stage 2 physics results use larger ones, so the servos are not oversized: 50 / 150 / 150 mm links, 300 × 150 mm shoulder spacing, 212.5 mm standing height (`docs/STAGE2.md`). The trot has a 1.7 s period everywhere. The Stage 1 demos were first made at 0.5 s; a period sweep in physics showed that was not optimal and they were regenerated at 1.7 s (`docs/PHYSICS.md`).
+These are the Stage 0–1 (geometry) placeholders. The Stage 2 physics results use larger ones, so the servos are not oversized: 50 / 150 / 150 mm links, 300 × 150 mm shoulder spacing, 212.5 mm standing height (`docs/STAGE2.md`). The trot has a 1.7 s period everywhere. The Stage 1 demos were first made at 0.5 s; a period sweep in physics showed that was not optimal and they were regenerated at 1.7 s (`docs/PHYSICS.md`). The physics trot is tuned further (22 mm swing, 160 mm stance, kp 50, kd 0.9; `docs/STAGE2.md`); the crawl keeps the 212.5 mm stance.
 
 ## Quick start
 
@@ -118,12 +118,14 @@ site/                  website: pages, assets/mojito.js (JS port of leg, body, g
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
-  sim/                 stand_test, sit_to_stand, make_stand_demo, gait_replay, gait_speed_diagnosis, pace_diagnosis, trot_period_sweep,
-                       trot_period_robustness, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  stand/               stand_test, sit_to_stand, make_stand_demo
+  gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
+  gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
+                       and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
-results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations)
+results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
 docs/USAGE.md  RESULTS.md  PHYSICS.md   usage, geometry results, physics results
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage

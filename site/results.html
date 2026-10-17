@@ -81,14 +81,14 @@
   </div>
 
   <h2 id="s2c">Stage 2: walking in physics</h2>
-  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V, kp 10, kd 0.2. The trot here has a 1.7&nbsp;s period (<a href="#trotperiod">why</a>); the crawl is 2&nbsp;s.</p>
+  <p>Trot and crawl foot paths from Stage 1 go through the closed-form IK and the servo model into the MuJoCo model; the body is free and must push itself along. Default placeholder masses (1.72 kg), 5 V. The trot uses the tuned settings (kp 50, kd 0.9, 0.16&nbsp;m stance, 22&nbsp;mm swing; <a href="#trotcombined">why</a>); the crawl keeps kp 10, kd 0.2 and a 0.2125&nbsp;m stance. The trot has a 1.7&nbsp;s period (<a href="#trotperiod">why</a>); the crawl is 2&nbsp;s.</p>
   <div class="grid g2">
     <div class="card chart-card"><h4>Commanded against measured forward speed</h4><p class="sub">m/s; the dashed line is "does what it is told"</p><div id="c-speed"></div>
-      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed. Marching in place drifts backward (slightly, for the 1.7&nbsp;s trot).</p></div>
+      <p class="read">All nine runs stayed upright (tilt at most <span id="maxtilt"></span>°) but none reached the commanded speed (the tuned trot comes closest). The 0.30&nbsp;m/s trot is not counted as walked: its servos are saturated for more than 20% of the walk. Marching in place drifts backward for the crawl; the tuned trot does not.</p></div>
     <div class="card chart-card"><h4>Peak servo torque while walking</h4><p class="sub">fraction of the 5 V stall torque</p><div id="c-torque"></div>
       <p class="read">The crawl runs the servos at their limit; the reason was not traced. Standing with these masses peaks at 0.28.</p></div>
     <div class="card chart-card"><h4>Why the trot falls short of 0.15 m/s</h4><p class="sub">measured body speed, and the speed the loaded feet's commanded motion would give ("ask")</p><div id="c-diag"></div>
-      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely. For the 1.7&nbsp;s trot the body makes more than the "ask" (the speed the loaded feet's commanded motion would give), so that explanation, worked out at 0.5&nbsp;s, no longer accounts for the numbers; the reason was not traced. A taller swing made it worse.</p></div>
+      <p class="read">Soft servos (kp 10) explain the crawl shortfall completely. For the 1.7&nbsp;s trot with the original settings (30&nbsp;mm swing, 0.2125&nbsp;m stance, kp 10) the body makes more than the "ask" (the speed the loaded feet's commanded motion would give), so that explanation, worked out at 0.5&nbsp;s, no longer accounts for the numbers; the reason was not traced. A taller swing made it worse.</p></div>
     <div class="card chart-card"><h4>Trot at 0.15 m/s: what the grid of runs says</h4><p class="sub">measured speed against servo stiffness, for three masses (swing 30 mm)</p><div id="c-sweep"><p class="muted small">Loading the recorded runs…</p></div>
       <p class="read">From the playground's 144 recorded runs, one run per point.</p></div>
   </div>
@@ -106,6 +106,50 @@
   <p>Trot at 0.15&nbsp;m/s for 3 servo gains &times; 3 masses (nine cells) at each swing height. "Faster than 0.5&nbsp;s" counts the cells where that period made more speed than the 0.5&nbsp;s trot with the same gain, mass and swing.</p>
   <div class="card"><table id="t-robust"></table><p class="read" id="robust-read"></p></div>
   <div class="callout limit"><b>Not shown.</b> Any real robot's behaviour; other speeds, turn rates, terrain or disturbances; friction limits (slip was measured but not separated from the foot rolling); whether tuned gains or gait timing close the speed gap. The pace gait (left legs, then right) goes backward because the body rolls onto the feet it is lifting; see <a href="reports.html#STAGE2">the Stage 2 report</a>.</div>
+
+  <h3 id="trotparams">What each parameter does to the 1.7&nbsp;s trot</h3>
+  <p>With the period fixed at 1.7&nbsp;s, five other settings were varied together: duty (the fraction of the cycle a foot is down), commanded speed, stance height, servo gain and swing height. That is 192 runs, 3 cycles each, at the placeholder 1.72&nbsp;kg, one run per cell. Every point below is the median over the runs that walked, with the other four parameters spread over their values, so it describes this grid and not one parameter alone. The speed ratio is measured forward speed divided by commanded speed (1 would be the commanded speed). "Walked" only means upright and finished, not that the speed was met.</p>
+  <div class="grid g2" id="params-grid"></div>
+  <p class="read" id="params-read"></p>
+  <ul id="params-list" class="small"></ul>
+  <h4>Best settings in this grid</h4>
+  <p>For each commanded speed, the run that walked with the highest speed ratio. Three of the four winning values (30&nbsp;mm swing, kp&nbsp;30, 0.19&nbsp;m stance) are the edge of the range tested, so the optimum may lie beyond them; the next section tests that. One run per cell, so these are the best of 48 single runs, not proven optima.</p>
+  <div class="card"><table id="t-best"></table></div>
+  <figure class="card"><img src="media/trot_1p7_parameter_effects.png" alt="Speed ratio and tilt against each parameter" loading="lazy" style="width:100%"><figcaption>All 192 runs (original matplotlib plot, <code>results/gait/sweeps/parameters/trot_1p7_parameter_effects.png</code>): dots are runs, the line is the median.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> Why each parameter has its effect (not traced); interactions between parameters; mass, friction, turning or terrain; any real robot. The speed shortfall looks like a roughly fixed amount rather than a fixed fraction (the ratio rises with commanded speed), but I did not fit or trace it. One run per cell, no randomisation, so there is no spread to quote.</div>
+
+  <h3 id="trotpush">Pushing the best settings further: one parameter at a time, 10 runs per value</h3>
+  <p>The grid above had its best values at the edge of what was tried, so each of four parameters was swept further from the best baseline (1.7&nbsp;s, duty 0.5, 0.15&nbsp;m/s, 0.19&nbsp;m stance, 30&nbsp;mm swing, kp&nbsp;30, kd&nbsp;0.5): kp up to 150 (kd tied to kp as 0.5&nbsp;&times;&nbsp;&radic;(kp/30)), kd from 0.1 to 2, swing height down to 10&nbsp;mm, stance height down to 0.09&nbsp;m. The simulation is deterministic, so each value was run 10 times with a random draw of body masses (&plusmn;5%) and servo latency (18 to 22&nbsp;ms), the same 10 draws at every value. The mean and standard deviation below are over those 10 runs. The spread comes from those perturbations only: it is small because they are small, it says nothing about a real robot, and it leaves out model error.</p>
+  <div class="grid g2" id="oat-grid"></div>
+  <p class="read" id="oat-read"></p>
+  <div id="oat-tables"></div>
+  <figure class="card"><img src="media/trot_1p7_one_at_a_time.png" alt="Speed ratio, tilt and walked count against kp, kd, swing height and stance height" loading="lazy" style="width:100%"><figcaption>All 420 runs (original matplotlib plot, <code>results/gait/sweeps/parameters/trot_1p7_one_at_a_time.png</code>): mean &plusmn; 1 sd, dots are runs, the dotted line is the baseline value.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> Each parameter was changed alone from one baseline, so the best values were not run together. Duty, commanded speed and mass were not varied. At stance heights of 0.15&nbsp;m and below the commanded feet leave the joint limits (the run is not counted as walked, though the robot did not fall); the speed ratio there is not a valid test of the gait. At kd&nbsp;2 the body moves backward, yet the walked flag (upright and finished) is still true. Why each effect occurs was not traced. Placeholder dimensions, masses, servo figures and friction.</div>
+
+  <h3 id="trotkd">kd at each kp: the damping sweep at 14 servo gains</h3>
+  <p>The kp sweep above tied kd to kp, which could have hidden a better kd at high kp. Here kp (20 to 150 in steps of 10) is crossed with kd (0 to 3 N&middot;m&middot;s/rad, 17 values, denser from 0.5 to 2), at the same baseline (1.7&nbsp;s, duty 0.5, 0.15&nbsp;m/s, 0.19&nbsp;m stance, 30&nbsp;mm swing), 10 runs per cell with the same random mass (&plusmn;5%) and latency (18 to 22&nbsp;ms) draws as before: 2380 runs. The spread is from those draws only.</p>
+  <div class="grid g2">
+    <div class="card chart-card"><h4>Speed ratio against kd</h4><p class="sub">mean of 10 runs; five of the 14 kp values</p><div id="c-kd-ratio"></div></div>
+    <div class="card chart-card"><h4>Largest tilt against kd</h4><p class="sub">mean of 10 runs, degrees</p><div id="c-kd-tilt"></div></div>
+  </div>
+  <p class="read" id="kd-read"></p>
+  <h4>Best kd at each kp</h4>
+  <div class="card"><table id="t-kd-best"></table></div>
+  <h4>Mean speed ratio, every kp and kd</h4>
+  <div class="card"><table id="t-kd-ratio"></table></div>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_lines.png" alt="Speed ratio and tilt against kd for every kp" loading="lazy" style="width:100%"><figcaption>All 14 kp values (<code>results/gait/sweeps/servo_gains/trot_1p7_kp_kd_lines.png</code>): mean &plusmn; 1 sd.</figcaption></figure>
+  <figure class="card"><img src="media/trot_1p7_kp_kd_maps.png" alt="Heat maps of speed ratio and tilt over kp and kd" loading="lazy" style="width:100%"><figcaption>kp against kd (<code>results/gait/sweeps/servo_gains/trot_1p7_kp_kd_maps.png</code>); the star marks the kd with the highest mean speed ratio at each kp.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> The cliff and the plateau edges are placed to the grid (0.1 steps near the cliff), and why the cliff is there was not traced. One baseline: other speeds, masses and swing heights may move the plateau. The spread is from the mass and latency draws only. The replay's "walked" flag was true for all 2380 runs, including those that went backward, so it does not filter anything here. Placeholder dimensions, masses, servo figures and friction.</div>
+
+  <h3 id="trotcombined">Do the best values add up? Together, at four speeds and three masses</h3>
+  <p>The best value of each parameter from the sweeps above was used together: <b>best</b> = kp&nbsp;50, kd&nbsp;0.9 (mid-plateau, away from the cliff), 22&nbsp;mm swing, 0.16&nbsp;m stance, against the <b>baseline</b> kp&nbsp;30, kd&nbsp;0.5, 30&nbsp;mm, 0.19&nbsp;m. The test also has the best settings with a 0.17&nbsp;m stance, the best with one group of settings put back to the baseline (to see what each contributes in combination), and the baseline with only one group changed. Each setting was run at 0.05, 0.1, 0.15 and 0.2&nbsp;m/s and at three masses (about 1.0, 1.7 and 3.0&nbsp;kg), 10 runs per cell: 1080 runs. The same 10 random mass and latency draws are used in every cell, so the differences below are paired. The spread comes from those draws only.</p>
+  <div class="grid g2" id="comb-grid"></div>
+  <p class="read" id="comb-read"></p>
+  <h4>Paired difference in speed ratio: best minus baseline, and the sum of the three single-group effects</h4>
+  <div class="card"><table id="t-comb-diff"></table></div>
+  <div id="comb-tables"></div>
+  <figure class="card"><img src="media/trot_1p7_combined.png" alt="Speed ratio and tilt for each setting, speed and mass" loading="lazy" style="width:100%"><figcaption>(<code>results/gait/sweeps/combined/trot_1p7_combined.png</code>): mean &plusmn; 1 sd, 10 runs per bar.</figcaption></figure>
+  <div class="callout limit"><b>What this does not show.</b> Other duties and periods; commanded speeds above 0.2&nbsp;m/s; turning, friction and terrain; whether the kd cliff moves with mass (kd was swept only at the middle mass); why the single-group gains overlap or why the 22&nbsp;mm swing fails at the heavy mass. At the heaviest mass the servos are at their stall limit in every run and the results are noisy as well as different. The spread is from the mass and latency draws only. Placeholder dimensions, masses, servo figures and friction.</div>
 
   <h2 id="plots">Original plots</h2>
   <div class="gallery" id="plots-g"></div>
@@ -209,6 +253,97 @@
       const head = Q.lift_m.map(l => `<th class="num">${f(1000 * l, 0)} mm: faster than 0.5 s</th><th class="num">walked</th><th class="num">median m/s</th><th class="num">median tilt</th>`).join('');
       $('t-robust').innerHTML = `<tr><th class="num">period s</th>${head}</tr>` + Q.periods_s.map(T => `<tr><td class="num">${T}</td>` + Q.lift_m.map(l => { const c = cells(T, l); return `<td class="num">${faster(T, l)} / ${c.length}</td><td class="num">${c.filter(r => r.walked).length} / ${c.length}</td><td class="num">${f(med(c.map(r => r.measured_velocity_m_s)), 3)}</td><td class="num">${f(med(c.map(r => r.max_tilt_deg)), 1)}°</td>`; }).join('') + '</tr>').join('');
       $('robust-read').textContent = `At the 30 mm swing the 1.7 s trot made more speed than the 0.5 s trot in ${faster(1.7, 0.03)} of 9 cells; at the 60 mm swing in ${faster(1.7, 0.06)} of 9, and ${cells(1.7, 0.06).filter(r => r.walked).length} of 9 walked (against ${cells(0.5, 0.06).filter(r => r.walked).length} of 9 at 0.5 s). Periods from about 1.5 s up to 3 s are close to each other at 30 mm, so 1.7 s is one point on a plateau, not a peak. The 4 s trot does not walk. Tilt is the largest value reached in the run (180° is a fall).`;
+    }
+    const PS = R.trot_1p7_parameter_sweep;
+    if (PS) {
+      const med = a => { const t = [...a].sort((x, y) => x - y), n = t.length; return n % 2 ? t[(n - 1) / 2] : (t[n / 2 - 1] + t[n / 2]) / 2; };
+      const params = [['duty', 'duty', v => v], ['speed_m_s', 'commanded speed, m/s', v => v], ['height_m', 'stance height, m', v => v], ['kp', 'servo gain kp, N·m/rad', v => v], ['lift_m', 'swing height, mm', v => 1000 * v]];
+      const stat = (k, v, fld) => med(PS.runs.filter(r => r[k] === v && r.walked).map(r => r[fld]));
+      const fell = (k, v) => PS.runs.filter(r => r[k] === v && !r.walked).length, count = (k, v) => PS.runs.filter(r => r[k] === v).length;
+      $('params-grid').innerHTML = params.map(([k, l]) => `<div class="card chart-card"><h4>${l}</h4><p class="sub">median speed ratio and tilt of the runs that walked</p><div id="cp-${k}"></div><div id="ct-${k}"></div></div>`).join('');
+      params.forEach(([k, l, sh]) => {
+        const vals = [...new Set(PS.runs.map(r => r[k]))].sort((a, b) => a - b);
+        const x = { label: l, ticks: vals.map(sh), fmt: v => +(+v).toPrecision(4) };
+        Charts.line($('cp-' + k), { x, y: { label: 'speed ratio', fmt: v => f(v, 2), domain: [0, 1] }, hlines: [{ y: 1, label: 'commanded', color: 'var(--muted)' }],
+          series: [{ name: 'speed ratio', color: B, markers: true, points: vals.map(v => [sh(v), stat(k, v, 'velocity_ratio')]) }] });
+        Charts.line($('ct-' + k), { x, y: { label: 'largest tilt, °', fmt: v => f(v, 0), domain: [0, 25] },
+          series: [{ name: 'tilt', color: O, markers: true, points: vals.map(v => [sh(v), stat(k, v, 'max_tilt_deg')]) }] });
+      });
+      const L = PS.lift_m, d = (k, v, fld) => stat(k, v, fld);
+      $('params-read').textContent = `${PS.runs.filter(r => r.walked).length} of ${PS.runs.length} runs walked. Swing height mattered most: at ${f(1000 * L[0], 0)} mm the median speed ratio was ${f(d('lift_m', L[0], 'velocity_ratio'), 2)} with ${fell('lift_m', L[0])} of ${count('lift_m', L[0])} falls; at ${f(1000 * L[1], 0)} mm it was ${f(d('lift_m', L[1], 'velocity_ratio'), 2)}, median tilt ${f(d('lift_m', L[1], 'max_tilt_deg'), 1)}° and ${fell('lift_m', L[1])} of ${count('lift_m', L[1])} fell. The best single run made ${f(Math.max(...PS.runs.filter(r => r.walked).map(r => r.velocity_ratio)), 2)} of its commanded speed.`;
+      $('t-best').innerHTML = '<tr><th class="num">commanded m/s</th><th class="num">duty</th><th class="num">height m</th><th class="num">kp</th><th class="num">swing mm</th><th class="num">measured m/s</th><th class="num">speed ratio</th><th class="num">tilt</th><th class="num">peak torque / stall</th></tr>'
+        + PS.speed_m_s.map(sp => { const r = PS.runs.filter(q => q.speed_m_s === sp && q.walked).sort((a, b) => b.velocity_ratio - a.velocity_ratio)[0];
+          return `<tr><td class="num">${sp}</td><td class="num">${r.duty}</td><td class="num">${r.height_m}</td><td class="num">${r.kp}</td><td class="num">${f(1000 * r.lift_m, 0)}</td><td class="num">${f(r.measured_velocity_m_s, 3)}</td><td class="num">${f(r.velocity_ratio, 2)}</td><td class="num">${f(r.max_tilt_deg, 1)}°</td><td class="num">${f(r.peak_torque_fraction_of_limit, 2)}</td></tr>`; }).join('');
+      $('params-list').innerHTML = params.map(([k, l, sh]) => { const vals = [...new Set(PS.runs.map(r => r[k]))].sort((a, b) => a - b);
+        return `<li><b>${l}:</b> ` + vals.map(v => `${+(+sh(v)).toPrecision(4)}: ratio ${f(stat(k, v, 'velocity_ratio'), 2)}, tilt ${f(stat(k, v, 'max_tilt_deg'), 1)}°, fell ${fell(k, v)}/${count(k, v)}`).join('; ') + '</li>'; }).join('');
+    }
+    const OT = R.trot_1p7_one_at_a_time;
+    if (OT) {
+      const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+      const sd = a => a.length < 2 ? 0 : Math.sqrt(a.reduce((x, y) => x + (y - mean(a)) ** 2, 0) / (a.length - 1));
+      const sweepsOT = [['kp', 'servo gain kp, N·m/rad (kd tied)', v => v], ['kd', 'servo damping kd, N·m·s/rad (kp 30)', v => v], ['lift', 'swing height, mm', v => 1000 * v], ['height', 'stance height, m', v => v]];
+      const rowsOT = k => OT.sweeps[k].map(v => {
+        const rs = OT.runs.filter(r => r.sweep === k && r.value === v), up = rs.filter(r => r.max_tilt_deg < 30), ratio = rs.map(r => r.velocity_ratio);
+        return { v, n: rs.length, walked: rs.filter(r => r.walked).length, inLimits: rs.filter(r => r.within_joint_limits).length, rm: mean(ratio), rs: sd(ratio), rmin: Math.min(...ratio), rmax: Math.max(...ratio),
+          tm: up.length ? mean(up.map(r => r.max_tilt_deg)) : null, ts: up.length ? sd(up.map(r => r.max_tilt_deg)) : null, qm: up.length ? mean(up.map(r => r.peak_torque_fraction_of_limit)) : null };
+      });
+      $('oat-grid').innerHTML = sweepsOT.map(([k, l]) => `<div class="card chart-card"><h4>${l}</h4><p class="sub">mean speed ratio and mean tilt over 10 runs per value; dashed lines are mean &plusmn; 1 sd</p><div id="op-${k}"></div><div id="ot-${k}"></div></div>`).join('');
+      $('oat-tables').innerHTML = sweepsOT.map(([k, l, sh]) => `<h4>${l}</h4><div class="card"><table id="tt-${k}"></table></div>`).join('');
+      const fmtv = v => +(+v).toPrecision(4), fx = (x, d) => x == null ? '–' : f(x, d);
+      sweepsOT.forEach(([k, l, sh]) => {
+        const rows = rowsOT(k), x = { label: l, fmt: fmtv, zero: false };
+        Charts.line($('op-' + k), { legend: false, x, y: { label: 'speed ratio', fmt: v => f(v, 2), zero: false }, hlines: [{ y: 1, label: 'commanded', color: 'var(--muted)' }],
+          series: [{ name: 'mean', color: B, markers: true, points: rows.map(r => [sh(r.v), r.rm]) },
+                   { name: '+1 sd', color: B, dashed: true, width: 1, points: rows.map(r => [sh(r.v), r.rm + r.rs]) }, { name: '-1 sd', color: B, dashed: true, width: 1, points: rows.map(r => [sh(r.v), r.rm - r.rs]) }] });
+        const tr = rows.filter(r => r.tm != null);
+        Charts.line($('ot-' + k), { legend: false, x, y: { label: 'largest tilt, °', fmt: v => f(v, 1), zero: false },
+          series: [{ name: 'mean', color: O, markers: true, points: tr.map(r => [sh(r.v), r.tm]) },
+                   { name: '+1 sd', color: O, dashed: true, width: 1, points: tr.map(r => [sh(r.v), r.tm + r.ts]) }, { name: '-1 sd', color: O, dashed: true, width: 1, points: tr.map(r => [sh(r.v), r.tm - r.ts]) }] });
+        $('tt-' + k).innerHTML = `<tr><th class="num">${l}</th><th class="num">walked</th><th class="num">in limits</th><th class="num">speed ratio mean</th><th class="num">sd</th><th class="num">min</th><th class="num">max</th><th class="num">tilt mean</th><th class="num">sd</th><th class="num">torque / stall</th></tr>`
+          + rows.map(r => `<tr><td class="num">${fmtv(sh(r.v))}</td><td class="num">${r.walked}/${r.n}</td><td class="num">${r.inLimits}/${r.n}</td><td class="num">${f(r.rm, 3)}</td><td class="num">${f(r.rs, 3)}</td><td class="num">${f(r.rmin, 2)}</td><td class="num">${f(r.rmax, 2)}</td><td class="num">${fx(r.tm, 1)}°</td><td class="num">${fx(r.ts, 1)}</td><td class="num">${fx(r.qm, 2)}</td></tr>`).join('');
+      });
+      const bestOf = k => rowsOT(k).filter(r => r.inLimits === r.n).sort((a, b) => b.rm - a.rm)[0];
+      const bk = bestOf('kp'), bl = bestOf('lift'), bh = bestOf('height');
+      $('oat-read').textContent = `${OT.runs.filter(r => r.walked).length} of ${OT.runs.length} runs walked. Highest mean speed ratio among values where every target is reachable: kp ${fmtv(bk.v)} (${f(bk.rm, 3)}, sd ${f(bk.rs, 3)}), swing ${f(1000 * bl.v, 0)} mm (${f(bl.rm, 3)}, sd ${f(bl.rs, 3)}), stance ${fmtv(bh.v)} m (${f(bh.rm, 3)}, sd ${f(bh.rs, 3)}). Differences of about one sd between neighbouring values are not evidence of a real difference. kd was flat from 0.1 to 1.25.`;
+    }
+    const KG = R.trot_1p7_kp_kd_grid_summary;
+    if (KG) {
+      const cell = (kp, kd) => KG.cells.find(c => c.kp === kp && c.kd === kd);
+      const kps = [...new Set(KG.cells.map(c => c.kp))], kdsAll = [...new Set(KG.cells.map(c => c.kd))];
+      const shown = [20, 50, 80, 110, 150], cols = [B, A, O, V, 'var(--muted)'];
+      Charts.line($('c-kd-ratio'), { x: { label: 'kd, N·m·s/rad', fmt: v => +(+v).toPrecision(3), zero: false }, y: { label: 'speed ratio', domain: [-1, 1], fmt: v => f(v, 1) }, hlines: [{ y: 1, label: 'commanded', color: 'var(--muted)' }],
+        series: shown.map((kp, i) => ({ name: `kp ${kp}`, color: cols[i], markers: true, points: kdsAll.map(kd => [kd, cell(kp, kd).ratio_mean]) })) });
+      Charts.line($('c-kd-tilt'), { x: { label: 'kd, N·m·s/rad', fmt: v => +(+v).toPrecision(3), zero: false }, y: { label: 'largest tilt, °', fmt: v => f(v, 1), zero: false },
+        series: shown.map((kp, i) => ({ name: `kp ${kp}`, color: cols[i], markers: true, points: kdsAll.map(kd => [kd, cell(kp, kd).tilt_mean_deg]) })) });
+      const b50 = KG.best_per_kp.find(b => b.kp === 50), b150 = KG.best_per_kp.find(b => b.kp === 150), top = [...KG.best_per_kp].sort((a, b) => b.ratio_mean - a.ratio_mean)[0];
+      $('kd-read').textContent = `The curve is not a bell: at each kp the speed rises with kd to a plateau, then falls sharply above kd 1.4 (to about 0.3 of the commanded speed at kd 1.7, backward at 2 and 3). The highest mean speed ratio is ${f(top.ratio_mean, 3)} at kp ${top.kp}, kd ${top.best_kd}. At kp 150 the best kd (${b150.best_kd}) gives ${f(b150.ratio_mean, 3)}, so no kd rescues a high kp. Tilt at kp 150 is ${f(Math.min(...KG.cells.filter(c => c.kp === 150).map(c => c.tilt_mean_deg)), 1)} to ${f(Math.max(...KG.cells.filter(c => c.kp === 150).map(c => c.tilt_mean_deg)), 1)}° at every kd, so it is set by kp, not kd.`;
+      $('t-kd-best').innerHTML = '<tr><th class="num">kp</th><th class="num">best kd</th><th class="num">speed ratio mean</th><th class="num">sd</th><th class="num">tilt</th><th class="num">torque / stall</th><th class="num">kd within 0.01 of the peak</th><th class="num">first kd 0.05 below it</th></tr>'
+        + KG.best_per_kp.map(b => `<tr><td class="num">${b.kp}</td><td class="num">${b.best_kd}</td><td class="num">${f(b.ratio_mean, 3)}</td><td class="num">${f(b.ratio_sd, 3)}</td><td class="num">${f(b.tilt_mean_deg, 1)}°</td><td class="num">${f(b.torque_mean, 2)}</td><td class="num">${b.plateau_kd_min} to ${b.plateau_kd_max}</td><td class="num">${b.cliff_kd == null ? '–' : b.cliff_kd}</td></tr>`).join('');
+      $('t-kd-ratio').innerHTML = '<tr><th class="num">kp \\ kd</th>' + kdsAll.map(kd => `<th class="num">${kd}</th>`).join('') + '</tr>'
+        + kps.map(kp => `<tr><td class="num">${kp}</td>` + kdsAll.map(kd => `<td class="num">${f(cell(kp, kd).ratio_mean, 2)}</td>`).join('') + '</tr>').join('');
+    }
+    const CB = R.trot_1p7_combined_summary;
+    if (CB) {
+      const cbCell = (c, m, sp) => CB.cells.find(x => x.config === c && x.mass_scale === m && x.speed_m_s === sp);
+      const masses = [...new Set(CB.cells.map(c => c.mass_scale))], speedsCB = [...new Set(CB.cells.map(c => c.speed_m_s))], cfgs = [...new Set(CB.cells.map(c => c.config))];
+      const shownCfg = [['baseline', 'var(--muted)'], ['best', B], ['best_stance_0.17', A], ['gains_only', O], ['swing_only', V], ['stance_only', 'var(--ink2)']];
+      const mkg = m => cbCell('baseline', m, speedsCB[0]).total_mass_kg;
+      $('comb-grid').innerHTML = masses.map(m => `<div class="card chart-card"><h4>${f(mkg(m), 2)} kg: speed ratio</h4><p class="sub">mean of 10 runs by commanded speed (m/s)</p><div id="cb-${m}"></div></div>`).join('')
+        + masses.map(m => `<div class="card chart-card"><h4>${f(mkg(m), 2)} kg: largest tilt</h4><p class="sub">mean of 10 upright runs, degrees</p><div id="cbt-${m}"></div></div>`).join('');
+      masses.forEach(m => {
+        Charts.bars($('cb-' + m), { categories: speedsCB.map(String), y: { label: 'speed ratio', fmt: v => f(v, 2), domain: [0, 1] }, aspect: 1.5,
+          series: shownCfg.map(([c, col]) => ({ name: c, color: col, values: speedsCB.map(sp => cbCell(c, m, sp).ratio_mean) })) });
+        Charts.bars($('cbt-' + m), { categories: speedsCB.map(String), y: { label: 'tilt, °', fmt: v => f(v, 0) }, aspect: 1.5,
+          series: shownCfg.map(([c, col]) => ({ name: c, color: col, values: speedsCB.map(sp => cbCell(c, m, sp).tilt_mean_deg) })) });
+      });
+      const pd = (m, sp) => CB.paired_differences.find(d => d.mass_scale === m && d.speed_m_s === sp), g3 = a => `${f(a[0], 3)} ± ${f(a[1], 3)}`;
+      $('t-comb-diff').innerHTML = '<tr><th class="num">mass kg</th><th class="num">speed m/s</th><th class="num">best − baseline</th><th class="num">sum of the three single-group effects</th><th class="num">best − best with baseline gains</th><th class="num">best − best with baseline swing</th><th class="num">best − best with baseline stance</th></tr>'
+        + masses.flatMap(m => speedsCB.map(sp => { const d = pd(m, sp); return `<tr><td class="num">${f(mkg(m), 2)}</td><td class="num">${sp}</td><td class="num">${g3(d.best_minus_baseline)}</td><td class="num">${f(d.sum_of_single_effects, 3)}</td><td class="num">${g3(d.best_minus_best_baseline_gains)}</td><td class="num">${g3(d.best_minus_best_baseline_swing)}</td><td class="num">${g3(d.best_minus_best_baseline_stance)}</td></tr>`; })).join('');
+      $('comb-tables').innerHTML = masses.map(m => `<h4>${f(mkg(m), 2)} kg: speed ratio, mean ± sd (runs in limits and moving forward, of 10)</h4><div class="card"><table id="tc-${m}"></table></div>`).join('');
+      masses.forEach(m => { $('tc-' + m).innerHTML = '<tr><th>setting</th>' + speedsCB.map(sp => `<th class="num">${sp} m/s</th>`).join('') + '</tr>'
+        + cfgs.map(c => `<tr><td>${c}</td>` + speedsCB.map(sp => { const x = cbCell(c, m, sp); return `<td class="num">${f(x.ratio_mean, 3)} ± ${f(x.ratio_sd, 3)} (${Math.min(x.in_limits, x.forward)})</td>`; }).join('') + '</tr>').join(''); });
+      const m1 = masses[1], b = sp => pd(m1, sp).best_minus_baseline[0];
+      $('comb-read').textContent = `At about ${f(mkg(m1), 1)} kg the best settings together made ${f(cbCell('best', m1, 0.15).ratio_mean, 3)} of the commanded speed at 0.15 m/s against ${f(cbCell('baseline', m1, 0.15).ratio_mean, 3)} for the baseline (paired difference ${f(b(0.15), 3)}), and tilted ${f(cbCell('best', m1, 0.15).tilt_mean_deg, 1)}° against ${f(cbCell('baseline', m1, 0.15).tilt_mean_deg, 1)}°. The gain falls with speed (${f(b(0.05), 3)} at 0.05 m/s, ${f(b(0.2), 3)} at 0.2 m/s). The combined gain is smaller than the sum of the single-group gains in every cell at the two lighter masses. At the heaviest mass the servos are at their stall limit and there is no clear gain.`;
     }
     const gal = [['learning/error_distribution.png', 'Error distribution'], ['learning/error_vs_length.png', 'Error against leg size'], ['learning/error_map.png', 'Error across the workspace'], ['learning/training_curve.png', 'Training curve'], ['stand/sit_to_stand.png', 'Sit to stand: height and torque']];
     $('plots-g').innerHTML = gal.map(([s, c]) => `<figure class="card"><img src="media/${s.split('/').pop()}" alt="${c}" loading="lazy" style="width:100%"><figcaption>${c} (original matplotlib plot, <code>results/${s}</code>)</figcaption></figure>`).join('');

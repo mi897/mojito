@@ -8,7 +8,7 @@ floor because only the foot pads collide in the model.
     results/stand/stand_demo.gif        4 kg stands, 6 kg collapses (kp 100)
     results/stand/sit_to_stand_demo.gif 3 kg rises from a crouch in 2 s, 5 kg cannot (kp 10)
 
-    python scripts/sim/make_stand_demo.py
+    python scripts/stand/make_stand_demo.py
 """
 import os
 import sys

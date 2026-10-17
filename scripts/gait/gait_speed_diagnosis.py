@@ -10,7 +10,7 @@ gives a speed the commanded motion can deliver:
 body to move backward). Whatever falls short of `ask` is the servo not following the command.
 Runs variants of the servo and the gait, writes results/gait/gait_speed_diagnosis.json. Needs mujoco.
 
-    python scripts/sim/gait_speed_diagnosis.py
+    python scripts/gait/gait_speed_diagnosis.py
 """
 import dataclasses
 import json
@@ -25,6 +25,8 @@ from mojito.sim import actuators, gait_replay  # noqa: E402
 
 TIMESTEP = 0.002
 STAND, RAMP = 1.0, 0.5
+# The diagnosis was made with the original 30 mm swing, 0.2125 m stance and kp 10 servo; `gaits.TROT` is now 22 mm (and tuned in gait_replay).
+TROT_30MM = dataclasses.replace(gaits.TROT, lift=0.03)
 Servo = actuators.ServoParams
 IDEAL = Servo(kp=100.0, kd=1.0, latency=0.0, resolution=1e-4, torque_scale=10.0)  # not a real servo: a tracking upper bound
 
@@ -66,7 +68,7 @@ def main():
                    "Placeholder dimensions, masses (1.72 kg), servo figures and friction; one run per entry.",
            "trot": {}, "crawl": {}}
     for name, kw in VARIANTS.items():
-        out["trot"][name] = [analyse(gaits.TROT, v, **dict(kw)) for v in (0.0, 0.15)]
+        out["trot"][name] = [analyse(TROT_30MM, v, **dict(kw)) for v in (0.0, 0.15)]
     for name in ("baseline (kp 10, kd 0.2, latency 20 ms, PCA9685 steps)", "kp 100, kd 1"):
         out["crawl"][name] = [analyse(gaits.CRAWL, v, **dict(VARIANTS[name])) for v in (0.0, 0.04)]
     for gait in ("trot", "crawl"):

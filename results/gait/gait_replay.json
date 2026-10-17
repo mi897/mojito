@@ -5,7 +5,20 @@
     0.15,
     0.15
   ],
-  "stance_height_m": 0.2125,
+  "stance_height_m": {
+    "trot": 0.16,
+    "crawl": 0.2125
+  },
+  "servo": {
+    "trot": {
+      "kp": 50.0,
+      "kd": 0.9
+    },
+    "crawl": {
+      "kp": 10.0,
+      "kd": 0.2
+    }
+  },
   "timestep_s": 0.002,
   "runs": [
     {
@@ -16,20 +29,20 @@
       ],
       "commanded_yaw_rate_rad_s": 0.0,
       "walked": true,
-      "max_tilt_deg": 9.1,
-      "min_body_height_mm": 209.5,
+      "max_tilt_deg": 6.5,
+      "min_body_height_mm": 167.5,
       "measured_forward_lateral_velocity_m_s": [
-        -0.008,
-        0.002
+        0.0,
+        -0.0
       ],
-      "measured_yaw_rate_rad_s": 0.007,
-      "peak_torque_fraction_of_limit": 0.612,
+      "measured_yaw_rate_rad_s": -0.0,
+      "peak_torque_fraction_of_limit": 0.654,
       "fraction_of_walking_saturated": 0.0,
-      "max_joint_gap_deg": 8.2,
+      "max_joint_gap_deg": 1.7,
       "feet_down_min": 2,
-      "feet_down_mean": 3.31,
-      "slip_max_mm_per_step": 0.41,
-      "slip_mean_mm_per_step": 0.029
+      "feet_down_mean": 3.1,
+      "slip_max_mm_per_step": 0.06,
+      "slip_mean_mm_per_step": 0.012
     },
     {
       "gait": "trot",
@@ -39,20 +52,20 @@
       ],
       "commanded_yaw_rate_rad_s": 0.0,
       "walked": true,
-      "max_tilt_deg": 7.0,
-      "min_body_height_mm": 208.4,
+      "max_tilt_deg": 5.9,
+      "min_body_height_mm": 166.9,
       "measured_forward_lateral_velocity_m_s": [
-        0.011,
-        0.002
+        0.038,
+        -0.0
       ],
-      "measured_yaw_rate_rad_s": 0.01,
-      "peak_torque_fraction_of_limit": 0.635,
+      "measured_yaw_rate_rad_s": -0.0,
+      "peak_torque_fraction_of_limit": 0.738,
       "fraction_of_walking_saturated": 0.0,
-      "max_joint_gap_deg": 6.5,
+      "max_joint_gap_deg": 2.2,
       "feet_down_min": 2,
-      "feet_down_mean": 3.33,
-      "slip_max_mm_per_step": 0.49,
-      "slip_mean_mm_per_step": 0.06
+      "feet_down_mean": 3.18,
+      "slip_max_mm_per_step": 0.3,
+      "slip_mean_mm_per_step": 0.067
     },
     {
       "gait": "trot",
@@ -62,20 +75,20 @@
       ],
       "commanded_yaw_rate_rad_s": 0.0,
       "walked": true,
-      "max_tilt_deg": 5.2,
-      "min_body_height_mm": 204.2,
+      "max_tilt_deg": 5.9,
+      "min_body_height_mm": 166.0,
       "measured_forward_lateral_velocity_m_s": [
-        0.1,
-        0.027
+        0.132,
+        -0.001
       ],
-      "measured_yaw_rate_rad_s": 0.037,
-      "peak_torque_fraction_of_limit": 0.757,
+      "measured_yaw_rate_rad_s": 0.0,
+      "peak_torque_fraction_of_limit": 0.889,
       "fraction_of_walking_saturated": 0.0,
-      "max_joint_gap_deg": 8.7,
+      "max_joint_gap_deg": 5.4,
       "feet_down_min": 2,
-      "feet_down_mean": 3.25,
-      "slip_max_mm_per_step": 1.11,
-      "slip_mean_mm_per_step": 0.138
+      "feet_down_mean": 2.93,
+      "slip_max_mm_per_step": 0.94,
+      "slip_mean_mm_per_step": 0.132
     },
     {
       "gait": "trot",
@@ -84,21 +97,21 @@
         0.0
       ],
       "commanded_yaw_rate_rad_s": 0.0,
-      "walked": true,
-      "max_tilt_deg": 9.8,
-      "min_body_height_mm": 198.7,
+      "walked": false,
+      "max_tilt_deg": 6.6,
+      "min_body_height_mm": 164.3,
       "measured_forward_lateral_velocity_m_s": [
-        0.248,
-        0.051
+        0.249,
+        -0.003
       ],
-      "measured_yaw_rate_rad_s": 0.029,
-      "peak_torque_fraction_of_limit": 0.933,
-      "fraction_of_walking_saturated": 0.209,
-      "max_joint_gap_deg": 14.8,
+      "measured_yaw_rate_rad_s": 0.0,
+      "peak_torque_fraction_of_limit": 1.0,
+      "fraction_of_walking_saturated": 0.406,
+      "max_joint_gap_deg": 10.9,
       "feet_down_min": 1,
-      "feet_down_mean": 2.9,
-      "slip_max_mm_per_step": 2.13,
-      "slip_mean_mm_per_step": 0.237
+      "feet_down_mean": 2.82,
+      "slip_max_mm_per_step": 1.83,
+      "slip_mean_mm_per_step": 0.229
     },
     {
       "gait": "trot",
@@ -108,20 +121,20 @@
       ],
       "commanded_yaw_rate_rad_s": 0.6,
       "walked": true,
-      "max_tilt_deg": 12.1,
-      "min_body_height_mm": 206.6,
+      "max_tilt_deg": 6.5,
+      "min_body_height_mm": 166.1,
       "measured_forward_lateral_velocity_m_s": [
-        -0.019,
+        -0.001,
         -0.007
       ],
-      "measured_yaw_rate_rad_s": 0.38,
-      "peak_torque_fraction_of_limit": 0.847,
+      "measured_yaw_rate_rad_s": 0.535,
+      "peak_torque_fraction_of_limit": 0.901,
       "fraction_of_walking_saturated": 0.0,
-      "max_joint_gap_deg": 10.6,
+      "max_joint_gap_deg": 3.6,
       "feet_down_min": 2,
-      "feet_down_mean": 3.07,
-      "slip_max_mm_per_step": 0.89,
-      "slip_mean_mm_per_step": 0.112
+      "feet_down_mean": 2.99,
+      "slip_max_mm_per_step": 0.8,
+      "slip_mean_mm_per_step": 0.122
     },
     {
       "gait": "crawl",

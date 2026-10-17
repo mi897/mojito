@@ -18,6 +18,20 @@ from ..robot import body, gaits
 from . import actuators, mjcf, stand
 
 
+# Settings for the trot that did best in physics (docs/STAGE2.md, "Do the best values add up?"): 0.16 m stance, kp 50, kd 0.9.
+# The swing height (22 mm) is in `gaits.TROT`. Other gaits keep the original stance height and servo defaults.
+TROT_STANCE_HEIGHT = 0.16
+TROT_SERVO = dict(kp=50.0, kd=0.9)
+DEFAULT_STANCE_HEIGHT = 0.2125
+
+
+def settings_for(gait) -> dict:
+    """Keyword arguments (`height`, `servo`) for `run_gait`: the tuned ones for the trot, the original ones for any other gait."""
+    if gait.name == "trot":
+        return {"height": TROT_STANCE_HEIGHT, "servo": actuators.ServoParams(**TROT_SERVO)}
+    return {"height": DEFAULT_STANCE_HEIGHT, "servo": actuators.ServoParams()}
+
+
 def _smoothstep(x):
     return stand.smoothstep(x)
 

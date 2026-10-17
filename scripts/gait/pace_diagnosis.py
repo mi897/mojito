@@ -4,13 +4,13 @@ Hypothesis: with only two feet on one side down, the support is a line along tha
 mass. The body is not held up laterally, so it rolls onto the lifted feet until they touch the floor, they carry
 the load although commanded to swing, and a loaded swing foot moves forward in the body frame, pushing the body back.
 Checks, each from a MuJoCo run (placeholder dimensions, masses, servo figures, friction; one run per entry):
-  1. load share on feet commanded to swing, and the 'ask' of scripts/sim/gait_speed_diagnosis.py, pace against trot;
+  1. load share on feet commanded to swing, and the 'ask' of scripts/gait/gait_speed_diagnosis.py, pace against trot;
   2. roll range of the body against the roll that lifts the swing foot back to the floor, 2 atan(lift / track);
   3. whether load sits on the swing side (mean left-load share while the left legs are commanded to stand);
   4. variants: period, duty, swing height;
   5. a lateral body shift toward the stance side (the crawl's lean idea), which should unload the swing feet.
 
-    python scripts/sim/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
+    python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
 """
 import dataclasses
 import json
@@ -24,7 +24,9 @@ from mojito.robot import gaits
 from mojito.sim import actuators, gait_replay  # noqa: E402
 
 TIMESTEP = 0.002
-PACE = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
+# The pace was measured with the original 30 mm swing, 0.2125 m stance and kp 10 servo, and still is; `gaits.TROT` is now 22 mm.
+TROT = dataclasses.replace(gaits.TROT, lift=0.03)
+PACE = dataclasses.replace(TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
 Servo = actuators.ServoParams
 IDEAL = Servo(kp=100.0, kd=1.0, latency=0.0, resolution=1e-4, torque_scale=10.0)
 
@@ -59,7 +61,7 @@ def measure(gait, velocity=0.1, cycles=3, **kw):
 def main():
     out = {"what": __doc__.strip().split("\n")[0], "velocity_commanded_m_s": 0.1}
     out["trot_vs_pace"] = {f"{g.name} {n}": measure(g, **kw)
-                           for g in (gaits.TROT, PACE)
+                           for g in (TROT, PACE)
                            for n, kw in (("kp 10", {}), ("kp 100", dict(servo=Servo(kp=100.0, kd=1.0))), ("ideal servo", dict(servo=IDEAL)))}
     rows = {}
     for name, gait in (("pace period 1.7 (base)", PACE), ("period 0.5 (the original)", dataclasses.replace(PACE, period=0.5)),

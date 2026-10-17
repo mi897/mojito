@@ -22,10 +22,22 @@ class TestLiveSim(unittest.TestCase):
         sim.step(500)  # stand for 1 s, as run_gait does
         sim.set_params(walk=True)
         sim.step(1000)
-        r = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=4, stand_time=1.0, ramp_time=0.5)
+        r = gait_replay.run_gait(gaits.TROT, (0.15, 0.0), cycles=4, stand_time=1.0, ramp_time=0.5,
+                                 **gait_replay.settings_for(gaits.TROT))
         origin = sim.data.site("body_origin").xpos
         # the target-speed limit and the accumulated cycle position make this close, not bit-identical
         np.testing.assert_allclose(origin, r["origin_m"][1499], atol=2e-3)
+
+    def test_presets_match_the_batch_replay_settings(self):
+        # the live explorer's presets must start from the same settings the replays use, trot tuned, crawl and pace original
+        for name, gait in (("trot", gaits.TROT), ("crawl", gaits.CRAWL)):
+            settings = gait_replay.settings_for(gait)
+            preset = live_sim.PRESETS[name]
+            self.assertEqual(preset["height"], settings["height"])
+            self.assertEqual(preset["kp"], settings["servo"].kp)
+            self.assertEqual(preset["kd"], settings["servo"].kd)
+            self.assertEqual(preset["lift"], gait.lift)
+        self.assertEqual(live_sim.PRESETS["pace"]["kp"], gait_replay.settings_for(gaits.CRAWL)["servo"].kp)
 
     def test_changing_the_period_does_not_jump_the_phase(self):
         sim = live_sim.LiveSim(live_sim.PRESETS["trot"])

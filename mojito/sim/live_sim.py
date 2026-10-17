@@ -1,4 +1,4 @@
-"""A gait replay you can steer while it runs (used by scripts/sim/live_gait.py).
+"""A gait replay you can steer while it runs (used by scripts/gait/live_gait.py).
 
 Same model as `gait_replay.run_gait` (closed-form IK, `actuators.Servo`, actuated MuJoCo model), but advanced a
 few steps at a time, with the gait and servo parameters changeable between steps.
@@ -30,17 +30,22 @@ HISTORY = 2.0              # s, window for the measured velocity
 CONTACT_FORCE = 0.5        # N, a foot carrying more is "down"
 
 DEFAULTS = dict(
-    period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0,
+    period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.022, sway=0.0,
     vx=0.15, vy=0.0, yaw_rate=0.0,
-    kp=10.0, kd=0.2, mass=1.72, speed=1.0, walk=False,
+    kp=50.0, kd=0.9, mass=1.72, speed=1.0, walk=False,
     # robot design: these rebuild the model (like mass). Metres.
-    la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.2125,
+    la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.16,
     voltage=5.0,
 )
+# The trot uses the tuned settings of gait_replay (kp 50, kd 0.9, 0.16 m stance, 22 mm swing); the crawl and the pace keep the original
+# servo (kp 10, kd 0.2), 0.2125 m stance and 30 mm swing, which is what their results in docs/STAGE2.md were measured with.
 PRESETS = {
-    "trot": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.03, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0),
-    "crawl": dict(period=2.0, duty=0.85, offsets=[0.75, 0.25, 0.5, 0.0], lift=0.03, sway=0.025, vx=0.04, vy=0.0, yaw_rate=0.0),
-    "pace": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0),
+    "trot": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.022, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0,
+                 kp=50.0, kd=0.9, height=0.16),
+    "crawl": dict(period=2.0, duty=0.85, offsets=[0.75, 0.25, 0.5, 0.0], lift=0.03, sway=0.025, vx=0.04, vy=0.0, yaw_rate=0.0,
+                  kp=10.0, kd=0.2, height=0.2125),
+    "pace": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0,
+                 kp=10.0, kd=0.2, height=0.2125),
 }
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),

@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# MuJoCo physics: mojito/sim, scripts/sim, the live gait explorer, the site's live physics.
+# MuJoCo physics: mojito/sim, scripts/gait, scripts/stand, the live gait explorer, the site's live physics.
 sim = ["mujoco"]
 # PyTorch backend (the NumPy backend is the default and needs nothing extra). Pick one build:
 # CPU-only wheel, or the CUDA wheel. scripts/setup.sh chooses for you (--cpu, --gpu, or detects).

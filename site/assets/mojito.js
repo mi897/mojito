@@ -130,7 +130,7 @@
   }
 
   /* ---------- gaits ---------- */
-  const TROT = { name: 'trot', period: 1.7, duty: 0.5, offsets: [0, 0.5, 0.5, 0], lift: 0.03, sway: 0 };
+  const TROT = { name: 'trot', period: 1.7, duty: 0.5, offsets: [0, 0.5, 0.5, 0], lift: 0.022, sway: 0 };
   const CRAWL = { name: 'crawl', period: 2.0, duty: 0.85, offsets: [0.75, 0.25, 0.5, 0], lift: 0.03, sway: 0.025 };
   const PACE = { name: 'pace', period: 1.7, duty: 0.5, offsets: [0, 0.5, 0, 0.5], lift: 0.03, sway: 0 };
 
