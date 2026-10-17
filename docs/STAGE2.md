@@ -718,6 +718,104 @@ Each is one branch-sized step. Tick them off here as they land.
      | 150 | 9.3 | 9.2 | 9.2 | 9.2 | 9.2 | 9.3 | 9.3 | 9.1 | 9.1 | 9.0 | 9.0 | 9.0 | 9.1 | 9.2 | 9.1 | 9.1 | 9.1 |
      *What it shows.* (1) At kp 50 to 60 the speed ratio is 0.865 on the plateau (kd 0.2 to 1.4 at kp 50, 0.7 to 1.4 at kp 60), the best in this grid; kp 40 to 70 are within 0.003 of it (0.862 to 0.865), so I would not call one of them the optimum. (2) The highest kd below the cliff (1.4) (1.3 at kp 150) is the best at every kp from 50 up, so for high kp more damping helps up to the cliff and not beyond. But it helps little: at kp 150 the best is 0.778 (kd 1.3), against 0.768 for the tied rule (kd 1.12) and 0.865 at kp 50 to 60. So the tied rule was not what made high kp slow; no kd rescues it. (3) Tilt depends mostly on kp, not kd: at kp 150 it is 9.0 to 9.3 degrees for every kd from 0 to 3, while at kp 20 it falls from 8.2 (kd 0) to 6.0 (kd 1.4) and at kp 40 from 8.8 to 7.7. Raising kd from 0 to 1.4 lowers the tilt by 2.2 degrees at kp 20 and by 0.2 at kp 150; that is the whole effect. So the tilt at high kp is not a damping problem in this model. (4) The torque is at its stall limit (peak 1.00 of stall) at the best kd for every kp from 60 up, consistent with a stiff servo saturating, but I did not test that as the cause of the slowdown. (5) The low-kd side matters more at high kp: kd 0 costs 0.03 (kp 20), 0.07 (kp 30) and 0.24 (kp 150) of the mean ratio against the peak. For use: a mid-plateau kd (about 0.7 to 1.1) at kp 50 to 60 gives 0.86 with margin from the cliff; kd 1.4 gives the same or a hair more but sits one grid step from a sharp drop.
      *Not shown.* The cliff and plateau edges are located to the grid (0.1 steps near the cliff), not exactly. One baseline (0.15 m/s, 0.19 m, 30 mm, duty 0.5, 1.72 kg); other speeds, masses and swing heights may move the plateau. The spread is from the mass and latency draws only. "Walked" was true for all 2380 runs, including those that went backward, so it is not a useful filter here. Placeholder dimensions, masses, servo figures and friction.
+   - *Do the best values add up when used together?* (`scripts/gait/sweeps/trot_1p7_combined.py`, `results/gait/sweeps/combined/trot_1p7_combined.json`; means, standard deviations and paired differences in `trot_1p7_combined_summary.json`; plot `trot_1p7_combined.png`, both from `scripts/gait/sweeps/plot_trot_1p7_combined.py`; website: Results, "Do the best values add up?"). Nine settings of (kp, kd, swing, stance), each at four commanded speeds (0.05, 0.1, 0.15, 0.2 m/s) and three masses (the placeholder masses times 0.6, 1.0, 1.75, which are 1.04, 1.73 and 3.02 kg as the means over the 10 random draws; the nominal figures are 1.03, 1.72 and 3.01), 10 runs per cell, 1080 runs, 1.7 s period, duty 0.5. The settings: *baseline* (kp 30, kd 0.5, 30 mm, 0.19 m); *best* (kp 50, kd 0.9, 22 mm, 0.16 m: the best value of each from the sweeps above, with kd in the middle of the plateau and not at the cliff); *best_stance_0.17* (best with a 0.17 m stance, for margin from the joint limits); *best_baseline_gains / _swing / _stance* (best with one group put back to the baseline value: gains means kp and kd together); *gains_only / swing_only / stance_only* (baseline with one group changed to the best). The same 10 random mass (+-5% per body) and latency (18 to 22 ms) draws are used in every cell, so differences are paired (the other config's ratio subtracted for the same draw, then the mean and sample standard deviation over the 10 draws). The spread is from those draws only. All 1080 runs counted as walked, stayed inside the joint limits (even 0.16 m at 0.2 m/s) and moved forward.
+     *Mean speed ratio ± sd (valid runs of 10 in brackets):*
+     mass 1.04 kg: mean speed ratio ± sd (valid runs of 10: in limits and moving forward) 
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 0.750 ± 0.002 (10/10) | 0.829 ± 0.003 (10/10) | 0.871 ± 0.002 (10/10) | 0.895 ± 0.002 (10/10) |
+     | best | 0.787 ± 0.002 (10/10) | 0.855 ± 0.002 (10/10) | 0.883 ± 0.001 (10/10) | 0.895 ± 0.001 (10/10) |
+     | best_stance_0.17 | 0.778 ± 0.002 (10/10) | 0.852 ± 0.002 (10/10) | 0.876 ± 0.001 (10/10) | 0.887 ± 0.001 (10/10) |
+     | best_baseline_gains | 0.770 ± 0.003 (10/10) | 0.861 ± 0.002 (10/10) | 0.892 ± 0.002 (10/10) | 0.907 ± 0.002 (10/10) |
+     | best_baseline_swing | 0.778 ± 0.002 (10/10) | 0.853 ± 0.003 (10/10) | 0.875 ± 0.002 (10/10) | 0.893 ± 0.002 (10/10) |
+     | best_baseline_stance | 0.802 ± 0.003 (10/10) | 0.855 ± 0.002 (10/10) | 0.875 ± 0.001 (10/10) | 0.894 ± 0.001 (10/10) |
+     | gains_only | 0.770 ± 0.004 (10/10) | 0.831 ± 0.002 (10/10) | 0.857 ± 0.002 (10/10) | 0.883 ± 0.002 (10/10) |
+     | swing_only | 0.773 ± 0.005 (10/10) | 0.849 ± 0.003 (10/10) | 0.884 ± 0.002 (10/10) | 0.902 ± 0.002 (10/10) |
+     | stance_only | 0.761 ± 0.004 (10/10) | 0.852 ± 0.003 (10/10) | 0.888 ± 0.002 (10/10) | 0.909 ± 0.002 (10/10) |
+
+     mass 1.73 kg: mean speed ratio ± sd (valid runs of 10: in limits and moving forward) 
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 0.677 ± 0.005 (10/10) | 0.783 ± 0.004 (10/10) | 0.848 ± 0.004 (10/10) | 0.880 ± 0.002 (10/10) |
+     | best | 0.756 ± 0.003 (10/10) | 0.846 ± 0.002 (10/10) | 0.880 ± 0.002 (10/10) | 0.895 ± 0.002 (10/10) |
+     | best_stance_0.17 | 0.755 ± 0.002 (10/10) | 0.837 ± 0.003 (10/10) | 0.876 ± 0.002 (10/10) | 0.891 ± 0.002 (10/10) |
+     | best_baseline_gains | 0.712 ± 0.004 (10/10) | 0.825 ± 0.004 (10/10) | 0.867 ± 0.003 (10/10) | 0.891 ± 0.002 (10/10) |
+     | best_baseline_swing | 0.745 ± 0.005 (10/10) | 0.837 ± 0.003 (10/10) | 0.875 ± 0.002 (10/10) | 0.897 ± 0.001 (10/10) |
+     | best_baseline_stance | 0.755 ± 0.005 (10/10) | 0.836 ± 0.003 (10/10) | 0.872 ± 0.003 (10/10) | 0.892 ± 0.001 (10/10) |
+     | gains_only | 0.736 ± 0.004 (10/10) | 0.816 ± 0.003 (10/10) | 0.859 ± 0.002 (10/10) | 0.885 ± 0.003 (10/10) |
+     | swing_only | 0.687 ± 0.004 (10/10) | 0.811 ± 0.004 (10/10) | 0.859 ± 0.003 (10/10) | 0.883 ± 0.002 (10/10) |
+     | stance_only | 0.700 ± 0.005 (10/10) | 0.819 ± 0.003 (10/10) | 0.870 ± 0.003 (10/10) | 0.897 ± 0.002 (10/10) |
+
+     mass 3.02 kg: mean speed ratio ± sd (valid runs of 10: in limits and moving forward) 
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 0.253 ± 0.166 (10/10) | 0.285 ± 0.042 (10/10) | 0.432 ± 0.016 (10/10) | 0.529 ± 0.036 (10/10) |
+     | best | 0.239 ± 0.085 (10/10) | 0.296 ± 0.033 (10/10) | 0.430 ± 0.020 (10/10) | 0.556 ± 0.014 (10/10) |
+     | best_stance_0.17 | 0.365 ± 0.146 (10/10) | 0.279 ± 0.070 (10/10) | 0.382 ± 0.047 (10/10) | 0.451 ± 0.043 (10/10) |
+     | best_baseline_gains | 0.125 ± 0.066 (10/10) | 0.254 ± 0.027 (10/10) | 0.407 ± 0.014 (10/10) | 0.537 ± 0.011 (10/10) |
+     | best_baseline_swing | 0.325 ± 0.011 (10/10) | 0.502 ± 0.002 (10/10) | 0.623 ± 0.005 (10/10) | 0.711 ± 0.013 (10/10) |
+     | best_baseline_stance | 0.627 ± 0.073 (10/10) | 0.484 ± 0.099 (10/10) | 0.536 ± 0.061 (10/10) | 0.571 ± 0.070 (10/10) |
+     | gains_only | 0.591 ± 0.106 (10/10) | 0.522 ± 0.110 (10/10) | 0.517 ± 0.060 (10/10) | 0.548 ± 0.037 (10/10) |
+     | swing_only | 0.358 ± 0.150 (10/10) | 0.283 ± 0.055 (10/10) | 0.433 ± 0.035 (10/10) | 0.523 ± 0.034 (10/10) |
+     | stance_only | 0.291 ± 0.010 (10/10) | 0.496 ± 0.008 (10/10) | 0.625 ± 0.013 (10/10) | 0.712 ± 0.015 (10/10) |
+     *Mean largest tilt in degrees / mean peak torque over stall (runs that stayed upright):*
+     mass 1.04 kg: mean tilt (deg, upright runs) and peak torque / stall
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 9.0 / 0.50 | 8.2 / 0.51 | 8.3 / 0.52 | 8.7 / 0.55 |
+     | best | 6.1 / 0.55 | 6.1 / 0.64 | 6.2 / 0.69 | 6.4 / 0.68 |
+     | best_stance_0.17 | 5.9 / 0.61 | 6.0 / 0.64 | 6.2 / 0.64 | 6.4 / 0.80 |
+     | best_baseline_gains | 5.9 / 0.44 | 5.8 / 0.51 | 5.9 / 0.53 | 6.1 / 0.59 |
+     | best_baseline_swing | 8.6 / 0.54 | 8.6 / 0.67 | 8.8 / 0.74 | 9.0 / 0.81 |
+     | best_baseline_stance | 6.1 / 0.60 | 5.9 / 0.64 | 6.1 / 0.64 | 6.3 / 0.73 |
+     | gains_only | 9.1 / 0.61 | 8.4 / 0.64 | 8.6 / 0.66 | 9.0 / 0.67 |
+     | swing_only | 5.9 / 0.48 | 5.7 / 0.51 | 5.7 / 0.51 | 6.0 / 0.55 |
+     | stance_only | 8.6 / 0.44 | 8.3 / 0.50 | 8.5 / 0.56 | 8.8 / 0.62 |
+
+     mass 1.73 kg: mean tilt (deg, upright runs) and peak torque / stall
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 8.8 / 0.75 | 7.9 / 0.76 | 7.9 / 0.85 | 8.2 / 0.87 |
+     | best | 5.9 / 0.74 | 5.8 / 0.84 | 5.9 / 0.88 | 6.0 / 0.98 |
+     | best_stance_0.17 | 5.6 / 0.81 | 5.7 / 0.87 | 5.9 / 0.86 | 6.0 / 0.91 |
+     | best_baseline_gains | 5.7 / 0.73 | 5.4 / 0.80 | 5.4 / 0.85 | 5.6 / 0.89 |
+     | best_baseline_swing | 8.6 / 0.74 | 8.3 / 0.86 | 8.5 / 0.93 | 8.7 / 0.99 |
+     | best_baseline_stance | 5.9 / 0.80 | 5.6 / 0.85 | 5.7 / 0.85 | 6.0 / 0.89 |
+     | gains_only | 9.0 / 0.84 | 8.2 / 0.84 | 8.3 / 0.88 | 8.7 / 0.89 |
+     | swing_only | 5.7 / 0.69 | 5.2 / 0.78 | 5.2 / 0.81 | 5.5 / 0.84 |
+     | stance_only | 8.6 / 0.74 | 8.0 / 0.84 | 8.1 / 0.86 | 8.4 / 0.85 |
+
+     mass 3.02 kg: mean tilt (deg, upright runs) and peak torque / stall
+     | config | 0.05 m/s | 0.1 m/s | 0.15 m/s | 0.2 m/s |
+     |---|---|---|---|---|
+     | baseline | 6.1 / 1.00 | 6.5 / 1.00 | 9.0 / 1.00 | 12.0 / 1.00 |
+     | best | 5.4 / 1.00 | 5.9 / 1.00 | 5.8 / 1.00 | 5.9 / 1.00 |
+     | best_stance_0.17 | 4.5 / 1.00 | 5.9 / 1.00 | 6.2 / 1.00 | 7.0 / 1.00 |
+     | best_baseline_gains | 5.3 / 1.00 | 5.5 / 1.00 | 5.6 / 1.00 | 5.7 / 1.00 |
+     | best_baseline_swing | 6.0 / 1.00 | 5.9 / 1.00 | 5.9 / 1.00 | 6.0 / 1.00 |
+     | best_baseline_stance | 4.4 / 1.00 | 4.3 / 1.00 | 4.8 / 1.00 | 6.2 / 1.00 |
+     | gains_only | 7.1 / 1.00 | 5.7 / 1.00 | 7.9 / 1.00 | 10.5 / 1.00 |
+     | swing_only | 3.7 / 1.00 | 4.6 / 1.00 | 5.6 / 1.00 | 9.1 / 1.00 |
+     | stance_only | 5.5 / 1.00 | 5.5 / 1.00 | 5.6 / 1.00 | 5.6 / 1.00 |
+     *Paired differences in speed ratio:*
+     paired differences in speed ratio (mean ± sd over the 10 draws)
+     | mass kg | speed | best - baseline | sum of the three single-group effects | gains only | swing only | stance only | best - best with baseline gains | best - best with baseline swing | best - best with baseline stance |
+     |---|---|---|---|---|---|---|---|---|---|
+     | 1.04 | 0.05 | 0.037 ± 0.001 | 0.054 | 0.020 ± 0.002 | 0.023 ± 0.003 | 0.011 ± 0.002 | 0.017 ± 0.003 | 0.009 ± 0.001 | -0.015 ± 0.002 |
+     | 1.04 | 0.1 | 0.026 ± 0.002 | 0.045 | 0.002 ± 0.003 | 0.020 ± 0.001 | 0.023 ± 0.001 | -0.005 ± 0.001 | 0.002 ± 0.002 | 0.001 ± 0.001 |
+     | 1.04 | 0.15 | 0.012 ± 0.002 | 0.015 | -0.014 ± 0.001 | 0.013 ± 0.001 | 0.017 ± 0.001 | -0.008 ± 0.001 | 0.009 ± 0.002 | 0.009 ± 0.001 |
+     | 1.04 | 0.2 | -0.000 ± 0.001 | 0.008 | -0.013 ± 0.001 | 0.006 ± 0.001 | 0.014 ± 0.001 | -0.012 ± 0.001 | 0.002 ± 0.001 | 0.001 ± 0.001 |
+     | 1.73 | 0.05 | 0.079 ± 0.002 | 0.094 | 0.059 ± 0.002 | 0.011 ± 0.001 | 0.024 ± 0.001 | 0.044 ± 0.002 | 0.011 ± 0.002 | 0.001 ± 0.003 |
+     | 1.73 | 0.1 | 0.063 ± 0.002 | 0.097 | 0.033 ± 0.002 | 0.028 ± 0.001 | 0.036 ± 0.001 | 0.021 ± 0.001 | 0.009 ± 0.002 | 0.010 ± 0.001 |
+     | 1.73 | 0.15 | 0.031 ± 0.002 | 0.043 | 0.010 ± 0.002 | 0.011 ± 0.001 | 0.022 ± 0.001 | 0.013 ± 0.002 | 0.005 ± 0.001 | 0.008 ± 0.001 |
+     | 1.73 | 0.2 | 0.015 ± 0.001 | 0.025 | 0.005 ± 0.001 | 0.003 ± 0.001 | 0.017 ± 0.001 | 0.004 ± 0.001 | -0.002 ± 0.001 | 0.003 ± 0.001 |
+     | 3.02 | 0.05 | -0.014 ± 0.082 | 0.481 | 0.338 ± 0.086 | 0.105 ± 0.028 | 0.039 ± 0.157 | 0.114 ± 0.019 | -0.086 ± 0.082 | -0.388 ± 0.048 |
+     | 3.02 | 0.1 | 0.011 ± 0.019 | 0.445 | 0.237 ± 0.075 | -0.003 ± 0.020 | 0.211 ± 0.037 | 0.041 ± 0.007 | -0.206 ± 0.033 | -0.188 ± 0.066 |
+     | 3.02 | 0.15 | -0.001 ± 0.011 | 0.280 | 0.086 ± 0.047 | 0.001 ± 0.024 | 0.193 ± 0.010 | 0.024 ± 0.006 | -0.192 ± 0.015 | -0.106 ± 0.042 |
+     | 3.02 | 0.2 | 0.028 ± 0.023 | 0.197 | 0.019 ± 0.005 | -0.006 ± 0.006 | 0.183 ± 0.021 | 0.019 ± 0.003 | -0.155 ± 0.004 | -0.014 ± 0.057 |
+     *What it shows.* (1) At the nominal and light masses (1.04 and 1.73 kg) the best settings together beat the baseline at every speed up to 0.15 m/s, by a small amount: at 1.73 kg +0.079, +0.063, +0.031 at 0.05, 0.1, 0.15 m/s (standard deviation of the paired difference 0.002), at 1.04 kg +0.037, +0.026, +0.012. At 0.2 m/s the gain is +0.015 (1.73 kg) and 0.000 (1.04 kg), because the baseline already makes 0.88 to 0.90 of the command there. The speed ratio reaches 0.88 to 0.90 at 0.15 and 0.2 m/s. (2) The tilt falls more clearly: 5.8 to 6.4 degrees against 7.9 to 9.0 at 1.04 and 1.73 kg, 2 to 3 degrees lower at every speed. (3) The gains are less than the sum of the three single-group gains in all 8 of those cells (for example at 1.73 kg and 0.1 m/s +0.063 against 0.097, at 1.04 kg and 0.2 m/s 0.000 against 0.008): the three overlap, so they do not add up fully. (4) With one group put back, at 1.73 kg all three groups still contribute in most cells (the gains +0.044, +0.021, +0.013, +0.004 across the four speeds; the swing +0.011, +0.009, +0.005, -0.002; the stance +0.001, +0.010, +0.008, +0.003). At 1.04 kg the new gains are slightly worse than the baseline gains from 0.1 m/s up (-0.005, -0.008, -0.012), and the lower stance is worse at 0.05 m/s (-0.015), so the best settings are not best everywhere. (5) The 0.17 m stance is 0.001 to 0.009 lower in speed ratio than 0.16 m in all 8 cells at 1.04 and 1.73 kg, so it buys joint-limit margin for little. (6) At 3.02 kg nothing is clear. The servos are at their stall limit (peak torque 1.00) in every run, the speed ratio is 0.24 to 0.56 with the best settings (against 0.25 to 0.53 for the baseline), the paired differences are within about 1.2 standard deviations of zero (for example -0.014 +- 0.082 at 0.05 m/s and +0.028 +- 0.023 at 0.2 m/s), and the three single-group gains (sum 0.20 to 0.48) vanish when combined (0.03 or less). The 22 mm swing is clearly worse at this mass: putting the swing back to 30 mm raises the ratio by 0.086, 0.206, 0.192, 0.155 at the four speeds. The standard deviation is large (up to 0.17), so the results at 3.02 kg are noisy as well as different.
+     *Use.* For a robot near the placeholder mass (about 1 to 1.7 kg, the working target is 1.5 kg) the best settings, or the same with a 0.17 m stance, are a small improvement in speed and a clear one in tilt at 0.15 m/s and below; a heavier robot would need its own settings, and a 30 mm swing did better at 3 kg. This is a placeholder-model result: servo figures, masses and friction are unverified.
+     *Not shown.* Other duties, periods or commanded speeds above 0.2 m/s; turning; terrain; friction; the cliff in kd moving with mass (all three kd values used, 0.5 and 0.9, were below it, but I did not sweep kd at the other masses); why the single gains overlap or why the 22 mm swing fails at 3 kg. The spread is from the mass and latency draws only, so it is small and does not cover model error. All dimensions, masses, servo figures and friction are placeholders.
 5. [ ] **Design sweep.** Vary link lengths, body size and mass; report which
    designs stand, which gaits survive, and the torque margin. Output to
    `results/` with the sweep ranges and mass assumptions stated.

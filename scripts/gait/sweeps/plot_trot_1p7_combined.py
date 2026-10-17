@@ -44,7 +44,7 @@ def main():
         rm, rsd = mean_sd([r["velocity_ratio"] for r in rs])
         tm, tsd = mean_sd([r["max_tilt_deg"] for r in up])
         qm, _ = mean_sd([r["peak_torque_fraction_of_limit"] for r in up])
-        cells.append({"config": c, "mass_scale": m, "speed_m_s": s, "total_mass_kg": rs[0]["total_mass_kg"], "n": len(rs),
+        cells.append({"config": c, "mass_scale": m, "speed_m_s": s, "total_mass_kg": statistics.fmean(r["total_mass_kg"] for r in rs), "n": len(rs),
                       "walked": sum(r["walked"] for r in rs), "in_limits": sum(r["within_joint_limits"] for r in rs),
                       "forward": sum(r["velocity_ratio"] > 0 for r in rs), "ratio_mean": rm, "ratio_sd": rsd,
                       "tilt_mean_deg": tm, "tilt_sd_deg": tsd, "torque_mean": qm,
