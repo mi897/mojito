@@ -46,7 +46,7 @@ scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
   stand/               stand_test, sit_to_stand, make_stand_demo
-  design/              design_sweep, plot_design_sweep (stand and walk 11 designs at three masses; results/design/)
+  design/              design_sweep, design_sweep_draws and a plot_ for each (stand and walk 11 designs at three masses, one run or 10 draws per cell; results/design/)
   gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
@@ -84,7 +84,7 @@ python scripts/learning/make_demo.py                # results/learning/step_demo
 python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
 python scripts/stand/stand_test.py               # results/stand/stand_test.json (needs mujoco)
 python scripts/stand/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
-python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, about 2.5 min on 4 cores); then plot_design_sweep.py
+python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, about 2.5 min on 4 cores); then plot_design_sweep.py; design_sweep_draws.py is the same with 10 mass and latency draws per cell (about 25 min)
 python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
 python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
