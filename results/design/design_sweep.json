@@ -1,0 +1,3284 @@
+{
+ "what": "Stand once and walk the trot and the crawl at three commanded speeds for 11 designs and three masses, one run per cell. Closed-form IK and the servo model into the actuated MuJoCo model, body free, 5 V. Gait timings and servo gains are those tuned on the 150 mm legs (not re-tuned); standing height = the height at which the leg has the placeholder knee bend. All dimensions, masses, servo figures and friction are placeholders.",
+ "speeds_m_s": [
+  0.05,
+  0.1,
+  0.15
+ ],
+ "mass_scales": [
+  0.6,
+  1.0,
+  1.75
+ ],
+ "run_time_s": 10.0,
+ "abduction_offset_m": 0.05,
+ "cells": [
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8963192841464879,
+     "max_tilt_deg": 6.114738969481328,
+     "peak_torque_fraction_of_limit": 0.5971092725156825,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.34665597185905345
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9401092000245431,
+     "max_tilt_deg": 6.196150232393065,
+     "peak_torque_fraction_of_limit": 0.5818508676377302,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.610909410313856
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.943780708184116,
+     "max_tilt_deg": 6.300944824616155,
+     "peak_torque_fraction_of_limit": 0.6341559644178353,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9017311913679763
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.14166666666666666,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 1.0897546491299543,
+     "max_tilt_deg": 1.3481077984766237,
+     "peak_torque_fraction_of_limit": 0.4183755015446826,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.4362171500016052
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7984844841155636,
+     "max_tilt_deg": 2.1272459852404153,
+     "peak_torque_fraction_of_limit": 0.7754101462390017,
+     "fraction_of_walking_saturated": 0.6218823529411764,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 1.1107113751616113
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5700187143100218,
+     "max_tilt_deg": 9.692993611976132,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9945882352941177,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 2.737569938879249
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.14166666666666666,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.0929945608381853,
+    "run_peak_fraction_of_limit": 0.11146474265982953,
+    "front_load_fraction": 0.45070886660411064,
+    "static_bound_kg": 10.763054857865608
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8950636058020104,
+     "max_tilt_deg": 5.893577985331997,
+     "peak_torque_fraction_of_limit": 0.7062931690409779,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3292917153891352
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9417688237864192,
+     "max_tilt_deg": 5.976975613885692,
+     "peak_torque_fraction_of_limit": 0.6919868581389996,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.615327016664339
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9573683471594915,
+     "max_tilt_deg": 6.059037562773204,
+     "peak_torque_fraction_of_limit": 0.6979240619722021,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8897280653085727
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.14166666666666666,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 1.0151561193973442,
+     "max_tilt_deg": 2.1540824089833337,
+     "peak_torque_fraction_of_limit": 0.6250719710594402,
+     "fraction_of_walking_saturated": 0.07552941176470589,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.649964250007205
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7197712086148254,
+     "max_tilt_deg": 3.3842350511635786,
+     "peak_torque_fraction_of_limit": 0.7269721515616292,
+     "fraction_of_walking_saturated": 0.6571764705882353,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.08973683363641
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.4741825145466345,
+     "max_tilt_deg": 10.936986215206408,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9936470588235294,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 2.6833442782846193
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.14166666666666666,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.16599813663388105,
+    "run_peak_fraction_of_limit": 0.1946687242651119,
+    "front_load_fraction": 0.44665523822230724,
+    "static_bound_kg": 10.763054857865608
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.866520827044383,
+     "max_tilt_deg": 5.552218974032403,
+     "peak_torque_fraction_of_limit": 0.9442586408624606,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.30933136774616743
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.92575422864114,
+     "max_tilt_deg": 5.6045059434299525,
+     "peak_torque_fraction_of_limit": 0.9485706674333857,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6118826556123571
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.10666666666666667,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9486762599679677,
+     "max_tilt_deg": 5.721289103747461,
+     "peak_torque_fraction_of_limit": 0.9986453790509284,
+     "fraction_of_walking_saturated": 0.032235294117647056,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9106596029583766
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.14166666666666666,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9101174692219197,
+     "max_tilt_deg": 4.009164160557417,
+     "peak_torque_fraction_of_limit": 0.9629826637760935,
+     "fraction_of_walking_saturated": 0.1976470588235294,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.173416617971643
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5015572285963774,
+     "max_tilt_deg": 6.327794417836787,
+     "peak_torque_fraction_of_limit": 0.9831345231518028,
+     "fraction_of_walking_saturated": 0.7178823529411764,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.3697712984130332
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.14166666666666666,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.41314467729989157,
+     "max_tilt_deg": 12.770401729486597,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 2.325545183261102
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.14166666666666666,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 0.35394101140313244,
+    "run_peak_fraction_of_limit": 0.3681110117672446,
+    "front_load_fraction": 0.43811257685329474,
+    "static_bound_kg": 10.763054857865608
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.823757075985139,
+     "max_tilt_deg": 6.103700743542194,
+     "peak_torque_fraction_of_limit": 0.9983733232167384,
+     "fraction_of_walking_saturated": 0.10352941176470588,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3383105924432578
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7143944743237219,
+     "max_tilt_deg": 6.13825949204647,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.4894117647058824,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5794767323335143
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.4867913614125851,
+     "max_tilt_deg": 6.2018004284181885,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6635294117647059,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.8977535917739223
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9526887306230787,
+     "max_tilt_deg": 1.7516113153046244,
+     "peak_torque_fraction_of_limit": 0.5215196098138248,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5627874988779359
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7798921800325943,
+     "max_tilt_deg": 3.2157546641628976,
+     "peak_torque_fraction_of_limit": 0.6439482474966538,
+     "fraction_of_walking_saturated": 0.44188235294117645,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 1.2010397262129056
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.8394578429727816,
+     "max_tilt_deg": 15.891541662508516,
+     "peak_torque_fraction_of_limit": 0.6695150552975813,
+     "fraction_of_walking_saturated": 0.7828235294117647,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 3.6208207559039227
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.1614466238602774,
+    "run_peak_fraction_of_limit": 0.14268564044847082,
+    "front_load_fraction": 0.4368437233258598,
+    "static_bound_kg": 9.14562040394027
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7977133996580819,
+     "max_tilt_deg": 5.850164890857974,
+     "peak_torque_fraction_of_limit": 0.999802072009632,
+     "fraction_of_walking_saturated": 0.15764705882352942,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3432923684493132
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6880311747130776,
+     "max_tilt_deg": 5.771274787922415,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5058823529411764,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6056610845226178
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.47150199117640257,
+     "max_tilt_deg": 5.830404150793664,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6705882352941176,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9108255197869307
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8362164623005599,
+     "max_tilt_deg": 2.7826705984747084,
+     "peak_torque_fraction_of_limit": 0.8512261617188138,
+     "fraction_of_walking_saturated": 0.05176470588235294,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.910008224332879
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.4197130077797953,
+     "max_tilt_deg": 4.240931420358552,
+     "peak_torque_fraction_of_limit": 0.9467080284617236,
+     "fraction_of_walking_saturated": 0.5407058823529411,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.3787774249481395
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7435011810313151,
+     "max_tilt_deg": 15.28927094854067,
+     "peak_torque_fraction_of_limit": 0.9021363289693699,
+     "fraction_of_walking_saturated": 0.8341176470588235,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.9067657760667402
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.3159718209014144,
+    "run_peak_fraction_of_limit": 0.2562399776873585,
+    "front_load_fraction": 0.4278305487888486,
+    "static_bound_kg": 9.14562040394027
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7424057350273812,
+     "max_tilt_deg": 5.379114607190506,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.22588235294117648,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3426857585067461
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6382931673931522,
+     "max_tilt_deg": 5.195136431639107,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7630588235294118,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6403545614087518
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.36764543355289736,
+     "max_tilt_deg": 5.072694199776315,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9905882352941177,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8841535913290388
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.2714475169161613,
+     "max_tilt_deg": 13.660742065038361,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.724,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.1240784907032377
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.12097776374424046,
+     "max_tilt_deg": 13.462486490630361,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.796235294117647,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.6775122816629051
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.013928985193060251,
+     "max_tilt_deg": 11.110120134401589,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9750588235294118,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.7673521036650586
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 0.795592247601229,
+    "run_peak_fraction_of_limit": 0.5070682728830628,
+    "front_load_fraction": 0.40627080574405144,
+    "static_bound_kg": 9.14562040394027
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.47984518291943584,
+     "max_tilt_deg": 8.790831060144948,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9432941176470588,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.4526408565351333
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.33633572498343217,
+     "max_tilt_deg": 8.288703091898306,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5715229081467943
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.23877243362693948,
+     "max_tilt_deg": 8.272880256672314,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.744610810856185
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7340523036560301,
+     "max_tilt_deg": 2.8680525410541664,
+     "peak_torque_fraction_of_limit": 0.6013773262418504,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6975802222261254
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.5627261679150171,
+     "max_tilt_deg": 4.877062383360933,
+     "peak_torque_fraction_of_limit": 0.8052205674276609,
+     "fraction_of_walking_saturated": 0.3315294117647059,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.4141452835520716
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6692894812185889,
+     "max_tilt_deg": 8.744615457855915,
+     "peak_torque_fraction_of_limit": 0.8446575445657235,
+     "fraction_of_walking_saturated": 0.6950588235294117,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.8916535488093058
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.22443362250037308,
+    "run_peak_fraction_of_limit": 0.15927790566863206,
+    "front_load_fraction": 0.42819467072438017,
+    "static_bound_kg": 8.505997202900712
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.44179065096018166,
+     "max_tilt_deg": 8.679546398340532,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9670588235294117,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.436793932952558
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.3212568343357404,
+     "max_tilt_deg": 8.119201368852783,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5783397434177033
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.2189204848049804,
+     "max_tilt_deg": 8.243948353909675,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.828061602813493
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8776922554469908,
+     "max_tilt_deg": 4.579334157197652,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.10235294117647059,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.0238059061065403
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7359106830197939,
+     "max_tilt_deg": 9.30815876999547,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.43411764705882355,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.6582478412560988
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.22619114486421604,
+     "max_tilt_deg": 10.925045672655568,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7807058823529411,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.9876176628672217
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.46763719636838247,
+    "run_peak_fraction_of_limit": 0.29432712337252964,
+    "front_load_fraction": 0.41264843834032555,
+    "static_bound_kg": 8.505997202900712
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.1,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.3560480501457038,
+     "max_tilt_deg": 8.523197450145604,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9915294117647059,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.4138098218761663
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.2156642631043325,
+     "max_tilt_deg": 7.169961912408216,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.4914671960989914
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.12509771407666842,
+     "max_tilt_deg": 7.892468735969106,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6886625825988141
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.0109241867778502,
+     "max_tilt_deg": 179.98082979066854,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.44541176470588234,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.003034747316785
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.6927103680305304,
+     "max_tilt_deg": 179.93954529489037,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6644705882352941,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 3.630433515703084
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": -0.7145473307793946,
+     "max_tilt_deg": 179.95861765799185,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.144116693317929
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 1.623622641589729,
+    "run_peak_fraction_of_limit": 0.6132867846144798,
+    "front_load_fraction": 0.36367796453285595,
+    "static_bound_kg": 8.505997202900712
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8825532161799505,
+     "max_tilt_deg": 6.201580376543066,
+     "peak_torque_fraction_of_limit": 0.519591759799125,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3273761444625262
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9263202142980543,
+     "max_tilt_deg": 6.244324786213329,
+     "peak_torque_fraction_of_limit": 0.5728824493708801,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6195584402648029
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9400045163632585,
+     "max_tilt_deg": 6.315386349004861,
+     "peak_torque_fraction_of_limit": 0.6093543393945916,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.9264063555706481
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 1.0291521369468661,
+     "max_tilt_deg": 1.8595952674374883,
+     "peak_torque_fraction_of_limit": 0.4554949039131407,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5763558076622517
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.9684167351972485,
+     "max_tilt_deg": 1.9671418607248443,
+     "peak_torque_fraction_of_limit": 0.577047053577253,
+     "fraction_of_walking_saturated": 0.33576470588235297,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.7285089662273994
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6175213073998834,
+     "max_tilt_deg": 4.467666835262111,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.824,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 3.056678591505512
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.13187479708168942,
+    "run_peak_fraction_of_limit": 0.13112320083273343,
+    "front_load_fraction": 0.44245327883170743,
+    "static_bound_kg": 9.145620403940269
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8565306450575956,
+     "max_tilt_deg": 5.99614587556136,
+     "peak_torque_fraction_of_limit": 0.5731157415081751,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.35697591584169225
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9231660803706885,
+     "max_tilt_deg": 6.056516088621795,
+     "peak_torque_fraction_of_limit": 0.6976751615696897,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6309197393010113
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9379717021115247,
+     "max_tilt_deg": 6.118471635588066,
+     "peak_torque_fraction_of_limit": 0.8532064507916697,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9306526608909471
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8788177526599833,
+     "max_tilt_deg": 3.474089249619619,
+     "peak_torque_fraction_of_limit": 0.7289660731880137,
+     "fraction_of_walking_saturated": 0.03764705882352941,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8489759642169562
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.9127424537287688,
+     "max_tilt_deg": 3.298197392555694,
+     "peak_torque_fraction_of_limit": 0.7167383599994626,
+     "fraction_of_walking_saturated": 0.42423529411764704,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.8425452242560243
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5841307364038458,
+     "max_tilt_deg": 5.820864344708082,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8578823529411764,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 3.03085946616098
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.2350653696476706,
+    "run_peak_fraction_of_limit": 0.22775823879863216,
+    "front_load_fraction": 0.4378152728957435,
+    "static_bound_kg": 9.145620403940269
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8110627322213972,
+     "max_tilt_deg": 5.794267517335415,
+     "peak_torque_fraction_of_limit": 0.8999168116587644,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3449102195828192
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8944415417253574,
+     "max_tilt_deg": 5.728694972103866,
+     "peak_torque_fraction_of_limit": 0.9883727963078571,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6390821497726741
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1398809017223819,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9184112822191403,
+     "max_tilt_deg": 5.843989936040697,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.030823529411764704,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9298083828072622
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1805662390001704,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8568242867031626,
+     "max_tilt_deg": 3.9255389141024346,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.1668235294117647,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.1797059895032882
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6299683001561943,
+     "max_tilt_deg": 4.102060888371098,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.556235294117647,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.812262228565673
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1805662390001704,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.42440540094500806,
+     "max_tilt_deg": 9.331675853646967,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8790588235294118,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.806988418541401
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.1805662390001704,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 0.4970926120592468,
+    "run_peak_fraction_of_limit": 0.4282636355897669,
+    "front_load_fraction": 0.4279028852415349,
+    "static_bound_kg": 9.145620403940269
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7860052520675948,
+     "max_tilt_deg": 6.073146073490185,
+     "peak_torque_fraction_of_limit": 0.5459058621522328,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.32549695410474117
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8559521112713855,
+     "max_tilt_deg": 6.127183165633488,
+     "peak_torque_fraction_of_limit": 0.6168046265783366,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6524041660686842
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8836113010893153,
+     "max_tilt_deg": 6.225588013276726,
+     "peak_torque_fraction_of_limit": 0.6962542896621542,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9015322198289601
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8554852001247117,
+     "max_tilt_deg": 3.407884579829521,
+     "peak_torque_fraction_of_limit": 0.5937995107698348,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.7624117988783684
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9447184530267319,
+     "max_tilt_deg": 2.867186633890027,
+     "peak_torque_fraction_of_limit": 0.597504503470373,
+     "fraction_of_walking_saturated": 0.11411764705882353,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.8194749071266985
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.78193026131577,
+     "max_tilt_deg": 7.695795298252275,
+     "peak_torque_fraction_of_limit": 0.7682377077117897,
+     "fraction_of_walking_saturated": 0.5618823529411765,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.7963464820426964
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.2780478720243805,
+    "run_peak_fraction_of_limit": 0.1869358173018696,
+    "front_load_fraction": 0.41998598190264413,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7568038812535394,
+     "max_tilt_deg": 5.878294970681231,
+     "peak_torque_fraction_of_limit": 0.7381010249827344,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3024186313954321
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8484485998176008,
+     "max_tilt_deg": 5.762627015304224,
+     "peak_torque_fraction_of_limit": 0.8439762171735604,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6672372142619669
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8809207227396837,
+     "max_tilt_deg": 5.872015602664724,
+     "peak_torque_fraction_of_limit": 0.889088453323149,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9354087200861603
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8450620466185974,
+     "max_tilt_deg": 3.2922124610641372,
+     "peak_torque_fraction_of_limit": 0.9822568954451998,
+     "fraction_of_walking_saturated": 0.028941176470588234,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9770763792562389
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8863991073754918,
+     "max_tilt_deg": 4.534631525661334,
+     "peak_torque_fraction_of_limit": 0.9160535653157154,
+     "fraction_of_walking_saturated": 0.24352941176470588,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.7676183325912906
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.38185613418564235,
+     "max_tilt_deg": 9.89166087670884,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6741176470588235,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.466427739099385
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.5435293665915036,
+    "run_peak_fraction_of_limit": 0.3365174135406103,
+    "front_load_fraction": 0.4083966444750175,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.23290369811519343,
+     "max_tilt_deg": 5.480310010003051,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7988235294117647,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.4181734807801911
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.2977504037192473,
+     "max_tilt_deg": 5.89434352528763,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8877647058823529,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6244825653863413
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.43516929345827926,
+     "max_tilt_deg": 5.838783074333264,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9418823529411765,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9273707429665022
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.0934093044357605,
+     "max_tilt_deg": 179.96912004986962,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5211764705882352,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.450866336263245
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.7791625537800385,
+     "max_tilt_deg": 179.92588118902881,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7355294117647059,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 4.011762422034918
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": -0.8280673213146917,
+     "max_tilt_deg": 179.9606292517555,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7755294117647059,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.142863207682922
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 1.3978239713574891,
+    "run_peak_fraction_of_limit": 0.6698059522880825,
+    "front_load_fraction": 0.3793893668392728,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7074258154023364,
+     "max_tilt_deg": 6.030445315223029,
+     "peak_torque_fraction_of_limit": 0.5686756003037265,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.31273533289519356
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7907045813290035,
+     "max_tilt_deg": 5.930654034209784,
+     "peak_torque_fraction_of_limit": 0.6326025842417184,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.7065394843049919
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7788853260897237,
+     "max_tilt_deg": 6.018207559690134,
+     "peak_torque_fraction_of_limit": 0.736766547321525,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9823037606854615
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.809851891630036,
+     "max_tilt_deg": 2.8499429358015274,
+     "peak_torque_fraction_of_limit": 0.7361879744315665,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8698588176451572
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.888690852294118,
+     "max_tilt_deg": 3.992960794380141,
+     "peak_torque_fraction_of_limit": 0.7262961217106976,
+     "fraction_of_walking_saturated": 0.0451764705882353,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.6899575770571058
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.48803010978453265,
+     "max_tilt_deg": 5.267201530018519,
+     "peak_torque_fraction_of_limit": 0.953394814715786,
+     "fraction_of_walking_saturated": 0.49576470588235294,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 1.9014987044200078
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.4656235707029349,
+    "run_peak_fraction_of_limit": 0.23537395863408678,
+    "front_load_fraction": 0.39804142634314504,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6590594095232619,
+     "max_tilt_deg": 5.666680952868498,
+     "peak_torque_fraction_of_limit": 0.8636262388645122,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.293748474987863
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.77404316848616,
+     "max_tilt_deg": 5.343514717835089,
+     "peak_torque_fraction_of_limit": 0.9232389221700755,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6845379764730547
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7439192088119706,
+     "max_tilt_deg": 5.423964742662336,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.06164705882352941,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.057581538079846
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7614725065900141,
+     "max_tilt_deg": 7.477888701034057,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.12329411764705882,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8992055376463275
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8274087618816872,
+     "max_tilt_deg": 11.966861086731173,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.25576470588235295,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.9669309431783601
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.17962898080231773,
+     "max_tilt_deg": 11.741609525864014,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5981176470588235,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.4567819674429767
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 1.0212683320421512,
+    "run_peak_fraction_of_limit": 0.43321594012412773,
+    "front_load_fraction": 0.3741088979855584,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.29750491789721484,
+     "max_tilt_deg": 8.680306537096405,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 3,
+     "slip_max_mm_per_step": 0.7068690052909998
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.02543639611357734,
+     "max_tilt_deg": 8.35007537539894,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9715999543159964
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.15763187071089066,
+     "max_tilt_deg": 8.954741018973374,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.0425242378318065
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.4316765313794195,
+     "max_tilt_deg": 179.99062847127826,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.38494117647058823,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.401656111007133
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.1226438219279407,
+     "max_tilt_deg": 179.94424204927594,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5691764705882353,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.465721990471661
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.8298179644834782,
+     "max_tilt_deg": 179.96141670533535,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7350588235294118,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 3.9901673026475546
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 4.5828661044249595,
+    "run_peak_fraction_of_limit": 0.9059255999198789,
+    "front_load_fraction": 0.2705020644628079,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8761951449321553,
+     "max_tilt_deg": 6.244228424443508,
+     "peak_torque_fraction_of_limit": 0.4781770099835349,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3334310793176914
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9065936515441282,
+     "max_tilt_deg": 6.306238409454804,
+     "peak_torque_fraction_of_limit": 0.5852554886283727,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6617856395350183
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9237581904460611,
+     "max_tilt_deg": 6.396180968252624,
+     "peak_torque_fraction_of_limit": 0.6800140867537261,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.9459201716433926
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9989198678613554,
+     "max_tilt_deg": 3.8923972176316037,
+     "peak_torque_fraction_of_limit": 0.4901980544610251,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.8865691566517904
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.9476403280324049,
+     "max_tilt_deg": 3.240998181336514,
+     "peak_torque_fraction_of_limit": 0.4967283683381973,
+     "fraction_of_walking_saturated": 0.06211764705882353,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.50837012974912
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7745856892683938,
+     "max_tilt_deg": 3.8328401619434946,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.592,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 2.4681305528320028
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.16079913346522848,
+    "run_peak_fraction_of_limit": 0.1438135213166028,
+    "front_load_fraction": 0.43623600390554373,
+    "static_bound_kg": 8.505997202900714
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.851841442029184,
+     "max_tilt_deg": 6.234332131502232,
+     "peak_torque_fraction_of_limit": 0.5701190416222632,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3889043754011758
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8930269587770104,
+     "max_tilt_deg": 6.137125250135771,
+     "peak_torque_fraction_of_limit": 0.7394740673990134,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6708796451152035
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9185374122360331,
+     "max_tilt_deg": 6.2905528920282805,
+     "peak_torque_fraction_of_limit": 0.8291314841612576,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9651736278276349
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.90271079584153,
+     "max_tilt_deg": 3.433964288517516,
+     "peak_torque_fraction_of_limit": 0.7949726575875089,
+     "fraction_of_walking_saturated": 0.0025882352941176473,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9835618204980501
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.889961768826888,
+     "max_tilt_deg": 3.659965711704957,
+     "peak_torque_fraction_of_limit": 0.7836155407745987,
+     "fraction_of_walking_saturated": 0.19458823529411765,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.0215087973434223
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6756939298702197,
+     "max_tilt_deg": 4.851920594149032,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6912941176470588,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.45117829748623
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.2867710956839596,
+    "run_peak_fraction_of_limit": 0.2486392241807249,
+    "front_load_fraction": 0.43098037279406387,
+    "static_bound_kg": 8.505997202900714
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.1,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8004276677178246,
+     "max_tilt_deg": 6.38407768777659,
+     "peak_torque_fraction_of_limit": 0.9535928832170321,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3931045995932448
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8690271109076484,
+     "max_tilt_deg": 6.134200511655939,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.0025882352941176473,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6760046299339125
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.1809849594733097,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9011411829820947,
+     "max_tilt_deg": 6.140170955490702,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.054588235294117646,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9648683394462296
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.22391714737574006,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9309587384099007,
+     "max_tilt_deg": 5.908622447126159,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.21552941176470589,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.1619114199685496
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.8445509134079127,
+     "max_tilt_deg": 5.127908716262752,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.38141176470588234,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.047575952481648
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.22391714737574006,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5240769181124263,
+     "max_tilt_deg": 7.2822466373566925,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6962352941176471,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.255321615896279
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.22391714737574006,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 0.6100345741657326,
+    "run_peak_fraction_of_limit": 0.46380000499236973,
+    "front_load_fraction": 0.41939855460559267,
+    "static_bound_kg": 8.505997202900714
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7581835542109318,
+     "max_tilt_deg": 6.260578926125101,
+     "peak_torque_fraction_of_limit": 0.5030204252898963,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3013741755816961
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.837846150849535,
+     "max_tilt_deg": 6.267193210566478,
+     "peak_torque_fraction_of_limit": 0.6523198177252557,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6412012115743143
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8698577294050297,
+     "max_tilt_deg": 6.307060178014896,
+     "peak_torque_fraction_of_limit": 0.6693793775003697,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9482825873920334
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.896425442434698,
+     "max_tilt_deg": 2.7918364013919557,
+     "peak_torque_fraction_of_limit": 0.6681714486680281,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.7670842235092151
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8812454069233328,
+     "max_tilt_deg": 3.340925937996868,
+     "peak_torque_fraction_of_limit": 0.6174965867412429,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.686231824149587
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7688442238591967,
+     "max_tilt_deg": 4.108636173336273,
+     "peak_torque_fraction_of_limit": 0.8085168709533749,
+     "fraction_of_walking_saturated": 0.37011764705882355,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.5655451854385456
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.3624671411677288,
+    "run_peak_fraction_of_limit": 0.20906735071467478,
+    "front_load_fraction": 0.41135434167089713,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7197859384351792,
+     "max_tilt_deg": 6.255438593852685,
+     "peak_torque_fraction_of_limit": 0.7939609583955273,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.30226266761092513
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8144273755511566,
+     "max_tilt_deg": 5.951829805845705,
+     "peak_torque_fraction_of_limit": 0.8615175686378704,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6386651182709864
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.856017939060065,
+     "max_tilt_deg": 6.0863139579439665,
+     "peak_torque_fraction_of_limit": 0.8692269661654543,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9495173962953214
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 1.0320852137216265,
+     "max_tilt_deg": 5.4460324528543245,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.07623529411764705,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8895554980291535
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9484714204781376,
+     "max_tilt_deg": 4.6740878948051074,
+     "peak_torque_fraction_of_limit": 0.9755870189362534,
+     "fraction_of_walking_saturated": 0.09270588235294118,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 2.0872967104943663
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5786198246899202,
+     "max_tilt_deg": 7.354805839888486,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5491764705882353,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.494130322840544
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.7108400907084301,
+    "run_peak_fraction_of_limit": 0.37875474019150934,
+    "front_load_fraction": 0.397934353300062,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.17809953970186532,
+     "max_tilt_deg": 6.400771774516789,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7936470588235294,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.44727338986326154
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.3275632511689863,
+     "max_tilt_deg": 6.458577835036219,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8522352941176471,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.5633946218043181
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.19139836293274123,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.44431025718745476,
+     "max_tilt_deg": 6.418277554436414,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.916235294117647,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8855995984817547
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.269909854386555,
+     "max_tilt_deg": 179.82686869812545,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.44329411764705884,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.6756885184287205
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.9894295280745311,
+     "max_tilt_deg": 179.94870224154116,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5849411764705882,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.58719259576773
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2504163200219453,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": -0.8519440959697929,
+     "max_tilt_deg": 179.94775554750288,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7432941176470588,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.674442160407336
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2504163200219453,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 1.8588740747093566,
+    "run_peak_fraction_of_limit": 0.7600747719043434,
+    "front_load_fraction": 0.36264345561831474,
+    "static_bound_kg": 6.341751975767124
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6776607804789622,
+     "max_tilt_deg": 6.270200580414897,
+     "peak_torque_fraction_of_limit": 0.6036598849265492,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3141196366247869
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7479939542654596,
+     "max_tilt_deg": 5.979801254712839,
+     "peak_torque_fraction_of_limit": 0.7759613185710876,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.762842302305829
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.795958226576502,
+     "max_tilt_deg": 6.128285233712069,
+     "peak_torque_fraction_of_limit": 0.7491610712326728,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.0258108370067984
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2833333333333333,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9563680480716505,
+     "max_tilt_deg": 4.210764086801965,
+     "peak_torque_fraction_of_limit": 0.8601191392316027,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6715126959510784
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2833333333333333,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9223602469511979,
+     "max_tilt_deg": 4.165911509458243,
+     "peak_torque_fraction_of_limit": 0.8159181710910955,
+     "fraction_of_walking_saturated": 0.0007058823529411765,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.6611157993296706
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2833333333333333,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8377929560960514,
+     "max_tilt_deg": 6.372158658787278,
+     "peak_torque_fraction_of_limit": 0.8881362626890059,
+     "fraction_of_walking_saturated": 0.2823529411764706,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.4193898244582415
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2833333333333333,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.6775465299675749,
+    "run_peak_fraction_of_limit": 0.28103632714962706,
+    "front_load_fraction": 0.38133572638542357,
+    "static_bound_kg": 5.381527428932804
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6166085356358425,
+     "max_tilt_deg": 6.103726374671992,
+     "peak_torque_fraction_of_limit": 0.9614342491178749,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.30376945381406173
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7331526712448311,
+     "max_tilt_deg": 5.650735767188034,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.06705882352941177,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6594077700316248
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7780138449900846,
+     "max_tilt_deg": 5.7263173642044,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.096,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.1104425906274216
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2833333333333333,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.49529674799362533,
+     "max_tilt_deg": 16.645131857770362,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.39176470588235296,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.6292456898618048
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2833333333333333,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8998168510191809,
+     "max_tilt_deg": 8.156586899906408,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.31929411764705884,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.528261190177484
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2833333333333333,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.42244656850655316,
+     "max_tilt_deg": 179.88404109335252,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5407058823529411,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 5.858663061937071
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2833333333333333,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 1.5308844450395491,
+    "run_peak_fraction_of_limit": 0.5235185537263246,
+    "front_load_fraction": 0.35037265073129675,
+    "static_bound_kg": 5.381527428932804
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.2,
+    "lower_length_m": 0.2,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.3,
+    "body_width_m": 0.15
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.21986192892715878,
+     "max_tilt_deg": 10.009624215719722,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 3,
+     "slip_max_mm_per_step": 0.657428022999908
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.06641141208416268,
+     "max_tilt_deg": 11.733512225352266,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.0096105980001235
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21333333333333335,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.14461947255629637,
+     "max_tilt_deg": 14.36972484767172,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 1.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.1680790517753343
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.2833333333333333,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.45809691436229943,
+     "max_tilt_deg": 179.53344514607596,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.3487058823529412,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.4352136769604382
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.2833333333333333,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6370310210159275,
+     "max_tilt_deg": 179.92868485233228,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5823529411764706,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.9980088809051195
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.2833333333333333,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7834095612540612,
+     "max_tilt_deg": 179.36858260622216,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6992941176470588,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 2.7010132815032075
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.2833333333333333,
+    "total_mass_kg": 3.01,
+    "stood": false,
+    "tilt_deg": 179.61060112821752,
+    "run_peak_fraction_of_limit": 1.0,
+    "front_load_fraction": 0.46261595522714066,
+    "static_bound_kg": 5.381527428932804
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.24,
+    "body_width_m": 0.12
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7317755794360581,
+     "max_tilt_deg": 7.503992257310175,
+     "peak_torque_fraction_of_limit": 0.547017776737056,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.2900238216630103
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8009155362313151,
+     "max_tilt_deg": 7.482497068414345,
+     "peak_torque_fraction_of_limit": 0.6406233271073916,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6432831001227849
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8322479302337306,
+     "max_tilt_deg": 7.716113374498917,
+     "peak_torque_fraction_of_limit": 0.7201243328908042,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9195826825611136
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9318782181013093,
+     "max_tilt_deg": 3.5237761904157163,
+     "peak_torque_fraction_of_limit": 0.6204632601648903,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.7041955756763786
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9200464745575205,
+     "max_tilt_deg": 3.974448378336266,
+     "peak_torque_fraction_of_limit": 0.5725356211241674,
+     "fraction_of_walking_saturated": 0.11670588235294117,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.7886452066463907
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.6744194671828134,
+     "max_tilt_deg": 7.772180524737388,
+     "peak_torque_fraction_of_limit": 0.8496255520661515,
+     "fraction_of_walking_saturated": 0.5689411764705883,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.742193487820241
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.4477998042643705,
+    "run_peak_fraction_of_limit": 0.19484931256961982,
+    "front_load_fraction": 0.39750546054682323,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.24,
+    "body_width_m": 0.12
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6991353907066951,
+     "max_tilt_deg": 7.400235800480095,
+     "peak_torque_fraction_of_limit": 0.7390837343686748,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.2797691706171838
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.794824554823285,
+     "max_tilt_deg": 7.255282361488544,
+     "peak_torque_fraction_of_limit": 0.8338422702692749,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6692487163920198
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8371808590874557,
+     "max_tilt_deg": 7.35463545637662,
+     "peak_torque_fraction_of_limit": 0.8986032415255805,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9410858879681503
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9844460879457629,
+     "max_tilt_deg": 5.488860305731018,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.08917647058823529,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6427198694469981
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9717915415032398,
+     "max_tilt_deg": 7.888757470757998,
+     "peak_torque_fraction_of_limit": 0.9293329030717998,
+     "fraction_of_walking_saturated": 0.2555294117647059,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.6875524122465642
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.3122763649124939,
+     "max_tilt_deg": 8.920228070733678,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6607058823529411,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.9621106714520602
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.897596959062735,
+    "run_peak_fraction_of_limit": 0.3534655583688388,
+    "front_load_fraction": 0.3800192995328348,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.24,
+    "body_width_m": 0.12
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.12569861975798854,
+     "max_tilt_deg": 7.331167109062511,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8658823529411764,
+     "feet_down_min": 3,
+     "slip_max_mm_per_step": 0.4686582022913785
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.3374405894182312,
+     "max_tilt_deg": 7.345166240988851,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9407058823529412,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6368055651270477
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.4753111294325447,
+     "max_tilt_deg": 7.366754289375928,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9912941176470588,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 0.8937860248339281
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -1.128190237759688,
+     "max_tilt_deg": 179.86198807385566,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.42,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 4.8182890469267825
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": true,
+     "velocity_ratio": -0.8241974748687803,
+     "max_tilt_deg": 179.9688424384811,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.5872941176470589,
+     "feet_down_min": 0,
+     "slip_max_mm_per_step": 5.0931989870318315
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": -0.7707739142609359,
+     "max_tilt_deg": 179.80843572778116,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7604705882352941,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 4.396776768132055
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 2.5842869319589865,
+    "run_peak_fraction_of_limit": 0.7156002800327894,
+    "front_load_fraction": 0.328579971193539,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.36,
+    "body_width_m": 0.18
+   },
+   "mass_scale": 0.6,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8153900424529577,
+     "max_tilt_deg": 5.170668548806007,
+     "peak_torque_fraction_of_limit": 0.54254504459528,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.33389311601555693
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8787485003897797,
+     "max_tilt_deg": 5.211419222429366,
+     "peak_torque_fraction_of_limit": 0.6290377264419026,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6521161161494966
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9008412109179783,
+     "max_tilt_deg": 5.296069093905938,
+     "peak_torque_fraction_of_limit": 0.6814388954082078,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8983270902337549
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8356678521784192,
+     "max_tilt_deg": 2.999310038863656,
+     "peak_torque_fraction_of_limit": 0.5589341292864275,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.7502643408267707
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.9424626877964546,
+     "max_tilt_deg": 2.6218542206123834,
+     "peak_torque_fraction_of_limit": 0.5746814958654413,
+     "fraction_of_walking_saturated": 0.128,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.7734992397440543
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.7583135891076893,
+     "max_tilt_deg": 6.162369460801399,
+     "peak_torque_fraction_of_limit": 0.7256232823569122,
+     "fraction_of_walking_saturated": 0.5505882352941176,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.8552894354205778
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.032,
+    "stood": true,
+    "tilt_deg": 0.18993035246909795,
+    "run_peak_fraction_of_limit": 0.18189055778914237,
+    "front_load_fraction": 0.43417538042221443,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.36,
+    "body_width_m": 0.18
+   },
+   "mass_scale": 1.0,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7844797389131625,
+     "max_tilt_deg": 4.928958002811562,
+     "peak_torque_fraction_of_limit": 0.7363715713112058,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.37470740992078827
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.868139188057989,
+     "max_tilt_deg": 4.876659768110906,
+     "peak_torque_fraction_of_limit": 0.8236235591708275,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6215088686347561
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.8982153518177044,
+     "max_tilt_deg": 4.9471038473172895,
+     "peak_torque_fraction_of_limit": 0.8669105112556409,
+     "fraction_of_walking_saturated": 0.0,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.9304609783366969
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.7876044869491902,
+     "max_tilt_deg": 2.8543673398736944,
+     "peak_torque_fraction_of_limit": 0.9499732186524891,
+     "fraction_of_walking_saturated": 0.020941176470588234,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.106576785583761
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.775690009098294,
+     "max_tilt_deg": 3.689870438711393,
+     "peak_torque_fraction_of_limit": 0.9151489985331156,
+     "fraction_of_walking_saturated": 0.28494117647058825,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 1.9454672229394645
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.5533754331028081,
+     "max_tilt_deg": 9.5750144272695,
+     "peak_torque_fraction_of_limit": 0.9526157605635539,
+     "fraction_of_walking_saturated": 0.6818823529411765,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.4668736157063242
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 1.72,
+    "stood": true,
+    "tilt_deg": 0.3672482556465132,
+    "run_peak_fraction_of_limit": 0.32586047969926935,
+    "front_load_fraction": 0.42546511109192964,
+    "static_bound_kg": 7.17536990524374
+   }
+  },
+  {
+   "design": {
+    "upper_length_m": 0.15,
+    "lower_length_m": 0.15,
+    "abduction_offset_m": 0.05,
+    "body_length_m": 0.36,
+    "body_width_m": 0.18
+   },
+   "mass_scale": 1.75,
+   "walk": [
+    {
+     "gait": "trot",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.3217816869497292,
+     "max_tilt_deg": 4.235131496642972,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.7738823529411765,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.3128474162505042
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.3160883889214589,
+     "max_tilt_deg": 4.944789287762031,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8543529411764705,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.6028016991562892
+    },
+    {
+     "gait": "trot",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.16,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.41947815709745095,
+     "max_tilt_deg": 4.888184705485059,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.9070588235294118,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 0.8791929965203884
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.05,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.6700349475384282,
+     "max_tilt_deg": 12.298151976139554,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.6232941176470588,
+     "feet_down_min": 2,
+     "slip_max_mm_per_step": 1.4785374615758946
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.1,
+     "stance_height_m": 0.21249999999999997,
+     "walked": true,
+     "within_joint_limits": true,
+     "velocity_ratio": 0.286701670225729,
+     "max_tilt_deg": 13.930333896647165,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.788,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.0729039937072438
+    },
+    {
+     "gait": "crawl",
+     "speed_m_s": 0.15,
+     "stance_height_m": 0.21249999999999997,
+     "walked": false,
+     "within_joint_limits": false,
+     "velocity_ratio": 0.12131912522683785,
+     "max_tilt_deg": 17.93790597451342,
+     "peak_torque_fraction_of_limit": 1.0,
+     "fraction_of_walking_saturated": 0.8334117647058824,
+     "feet_down_min": 1,
+     "slip_max_mm_per_step": 2.4912248728054056
+    }
+   ],
+   "stand": {
+    "stance_height_m": 0.21249999999999997,
+    "total_mass_kg": 3.01,
+    "stood": true,
+    "tilt_deg": 0.9022286413228773,
+    "run_peak_fraction_of_limit": 0.6421602989109981,
+    "front_load_fraction": 0.4050950934043402,
+    "static_bound_kg": 7.17536990524374
+   }
+  }
+ ]
+}

@@ -39,20 +39,21 @@ mojito/                the library, in four subpackages (each holds at most abou
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
   learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
-                       stand.py, gait_replay.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+                       stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
   stand/               stand_test, sit_to_stand, make_stand_demo
+  design/              design_sweep, plot_design_sweep (stand and walk 11 designs at three masses; results/design/)
   gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
 tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
 weights/ik_leg.npz     the trained leg network
-results/               generated, committed: learning/, body/, stand/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
+results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
 docs/USAGE.md  RESULTS.md  PHYSICS.md   usage, geometry results, physics results
 docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
@@ -83,6 +84,7 @@ python scripts/learning/make_demo.py                # results/learning/step_demo
 python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
 python scripts/stand/stand_test.py               # results/stand/stand_test.json (needs mujoco)
 python scripts/stand/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
+python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, about 2.5 min on 4 cores); then plot_design_sweep.py
 python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
 python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/

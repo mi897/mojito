@@ -1,0 +1,15 @@
+{
+ "valid_walks": {
+  "trot 1.03 kg": "26 of 33",
+  "crawl 1.03 kg": "21 of 33",
+  "trot 1.72 kg": "26 of 33",
+  "crawl 1.72 kg": "20 of 33",
+  "trot 3.01 kg": "22 of 33",
+  "crawl 3.01 kg": "7 of 33"
+ },
+ "stood": {
+  "1.03 kg": "11 of 11",
+  "1.72 kg": "11 of 11",
+  "3.01 kg": "10 of 11"
+ }
+}

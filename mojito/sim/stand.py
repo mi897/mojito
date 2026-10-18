@@ -35,7 +35,8 @@ def _open(lengths, height, body_length, body_width, masses, timestep):
     model = robots.quadruped_urdf(body_length, body_width, lengths=lengths)
     start_z = height + mjcf.FOOT_RADIUS  # the pad centre is the foot tip; its lowest point is one radius lower
     m = mujoco.MjModel.from_xml_string(
-        mjcf.mjcf_from_urdf(model, masses=masses, height=start_z, timestep=timestep, actuated=True))
+        mjcf.mjcf_from_urdf(model, body_size=(body_length, body_width, mjcf.BODY_THICKNESS), masses=masses, height=start_z,
+                            timestep=timestep, actuated=True))
     d = mujoco.MjData(m)
     names = per_leg_names()
     mjcf.set_pose(m, d, names, initial_joint_angles.ravel(), base_pos=(0.0, 0.0, start_z))
