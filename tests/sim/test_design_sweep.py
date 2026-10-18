@@ -58,6 +58,30 @@ class TestScaledHeight(unittest.TestCase):
             self.assertAlmostEqual(joint_angles[2], reference_knee, places=9)
 
 
+class TestTuningHelpers(unittest.TestCase):
+    def test_default_settings_reproduce_the_untuned_heights(self):
+        for name, height in (("trot", gait_replay.TROT_STANCE_HEIGHT), ("crawl", gait_replay.DEFAULT_STANCE_HEIGHT)):
+            settings = design_sweep.default_settings(name)
+            self.assertAlmostEqual(design_sweep.height_for_knee(design_sweep.Design(), settings.knee), height, places=12)
+
+    def test_knee_from_ik_at_the_height_for_a_knee_returns_that_knee(self):
+        """Independent check of the law of cosines: closed-form IK at the height gives back the knee angle."""
+        for design in design_sweep.design_grid():
+            for knee in design_sweep.KNEE_GRID:
+                height = design_sweep.height_for_knee(design, knee)
+                joint_angles = leg.analytic_ik(np.array([0.0, design_sweep.ABDUCTION_OFFSET, -height]), design.lengths)
+                self.assertAlmostEqual(joint_angles[2], knee, places=9)
+
+    def test_grid_size_and_score_order(self):
+        self.assertEqual(len(design_sweep.settings_grid()), 45)
+        good = {"walked": True, "within_joint_limits": True, "velocity_ratio": 0.95, "peak_torque_fraction_of_limit": 0.5}
+        slow = dict(good, velocity_ratio=0.6)
+        fast_invalid = dict(good, within_joint_limits=False, velocity_ratio=1.0)
+        self.assertGreater(design_sweep.tuning_score(good), design_sweep.tuning_score(slow))
+        self.assertGreater(design_sweep.tuning_score(slow), design_sweep.tuning_score(fast_invalid))
+        self.assertGreater(design_sweep.tuning_score(good), design_sweep.tuning_score(dict(good, peak_torque_fraction_of_limit=0.9)))
+
+
 class TestStaticBound(unittest.TestCase):
     def test_placeholder_design_matches_torque_envelope(self):
         """scripts/body/torque_envelope.py gives the stand-case bound at the 5 V stall torque for the same design."""
@@ -86,6 +110,10 @@ class TestEvaluateDesign(unittest.TestCase):
 
     def test_one_walk_per_gait_and_speed(self):
         self.assertEqual([(w["gait"], w["speed_m_s"]) for w in self.result["walk"]], [("trot", 0.10), ("crawl", 0.10)])
+
+    def test_evaluate_walk_with_default_settings_matches_evaluate_design(self):
+        walk = design_sweep.evaluate_walk(design_sweep.Design(), "trot", design_sweep.default_settings("trot"), 1.0, 0.10, run_time=5.0)
+        self.assertAlmostEqual(walk["velocity_ratio"], self.result["walk"][0]["velocity_ratio"], places=6)
 
     def test_trot_at_placeholder_dimensions_walks(self):
         trot = self.result["walk"][0]
