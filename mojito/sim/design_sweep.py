@@ -16,7 +16,7 @@ Everything is a placeholder (dimensions, masses, servo figures, friction), see d
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -30,6 +30,8 @@ ABDUCTION_OFFSET = 0.05      # m, the same for every design
 SPEEDS = (0.05, 0.10, 0.15)  # commanded forward speeds, m/s
 MASS_SCALES = (0.6, 1.0, 1.75)  # times DEFAULT_MASSES (1.72 kg), as in the trot_1p7_combined sweep
 GAITS = {"trot": gaits.TROT, "crawl": gaits.CRAWL}
+MASS_SPREAD = 0.05           # each role's mass times a uniform draw in 1 +- this, as in scripts/gait/sweeps/trot_1p7_combined.py
+LATENCY = (0.018, 0.022)     # servo latency drawn uniformly from this range, s
 
 
 @dataclass(frozen=True)
@@ -86,15 +88,32 @@ def static_mass_bound(design: Design, height: float, stall_torque: float) -> flo
     return float(stall_torque / (torque_per_weight.max() * statics.G))
 
 
-def evaluate_design(design: Design, mass_scale: float = 1.0, speeds=SPEEDS, run_time: float = RUN_TIME) -> dict:
-    """Stand once and walk each gait at each speed; return a JSON-ready dict of the numbers kept per run."""
-    masses = scaled_masses(mass_scale)
+def draw_masses_and_latency(mass_scale: float, draw: int) -> tuple:
+    """Masses (every role times a uniform 0.95 to 1.05 and `mass_scale`) and latency for random draw number `draw`.
+
+    The generator is seeded with `draw`, so draw k is the same in every design and cell and cells are compared on the same draws.
+    """
+    rng = np.random.default_rng(draw)
+    masses = {role: mass * mass_scale * rng.uniform(1 - MASS_SPREAD, 1 + MASS_SPREAD)
+              for role, mass in mjcf.DEFAULT_MASSES.items()}
+    return masses, float(rng.uniform(*LATENCY))
+
+
+def evaluate_design(design: Design, mass_scale: float = 1.0, speeds=SPEEDS, run_time: float = RUN_TIME, draw=None) -> dict:
+    """Stand once and walk each gait at each speed; return a JSON-ready dict of the numbers kept per run.
+
+    draw  None for the nominal masses and latency, or an integer: random draw number (see `draw_masses_and_latency`).
+    """
+    if draw is None:
+        masses, latency = scaled_masses(mass_scale), None
+    else:
+        masses, latency = draw_masses_and_latency(mass_scale, draw)
     out = {"design": {"upper_length_m": design.upper_length, "lower_length_m": design.lower_length,
                       "abduction_offset_m": ABDUCTION_OFFSET, "body_length_m": design.body_length,
                       "body_width_m": design.body_width},
-           "mass_scale": mass_scale, "walk": []}
+           "mass_scale": mass_scale, "draw": draw, "latency_s": latency, "walk": []}
     height = scaled_height(design, gait_replay.DEFAULT_STANCE_HEIGHT)
-    servo = actuators.ServoParams()
+    servo = actuators.ServoParams() if latency is None else actuators.ServoParams(latency=latency)
     stood = stand.run_stand(design.lengths, height, design.body_length, design.body_width, masses=masses, servo=servo,
                             duration=run_time)
     out["stand"] = {"stance_height_m": height, "total_mass_kg": stood["total_mass_kg"], "stood": stood["stood"],
@@ -103,6 +122,8 @@ def evaluate_design(design: Design, mass_scale: float = 1.0, speeds=SPEEDS, run_
                     "static_bound_kg": static_mass_bound(design, height, servo.stall_torque)}
     for name, gait in GAITS.items():
         settings = gait_replay.settings_for(gait)
+        if latency is not None:
+            settings["servo"] = replace(settings["servo"], latency=latency)
         walk_height = scaled_height(design, settings["height"])
         for speed in speeds:
             r = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period, lengths=design.lengths, height=walk_height,

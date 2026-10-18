@@ -31,6 +31,18 @@ class TestDesignGrid(unittest.TestCase):
             self.assertAlmostEqual(scaled[role], 2 * mass)
 
 
+class TestDraws(unittest.TestCase):
+    def test_a_draw_is_repeatable_and_inside_the_stated_ranges(self):
+        masses, latency = design_sweep.draw_masses_and_latency(1.75, 3)
+        self.assertEqual((masses, latency), design_sweep.draw_masses_and_latency(1.75, 3))
+        self.assertNotEqual(masses, design_sweep.draw_masses_and_latency(1.75, 4)[0])
+        self.assertGreaterEqual(latency, design_sweep.LATENCY[0])
+        self.assertLessEqual(latency, design_sweep.LATENCY[1])
+        for role, mass in design_sweep.mjcf.DEFAULT_MASSES.items():
+            ratio = masses[role] / (1.75 * mass)
+            self.assertTrue(1 - design_sweep.MASS_SPREAD <= ratio <= 1 + design_sweep.MASS_SPREAD)
+
+
 class TestScaledHeight(unittest.TestCase):
     def test_placeholder_leg_gives_back_the_tuned_height(self):
         for base in (gait_replay.DEFAULT_STANCE_HEIGHT, gait_replay.TROT_STANCE_HEIGHT):
