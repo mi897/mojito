@@ -119,7 +119,7 @@ scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
   stand/               stand_test, sit_to_stand, make_stand_demo
-  design/              design_sweep, design_sweep_draws and a plot_ for each
+  design/              design_sweep, design_sweep_draws, design_tune, design_sweep_tuned and a plot_ for each sweep
   gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
