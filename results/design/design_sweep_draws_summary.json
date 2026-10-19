@@ -1,0 +1,1523 @@
+{
+ "draws": 10,
+ "rows": [
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.11191354671111169,
+   "static_bound_kg": 10.763054857865608,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9011955426758659,
+     "ratio_sd": 0.0021452187014438574
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9391042046145184,
+     "ratio_sd": 0.0016198627420116098
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9448089001026764,
+     "ratio_sd": 0.0016398120070505245
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 1.088042347389941,
+     "ratio_sd": 0.002356534877706118
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.7997216465896797,
+     "ratio_sd": 0.002279467812809422
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.5730877876637223,
+     "ratio_sd": 0.0031020060336187103
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.19546135762832134,
+   "static_bound_kg": 10.763054857865608,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8956647149844559,
+     "ratio_sd": 0.0016812791222226063
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9413286624228769,
+     "ratio_sd": 0.001623596320908798
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9566633084299898,
+     "ratio_sd": 0.0013740342616688592
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 1.0169315111621287,
+     "ratio_sd": 0.004944098896840433
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.7196479477798399,
+     "ratio_sd": 0.0036870846495095306
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.4733563672907682,
+     "ratio_sd": 0.004885811386181308
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.36968346737720004,
+   "static_bound_kg": 10.763054857865608,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8654957833937003,
+     "ratio_sd": 0.003110352139393122
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.925109464752288,
+     "ratio_sd": 0.002144480563743039
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9481372488034566,
+     "ratio_sd": 0.0011856662952323814
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9093244366214176,
+     "ratio_sd": 0.008732783459373412
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.5037270402771853,
+     "ratio_sd": 0.008087862652290605
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.4173738303320957,
+     "ratio_sd": 0.006692462236523658
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.14327397570751774,
+   "static_bound_kg": 9.14562040394027,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.8210702145759747,
+     "ratio_sd": 0.002205529908597877
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.7136993326335966,
+     "ratio_sd": 0.0024248314621122444
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.4867487727787364,
+     "ratio_sd": 0.0008370524347313306
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9515411793319277,
+     "ratio_sd": 0.005409616557902522
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.7800431098170664,
+     "ratio_sd": 0.0036309115455422526
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.8413237704545354,
+     "ratio_sd": 0.008267631493175177
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.2573379556766838,
+   "static_bound_kg": 9.14562040394027,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.7975365349527503,
+     "ratio_sd": 0.003538052355067436
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.6877918653233646,
+     "ratio_sd": 0.0015365967582238506
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.47141170864122917,
+     "ratio_sd": 0.0009937633449050606
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8361098211667131,
+     "ratio_sd": 0.004074305359660124
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.41642321072996,
+     "ratio_sd": 0.010636690141056318
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7433550447630517,
+     "ratio_sd": 0.009571485570162765
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.5094720538034438,
+   "static_bound_kg": 9.14562040394027,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.740157039347148,
+     "ratio_sd": 0.004609196966418242
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.6373635278513243,
+     "ratio_sd": 0.0033574031024521957
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.36685602664625694,
+     "ratio_sd": 0.00495261690901862
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.26449532108201546,
+     "ratio_sd": 0.0866973741360073
+    },
+    "crawl 0.1": {
+     "valid": 8,
+     "ratio_mean": 0.031240551615601818,
+     "ratio_sd": 0.22449699596047837
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.41962183899449296,
+     "ratio_sd": 0.23900146504411465
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.15995742112774705,
+   "static_bound_kg": 8.505997202900712,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.47830509766067586,
+     "ratio_sd": 0.0016655953864201148
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.3366509997784412,
+     "ratio_sd": 0.0013032577320869591
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.23880633888097025,
+     "ratio_sd": 0.0022585510645423794
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7354921411746866,
+     "ratio_sd": 0.005363931189789231
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.5601295397191739,
+     "ratio_sd": 0.004020321965391535
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.6648595175378995,
+     "ratio_sd": 0.013861150947575297
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.29566877245556455,
+   "static_bound_kg": 8.505997202900712,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.44144400077401513,
+     "ratio_sd": 0.001090368151419266
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.3217153867557017,
+     "ratio_sd": 0.0005308797049167313
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.21708669888177012,
+     "ratio_sd": 0.002370529464053271
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8819561786832756,
+     "ratio_sd": 0.009712069407698844
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.7200640587236343,
+     "ratio_sd": 0.04055664954499295
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.21683101507363003,
+     "ratio_sd": 0.010553921024760063
+    }
+   }
+  },
+  {
+   "upper_mm": 100.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.6165909326632357,
+   "static_bound_kg": 8.505997202900712,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.35443821010383314,
+     "ratio_sd": 0.006253722543390265
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.20707741097153773,
+     "ratio_sd": 0.011220823065279927
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.12973040677442327,
+     "ratio_sd": 0.013970770531462503
+    },
+    "crawl 0.05": {
+     "valid": 0,
+     "ratio_mean": -1.0186596994792858,
+     "ratio_sd": 0.012606397758979737
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.6952183623393783,
+     "ratio_sd": 0.022038363205451533
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.7128749925265783,
+     "ratio_sd": 0.009442792139788825
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.13161699913417552,
+   "static_bound_kg": 9.145620403940269,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8834927542141422,
+     "ratio_sd": 0.001868895580593363
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9274647941937095,
+     "ratio_sd": 0.0014903180765238502
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9400229082136564,
+     "ratio_sd": 0.0008376526403123789
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 1.0283237311405395,
+     "ratio_sd": 0.004360035902805967
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.9681499689901951,
+     "ratio_sd": 0.001802191138385212
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.617135675974209,
+     "ratio_sd": 0.0028328556284837147
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.22863602508424216,
+   "static_bound_kg": 9.145620403940269,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.855507203804043,
+     "ratio_sd": 0.0025298913817756656
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9226481194438229,
+     "ratio_sd": 0.0019518876850586067
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9377146506490405,
+     "ratio_sd": 0.00138788181821972
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8773972517571902,
+     "ratio_sd": 0.005531997492231016
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.9118090943852429,
+     "ratio_sd": 0.0036613763148243294
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.582934584788277,
+     "ratio_sd": 0.0030879019902296076
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.4299797256320567,
+   "static_bound_kg": 9.145620403940269,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8091300964893884,
+     "ratio_sd": 0.0030157268675725384
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8930976698691551,
+     "ratio_sd": 0.002712652695147911
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9184660663845804,
+     "ratio_sd": 0.001954422702864359
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8565311707911197,
+     "ratio_sd": 0.0021688327690318216
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.626210433365747,
+     "ratio_sd": 0.019254109678354947
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.4203743542314896,
+     "ratio_sd": 0.006756498484975431
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.18766551550982125,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7864943479785629,
+     "ratio_sd": 0.0019080183301691629
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.855616588756369,
+     "ratio_sd": 0.0020195764173533783
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8838670446296388,
+     "ratio_sd": 0.0012168953455712647
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8555123764183744,
+     "ratio_sd": 0.0027906378673062666
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.945017383867605,
+     "ratio_sd": 0.0018024772852343175
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7790785266566977,
+     "ratio_sd": 0.007837844128247206
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.33788561205258255,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7551575654619335,
+     "ratio_sd": 0.002770560748320662
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8460502021323247,
+     "ratio_sd": 0.002482196574797678
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.880124909643077,
+     "ratio_sd": 0.0016609177329593816
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8440177244538634,
+     "ratio_sd": 0.00268871410025643
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8850742957017564,
+     "ratio_sd": 0.0031416219309140037
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.3807606125570734,
+     "ratio_sd": 0.02708037506839883
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.6728480815691167,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.22891651782445468,
+     "ratio_sd": 0.08343746942791042
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.29251186764973697,
+     "ratio_sd": 0.029284113759062334
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.4316287769569017,
+     "ratio_sd": 0.01847021603014844
+    },
+    "crawl 0.05": {
+     "valid": 2,
+     "ratio_mean": -0.6038913822755643,
+     "ratio_sd": 0.6521362213059624
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.6816216459123192,
+     "ratio_sd": 0.15885933003913294
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.7701567668447665,
+     "ratio_sd": 0.0864139121967854
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.23631065651584365,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.706148363900518,
+     "ratio_sd": 0.002509637027627599
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.791571926331281,
+     "ratio_sd": 0.004206707376654184
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.779734366162496,
+     "ratio_sd": 0.0029294645219849944
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8129379739396674,
+     "ratio_sd": 0.006877178952260993
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8892637693050307,
+     "ratio_sd": 0.0010999631031196465
+    },
+    "crawl 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.49345361189411757,
+     "ratio_sd": 0.005625647581348228
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.43509776333415695,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.6590201594186468,
+     "ratio_sd": 0.004641392268147443
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.772423649269989,
+     "ratio_sd": 0.003118995094997947
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7436856663802944,
+     "ratio_sd": 0.002182497968562908
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7558976345554314,
+     "ratio_sd": 0.01630559375871956
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8260270896636216,
+     "ratio_sd": 0.011254430468804857
+    },
+    "crawl 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.18062505452454433,
+     "ratio_sd": 0.004708468379486492
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.9134468795257744,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": -0.28610431398049996,
+     "ratio_sd": 0.013504337570205102
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.028840274673839806,
+     "ratio_sd": 0.011392970088820622
+    },
+    "trot 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.1550986182521084,
+     "ratio_sd": 0.008182832956917116
+    },
+    "crawl 0.05": {
+     "valid": 0,
+     "ratio_mean": -1.4325942915397105,
+     "ratio_sd": 0.014295227228854178
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": -1.1158554030859327,
+     "ratio_sd": 0.009284842068342175
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.8476254724361116,
+     "ratio_sd": 0.03198670084477083
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.14433935625256922,
+   "static_bound_kg": 8.505997202900714,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8752752148636826,
+     "ratio_sd": 0.0022274051869851643
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9071942807190417,
+     "ratio_sd": 0.001609248362403279
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9236590300803222,
+     "ratio_sd": 0.0007954158544777453
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.999555110254924,
+     "ratio_sd": 0.005048493302250843
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.9470592172340322,
+     "ratio_sd": 0.004090670804027085
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7749698393205169,
+     "ratio_sd": 0.0029804708536771717
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.24956520197367538,
+   "static_bound_kg": 8.505997202900714,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8519208919052096,
+     "ratio_sd": 0.003550542886070739
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8924494137631795,
+     "ratio_sd": 0.002297628811876806
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9181798009780895,
+     "ratio_sd": 0.0015829655449334035
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.903903099735962,
+     "ratio_sd": 0.002779342883174811
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.8895292676305917,
+     "ratio_sd": 0.0012305477781698806
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.6786981132502257,
+     "ratio_sd": 0.0021047722035579725
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 100.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.46561367806898674,
+   "static_bound_kg": 8.505997202900714,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7994428721775428,
+     "ratio_sd": 0.004027300958902645
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8672072479293377,
+     "ratio_sd": 0.003019909513483723
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.9004067778525439,
+     "ratio_sd": 0.0023046143925775637
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9301220232211455,
+     "ratio_sd": 0.0050084137140019025
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.8483589757843403,
+     "ratio_sd": 0.005394579534831104
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.5269438425863762,
+     "ratio_sd": 0.0024892701579130047
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.20985300199038887,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.757505352842291,
+     "ratio_sd": 0.002882025827061262
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8361828216542342,
+     "ratio_sd": 0.0023611202376933407
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8689977927921552,
+     "ratio_sd": 0.0023673546126276937
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.897670210028366,
+     "ratio_sd": 0.002183255153757435
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8816884900701712,
+     "ratio_sd": 0.0028238949558577493
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7661679077770528,
+     "ratio_sd": 0.008845903860900915
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.3802419989129075,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7185361457669472,
+     "ratio_sd": 0.0048196731087554266
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8127929997606629,
+     "ratio_sd": 0.0036628874821516624
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8550599611260358,
+     "ratio_sd": 0.0024505350968967343
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 1.0298768305606585,
+     "ratio_sd": 0.0033431756452479994
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9490825192290222,
+     "ratio_sd": 0.0033841626117679436
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.5782417840891642,
+     "ratio_sd": 0.012611600200184123
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.7634340748223707,
+   "static_bound_kg": 6.341751975767124,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.17487254583352044,
+     "ratio_sd": 0.025817857858764014
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.3221820835381743,
+     "ratio_sd": 0.020370404089386073
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.43938813471619775,
+     "ratio_sd": 0.015475835677794458
+    },
+    "crawl 0.05": {
+     "valid": 0,
+     "ratio_mean": -1.2906080946600393,
+     "ratio_sd": 0.1077668937282914
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.988234767145177,
+     "ratio_sd": 0.008044481614926309
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.860091587838698,
+     "ratio_sd": 0.014128619788155312
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.2821223273530987,
+   "static_bound_kg": 5.381527428932804,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.6781051807103117,
+     "ratio_sd": 0.003984548058165385
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.7528068187568137,
+     "ratio_sd": 0.0008481623292082582
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.7957853704581449,
+     "ratio_sd": 0.003186394366524134
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9565125217067886,
+     "ratio_sd": 0.0024165919602138113
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9233383988044576,
+     "ratio_sd": 0.003044515304296173
+    },
+    "crawl 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8343992275679625,
+     "ratio_sd": 0.005922756660171535
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.5257484723446081,
+   "static_bound_kg": 5.381527428932804,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.6151963469975412,
+     "ratio_sd": 0.005303572463196703
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.7313970032476311,
+     "ratio_sd": 0.004749360959424665
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.7774613835342025,
+     "ratio_sd": 0.003411875662505826
+    },
+    "crawl 0.05": {
+     "valid": 7,
+     "ratio_mean": 0.07756801201745682,
+     "ratio_sd": 0.8279565632942888
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8966832070139755,
+     "ratio_sd": 0.019232075041608655
+    },
+    "crawl 0.15": {
+     "valid": 1,
+     "ratio_mean": 0.3653374917768766,
+     "ratio_sd": 0.09992052976277817
+    }
+   }
+  },
+  {
+   "upper_mm": 200.0,
+   "lower_mm": 200.0,
+   "body_mm": [
+    300.0,
+    150.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 0,
+   "stand_peak_over_stall_mean": 1.0,
+   "static_bound_kg": 5.381527428932804,
+   "walks": {
+    "trot 0.05": {
+     "valid": 0,
+     "ratio_mean": -0.2203002095052012,
+     "ratio_sd": 0.0018219322264883954
+    },
+    "trot 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.07147020178307628,
+     "ratio_sd": 0.02483974070797782
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.14014358133898802,
+     "ratio_sd": 0.022462979863916707
+    },
+    "crawl 0.05": {
+     "valid": 0,
+     "ratio_mean": 0.4879399622501911,
+     "ratio_sd": 0.10058625966932862
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": 0.646239562010776,
+     "ratio_sd": 0.04997990512700651
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7695846205397482,
+     "ratio_sd": 0.02475505509680991
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    240.0,
+    120.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.195586967551367,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7315054157663702,
+     "ratio_sd": 0.002536817358610637
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8028880567211043,
+     "ratio_sd": 0.0023417076215740307
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8324419504234468,
+     "ratio_sd": 0.0021180643195474968
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9332534763460163,
+     "ratio_sd": 0.001452162853375424
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9212492782958266,
+     "ratio_sd": 0.002957315264859681
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.6670454891337597,
+     "ratio_sd": 0.016199457734572282
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    240.0,
+    120.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.3548827468867989,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.6981212334498246,
+     "ratio_sd": 0.005012298373553933
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.7952354818059983,
+     "ratio_sd": 0.0030963391208152636
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8369974949957992,
+     "ratio_sd": 0.0023964698866324845
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.9858557704665939,
+     "ratio_sd": 0.0026210158036141613
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9718023002342818,
+     "ratio_sd": 0.003679748001871968
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.3219876123206675,
+     "ratio_sd": 0.027621366047384435
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    240.0,
+    120.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.7189240696676599,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.13334198544281678,
+     "ratio_sd": 0.05207798239616273
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.3327170255607119,
+     "ratio_sd": 0.02047063551673141
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.46889217312944986,
+     "ratio_sd": 0.016716348603002525
+    },
+    "crawl 0.05": {
+     "valid": 0,
+     "ratio_mean": -1.1388113212304583,
+     "ratio_sd": 0.022022077871047905
+    },
+    "crawl 0.1": {
+     "valid": 0,
+     "ratio_mean": -0.8336248739653531,
+     "ratio_sd": 0.010711352581034344
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": -0.774340857226288,
+     "ratio_sd": 0.01277750068649809
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    360.0,
+    180.0
+   ],
+   "mass_scale": 0.6,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.0355041236734126,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.18261468156682384,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8146971011048958,
+     "ratio_sd": 0.002720567855569376
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8775688296640753,
+     "ratio_sd": 0.0020367461791810297
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.900792497339334,
+     "ratio_sd": 0.0010701732853435726
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.8324105901190683,
+     "ratio_sd": 0.006329982398176122
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.9406679986135543,
+     "ratio_sd": 0.002918998439494237
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.7563894182985855,
+     "ratio_sd": 0.005865911570859094
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    360.0,
+    180.0
+   ],
+   "mass_scale": 1.0,
+   "n_draws": 10,
+   "total_mass_kg_mean": 1.7258402061223546,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.3272051079447967,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7831514643002885,
+     "ratio_sd": 0.003103822030083459
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.8681580198680198,
+     "ratio_sd": 0.0023087930204211526
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.8972997855628442,
+     "ratio_sd": 0.0016969237495351778
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.7883151152179853,
+     "ratio_sd": 0.0016672152528463952
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.774561082046752,
+     "ratio_sd": 0.010683054681985472
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.5502688695871931,
+     "ratio_sd": 0.016856936774531553
+    }
+   }
+  },
+  {
+   "upper_mm": 150.0,
+   "lower_mm": 150.0,
+   "body_mm": [
+    360.0,
+    180.0
+   ],
+   "mass_scale": 1.75,
+   "n_draws": 10,
+   "total_mass_kg_mean": 3.02022036071412,
+   "stood": 10,
+   "stand_peak_over_stall_mean": 0.6450632933802762,
+   "static_bound_kg": 7.17536990524374,
+   "walks": {
+    "trot 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.3083727520712859,
+     "ratio_sd": 0.09956754059997704
+    },
+    "trot 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.3119463578746037,
+     "ratio_sd": 0.03213279322517081
+    },
+    "trot 0.15": {
+     "valid": 10,
+     "ratio_mean": 0.41644122804986905,
+     "ratio_sd": 0.02054637191227278
+    },
+    "crawl 0.05": {
+     "valid": 10,
+     "ratio_mean": 0.6252791382590206,
+     "ratio_sd": 0.1385864131176152
+    },
+    "crawl 0.1": {
+     "valid": 10,
+     "ratio_mean": 0.2823469999734991,
+     "ratio_sd": 0.05341324716557082
+    },
+    "crawl 0.15": {
+     "valid": 0,
+     "ratio_mean": 0.07698871627845374,
+     "ratio_sd": 0.025399421587878748
+    }
+   }
+  }
+ ]
+}

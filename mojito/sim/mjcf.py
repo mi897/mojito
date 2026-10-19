@@ -25,6 +25,7 @@ from ..geometry.urdf import URDFModel, URDFError
 # Placeholder masses in kg, by role. Servos are listed at 60 g (docs/STAGE2.md).
 DEFAULT_MASSES = {"body": 0.8, "hip": 0.06, "thigh": 0.10, "shank": 0.06, "foot": 0.01}
 FOOT_RADIUS = 0.012
+BODY_THICKNESS = 0.06  # height of the box drawn for the body, m
 LINK_RADIUS = 0.01
 FLOOR_FRICTION = 1.0
 FOOT_FRICTION = 1.0
