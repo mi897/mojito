@@ -1,7 +1,7 @@
 """Live gait explorer: change gait and servo parameters while the physics runs, and watch the robot in a browser.
 
 The physics (MuJoCo, servo model, IK) runs in this Python process; the browser only draws the state and sends
-slider changes. Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine
+slider changes and drive commands (keyboard or gamepad, see the Drive card). Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine
 (the server listens on 127.0.0.1 only).
 
     pip install numpy scipy mujoco
@@ -98,7 +98,7 @@ def make_handler(runner):
                 self.send_response(204)
                 self.end_headers()
             elif self.path == "/meta":
-                self._send({"limits": live_sim.LIMITS, "presets": live_sim.PRESETS, "defaults": live_sim.DEFAULTS})
+                self._send({"limits": live_sim.LIMITS, "presets": live_sim.PRESETS, "defaults": live_sim.DEFAULTS, "drive": live_sim.DRIVE})
             else:
                 self.send_error(404)
 

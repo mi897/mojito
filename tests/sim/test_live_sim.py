@@ -82,6 +82,20 @@ class TestLiveSim(unittest.TestCase):
         sim.step(50)
         json.dumps(sim.snapshot())
 
+    def test_drive_limits_are_inside_the_slider_limits(self):
+        for name, full in live_sim.DRIVE.items():
+            self.assertIn(name, live_sim.PRESETS)
+            for key, value in full.items():
+                low, high = live_sim.LIMITS[key]
+                self.assertTrue(low <= -value and value <= high, (name, key))
+
+    def test_full_drive_command_does_not_fall(self):
+        # the page sends exactly these values at full stick (docs/STAGE2.md): all three at once, the worst case
+        for name, full in live_sim.DRIVE.items():
+            sim = live_sim.LiveSim(dict(live_sim.PRESETS[name], walk=True, **full))
+            sim.step(int(4.0 / sim.timestep))
+            self.assertFalse(sim.snapshot()["fell"], name)
+
 
 if __name__ == "__main__":
     unittest.main()

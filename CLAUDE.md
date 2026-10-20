@@ -88,7 +88,7 @@ python scripts/design/design_sweep.py         # results/design/design_sweep.json
 python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
 python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
-python scripts/gait/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs
+python scripts/gait/live_gait.py                # browser UI at 127.0.0.1:8765: sliders change the gait while it runs; keyboard or gamepad drive it, chase camera
 python scripts/website/build_site.py               # website data from results/; then: python -m http.server -d site
 python scripts/website/serve_site.py               # local-only server: the site plus live physics behind its playground (needs mujoco)
 python scripts/website/site_sweep.py               # 144 MuJoCo runs for the site's physics lab -> results/gait/physics_sweep.json (needs mujoco)
