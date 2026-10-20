@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.sim import live_sim  # noqa: E402
 
 PAGE = os.path.join(os.path.dirname(__file__), "live_gait.html")
+DRIVE_JS = os.path.join(os.path.dirname(__file__), "..", "..", "site", "assets", "drive.js")  # shared with the playground
 FRAME_SECONDS = 1.0 / 60.0
 
 
@@ -94,6 +95,9 @@ def make_handler(runner):
             elif self.path in ("/", "/index.html"):
                 with open(PAGE, "rb") as f:
                     self._send(f.read(), "text/html; charset=utf-8")
+            elif self.path == "/drive.js":
+                with open(DRIVE_JS, "rb") as f:
+                    self._send(f.read(), "text/javascript; charset=utf-8")
             elif self.path == "/favicon.ico":
                 self.send_response(204)
                 self.end_headers()

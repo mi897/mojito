@@ -64,6 +64,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   <div id="controls"></div>
 </aside>
 </main>
+<script src="/drive.js"></script>
 <script>
 const LEGS=['FL','FR','RL','RR'];
 const SPEC=[
@@ -73,7 +74,6 @@ const SPEC=[
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let meta=null,state=null,dragging=null,history=[],sendTimer=null,pending={};
 const view={az:-45,el:35.264,zoom:1.6,follow:true,start:null,chase:true,chaseOffset:20};
-const drive={on:true,keys:new Set(),hold:false,cmd:[0,0,0],sent:null,idleSince:0,pad:null,preset:'trot',lastButtons:[]};
 
 function send(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})}).catch(()=>{});}
 function queue(change){Object.assign(pending,change);clearTimeout(sendTimer);sendTimer=setTimeout(()=>{send('/params',pending);pending={};},60);}
@@ -107,58 +107,15 @@ function build(){
   document.getElementById('drive').onclick=()=>setDrive(!drive.on);
   document.getElementById('chase').onclick=()=>setChase(!view.chase);
 }
-function choosePreset(name){drive.preset=name;drive.sent=null;send('/preset',{name});}
-function setDrive(on){drive.on=on;drive.sent=null;const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
+function choosePreset(name){if(drive)drive.forget();send('/preset',{name});}
+function setDrive(on){drive.setOn(on);const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
 function setChase(on){view.chase=on;document.getElementById('chase').classList.toggle('on',on);if(on){view.zoom=Math.max(view.zoom,1.6);view.follow=true;document.getElementById('follow').classList.add('on');}}
-function resetRun(){history=[];view.start=null;drive.sent=null;send('/reset');}
-// ---- drive: keyboard and gamepad -> forward, left, yaw command ----
-const DEAD=0.15; // stick dead zone
-const stick=v=>{const a=Math.abs(v);return a<DEAD?0:Math.sign(v)*(a-DEAD)/(1-DEAD);};
-const KEYMAP={KeyW:'fwd',ArrowUp:'fwd',KeyS:'back',ArrowDown:'back',KeyA:'left',KeyD:'right',KeyQ:'turnl',ArrowLeft:'turnl',KeyE:'turnr',ArrowRight:'turnr'};
-addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'&&e.target.type!=='range'||e.ctrlKey||e.metaKey||e.altKey)return;
-  if(KEYMAP[e.code]){drive.keys.add(KEYMAP[e.code]);e.preventDefault();return;}
-  if(e.repeat)return;
-  if(e.code==='Space'){drive.hold=!drive.hold;e.preventDefault();}
-  else if(e.code==='Digit1')choosePreset('trot');else if(e.code==='Digit2')choosePreset('crawl');
-  else if(e.code==='KeyR')resetRun();else if(e.code==='KeyC')setChase(!view.chase);
-});
-addEventListener('keyup',e=>{if(KEYMAP[e.code])drive.keys.delete(KEYMAP[e.code]);});
-addEventListener('blur',()=>drive.keys.clear());
-function readPad(){
-  const pads=(navigator.getGamepads?navigator.getGamepads():[])||[];
-  const pad=[...pads].find(g=>g&&g.connected&&g.axes.length>=4);
-  drive.pad=pad?pad.id:null;
-  if(!pad){drive.lastButtons=[];return null;}
-  const was=drive.lastButtons,now=pad.buttons.map(b=>b.pressed);
-  const edge=i=>now[i]&&!was[i];
-  if(edge(0))drive.hold=!drive.hold;
-  if(edge(1))resetRun();
-  if(edge(2))setChase(!view.chase);
-  if(edge(4))choosePreset('trot');
-  if(edge(5))choosePreset('crawl');
-  drive.lastButtons=now;
-  const dpad=(now[12]?1:0)-(now[13]?1:0);
-  return [Math.max(-1,Math.min(1,-stick(pad.axes[1])+dpad)),-stick(pad.axes[0]),-stick(pad.axes[2])];
+function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/reset');}
+// ---- drive: keyboard and gamepad (shared with the playground, site/assets/drive.js) ----
+let drive=null;
+function startDrive(){
+  drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase)});
 }
-function driveTick(){
-  if(!meta)return;
-  const pad=readPad(),k=drive.keys;
-  let c=[(k.has('fwd')?1:0)-(k.has('back')?1:0),(k.has('left')?1:0)-(k.has('right')?1:0),(k.has('turnl')?1:0)-(k.has('turnr')?1:0)];
-  if(pad&&pad.some(v=>v!==0))c=pad;
-  if(!drive.on)return;
-  const norm=Math.hypot(c[0],c[1]);if(norm>1){c[0]/=norm;c[1]/=norm;} // diagonal is no faster than straight
-  const lim=meta.drive[drive.preset]||meta.drive.trot,now=performance.now();
-  const cmd=[c[0]*lim.vx,c[1]*lim.vy,c[2]*lim.yaw_rate];
-  drive.cmd=cmd;
-  const moving=c.some(v=>v!==0);
-  if(moving)drive.idleSince=now;
-  const walk=moving||drive.hold||now-drive.idleSince<500; // keep stepping briefly after release so it stops cleanly
-  const out={vx:cmd[0],vy:cmd[1],yaw_rate:cmd[2],walk};
-  const key=JSON.stringify(out);
-  if(key!==drive.sent){drive.sent=key;send('/params',out);}
-}
-setInterval(driveTick,33);
 function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
 
 function syncControls(){
@@ -231,7 +188,7 @@ function drawHud(){
   const d=vc.width/vc.getBoundingClientRect().width||1,v=state.measured_velocity,speed=Math.hypot(v[0],v[1]);
   vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d);
   vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
-  const lim=meta.drive[drive.preset]||meta.drive.trot;
+  const lim=drive.limits();
   vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d);
   vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d);
 }
@@ -264,7 +221,7 @@ async function poll(){
     if(history.length&&state.time<history[history.length-1].t)history=[];
     history.push({t:state.time,down:state.down,cmd:state.commanded_down});
     while(history.length&&history[0].t<state.time-4.5)history.shift();
-    syncControls();drawStats();
+    drive.sync(state.params);syncControls();drawStats();
   }catch(e){}
   setTimeout(poll,33);
 }
@@ -278,7 +235,7 @@ vc.addEventListener('pointerup',()=>drag=null);vc.addEventListener('pointercance
 vc.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(0.4,Math.min(5,view.zoom*Math.exp(-e.deltaY*0.001)));},{passive:false});
 vc.addEventListener('dblclick',()=>{view.chaseOffset=20;view.az=-45;view.el=35.264;view.zoom=1;});
 
-fetch('/meta').then(r=>r.json()).then(m=>{meta=m;build();poll();frame();});
+fetch('/meta').then(r=>r.json()).then(m=>{meta=m;build();startDrive();poll();frame();});
 </script>
 </body>
 </html>

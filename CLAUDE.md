@@ -41,7 +41,7 @@ mojito/                the library, in four subpackages (each holds at most abou
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
-site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
+site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html); data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
