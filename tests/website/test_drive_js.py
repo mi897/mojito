@@ -68,5 +68,67 @@ class TestDriveMapping(unittest.TestCase):
         self.assertIsNone(run_js("D.detectPreset({height:0.3,period:1.0},%s)" % json.dumps(presets)))
 
 
+
+FAKE_PAD = """
+const D=require('../../site/assets/drive.js');
+let tick=null; global.setInterval=f=>{tick=f;return 1;}; global.clearInterval=()=>{};
+global.addEventListener=()=>{}; global.removeEventListener=()=>{};
+const store={}; global.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=v;}};
+let axes=%(rest)s, mapping=%(mapping)s;
+Object.defineProperty(global,'navigator',{configurable:true,value:{getGamepads:()=>[{connected:true,id:'Android Pad',mapping,axes,buttons:Array.from({length:16},()=>({pressed:false}))}]}});
+const sent=[]; const drive=D.create({meta:{drive:{trot:{vx:0.25,vy:0.12,yaw_rate:0.8}},pose:{body_roll:0.15,body_pitch:0.15,body_yaw:0.2},presets:{}},
+  send:(p,b)=>sent.push(b),canvasActive:()=>true,reset(){},setPreset(){},toggleChase(){}});
+const set=a=>{axes=a;tick();};
+"""
+
+
+@unittest.skipIf(NODE is None, "node is not installed")
+class TestGamepadMapping(unittest.TestCase):
+    def run_pad(self, rest, mapping, body):
+        script = FAKE_PAD % {"rest": json.dumps(rest), "mapping": json.dumps(mapping)} + body
+        return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+
+    def test_stick_axes_standard_and_non_standard(self):
+        self.assertEqual(run_js("D.stickAxes([1,2,3,4],'standard',[0,0,0,0],null)"), [1, 2, 3, 4])
+        # a trigger rests at -1 on axis 2: the right stick is the next axes that rested near zero
+        self.assertEqual(run_js("D.stickAxes([0.1,0.2,-1,0.3,0.4,-1],'',[0,0,-1,0,0,-1],null)"), [0.1, 0.2, 0.3, 0.4])
+        self.assertEqual(run_js("D.stickAxes([0.5,0.6,0.7,0],'',[0,0,0,0],{lx:{i:3,sign:-1},ly:{i:2,sign:1},rx:{i:0,sign:1}})"), [-0, 0.7, 0.5, 0])
+
+    def test_non_standard_pad_sends_commands(self):
+        # forward on the left stick, and a right stick on axes 3 and 4 because axis 2 is a trigger resting at -1
+        out = self.run_pad([0, 0, -1, 0, 0, -1], "''", """
+            set([0,0,-1,0,0,-1]); set([0,-1,-1,0,0,-1]); set([0,-1,-1,0.9,0,-1]);
+            console.log(JSON.stringify(sent.slice(-2).map(c=>[c.vx,c.yaw_rate,c.walk])));""")
+        self.assertAlmostEqual(out[0][0], 0.25)
+        self.assertEqual(out[0][1], 0)
+        self.assertLess(out[1][1], 0)   # right stick right turns right (negative yaw rate)
+
+    def test_rest_trigger_axis_is_not_a_turn_command(self):
+        out = self.run_pad([0, 0, -1, 0, 0, -1], "''", "set([0,0,-1,0,0,-1]); console.log(JSON.stringify(sent.map(c=>c.yaw_rate)));")
+        self.assertTrue(all(v == 0 for v in out))
+
+    def test_calibration_learns_axes_and_signs(self):
+        # this pad: left stick up = axis 5 going +1, left stick right = axis 4 going -1, right stick right = axis 1 going +1
+        out = self.run_pad([0, 0, 0, 0, 0, 0], "''", """
+            drive.calibrate(); set([0,0,0,0,0,0]);
+            set([0,0,0,0,0,1]); set([0,0,0,0,0,0]);        // up on axis 5, release
+            set([0,0,0,0,-1,0]); set([0,0,0,0,0,0]);       // right on axis 4 (negative), release
+            set([0,1,0,0,0,0]); set([0,0,0,0,0,0]);        // right stick right on axis 1, release
+            const calibrated = drive.calib === null;
+            set([0,0,0,0,0,1]); set([0,0,0,0,-1,1]); set([0,1,0,0,0,0]);
+            console.log(JSON.stringify({calibrated, maps: drive.maps['Android Pad'], last: sent.slice(-3).map(c=>[c.vx,c.vy,c.yaw_rate])}));""")
+        self.assertTrue(out["calibrated"])
+        self.assertEqual(out["maps"]["ly"], {"i": 5, "sign": -1})
+        self.assertEqual(out["maps"]["lx"], {"i": 4, "sign": -1})
+        self.assertEqual(out["maps"]["rx"], {"i": 1, "sign": 1})
+        self.assertAlmostEqual(out["last"][0][0], 0.25)                       # forward
+        self.assertAlmostEqual(out["last"][1][1], -0.12 / 2 ** 0.5, places=6)  # forward and right together: right is negative left, on the unit circle
+        self.assertLess(out["last"][2][2], 0)
+
+    def test_nothing_is_sent_while_mapping(self):
+        out = self.run_pad([0, 0, 0, 0], "'standard'", "drive.calibrate(); set([0,-1,0,0]); set([0,0,0,0]); console.log(JSON.stringify(sent));")
+        self.assertEqual(out, [])
+
+
 if __name__ == "__main__":
     unittest.main()

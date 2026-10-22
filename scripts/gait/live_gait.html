@@ -65,6 +65,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
     <b>A D / left stick left, right</b><span>roll left, right side down</span>
     <b>Q E / right stick</b><span>yaw left, right</span>
   </div>
+  <div class="btns"><button id="mapPad">Map gamepad</button><button id="clearMap">Clear map</button></div>
   <div class="hint" id="padstatus"></div>
   <div class="btns" id="actions"></div>
   <div class="btns" id="presets"></div>
@@ -130,6 +131,8 @@ function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/re
 let drive=null;
 function startDrive(){
   drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase),onMode:showMode});
+  document.getElementById('mapPad').onclick=()=>drive.calibrate();
+  document.getElementById('clearMap').onclick=()=>drive.clearMap();
   document.getElementById('mode').onclick=()=>drive.setMode(drive.mode==='walk'?'pose':'walk');
 }
 function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
@@ -238,7 +241,7 @@ async function poll(){
     if(history.length&&state.time<history[history.length-1].t)history=[];
     history.push({t:state.time,down:state.down,cmd:state.commanded_down});
     while(history.length&&history[0].t<state.time-4.5)history.shift();
-    drive.sync(state.params);syncControls();drawStats();
+    drive.sync(state.params);document.getElementById('padstatus').textContent='Gamepad: '+drive.status();document.getElementById('mapPad').classList.toggle('on',!!drive.calib);syncControls();drawStats();
   }catch(e){}
   setTimeout(poll,33);
 }
