@@ -1,6 +1,7 @@
 /* Draggable isometric-style 3D view of the quadruped on a floor grid (canvas 2D, no libraries).
  * scene = { origin:[x,y,z], R:3x3 (body to world), bodySize:[length,width], points: 4 legs x [shoulder,hip,knee,foot] x xyz in the body frame,
- *           down:[4 bool] (foot carrying weight: filled), bad:[4 bool] (target not reachable: red ring), labels:true } */
+ *           down:[4 bool] (foot carrying weight: filled), bad:[4 bool] (target not reachable: red ring), labels:true,
+ *           arrows:[{from:[x,y], to:[x,y], colour:'--blue'}] optional, on the floor in world coordinates } */
 (function () {
   'use strict';
   const LEGS = ['FL', 'FR', 'RL', 'RR'];
@@ -91,6 +92,11 @@
           if (s.bad && s.bad[i]) { ctx.beginPath(); ctx.arc(proj[3][0], proj[3][1], 12 * d, 0, 7); ctx.strokeStyle = css('--orange'); ctx.lineWidth = 2.5 * d; ctx.setLineDash([4 * d, 3 * d]); ctx.stroke(); ctx.setLineDash([]); }
           if (s.labels !== false) { ctx.fillStyle = colour; ctx.font = `600 ${11 * d}px system-ui`; ctx.fillText(name, proj[0][0] + 7 * d, proj[0][1] - 7 * d); }
         } });
+      });
+      (s.arrows || []).forEach(ar => {
+        const [fx, fy] = ar.from, [tx, ty] = ar.to, len = Math.hypot(tx - fx, ty - fy) || 1, u = [(tx - fx) / len, (ty - fy) / len], hd = Math.min(0.03, len * 0.4);
+        const pts = [[fx, fy], [tx, ty], [tx - u[0] * hd - u[1] * hd * 0.6, ty - u[1] * hd + u[0] * hd * 0.6], [tx, ty], [tx - u[0] * hd + u[1] * hd * 0.6, ty - u[1] * hd - u[0] * hd * 0.6]].map(q => P([q[0], q[1], 0]));
+        items.push({ depth: -1, draw: () => { ctx.strokeStyle = css(ar.colour); ctx.lineWidth = 3 * d; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke(); } });
       });
       // depth grows toward the camera (project() puts nearer ground lower on screen), so paint the smallest first
       items.sort((a, b) => a.depth - b.depth).forEach(it => it.draw());

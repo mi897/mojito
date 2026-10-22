@@ -47,6 +47,10 @@ PRESETS = {
     "pace": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0,
                  kp=10.0, kd=0.2, height=0.2125),
 }
+# Full-stick command (forward m/s, left m/s, yaw rad/s) for drive mode (keyboard or gamepad), per preset. Probed in 6 s runs
+# (forward, back, sideways and turning each alone, and the trot with all three at once): none fell. The pace is left out,
+# it barely moves in physics. The measured speed is lower than the command, see docs/STAGE2.md.
+DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8), "crawl": dict(vx=0.06, vy=0.03, yaw_rate=0.3)}
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
               yaw_rate=(-3.0, 3.0), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),

@@ -1,7 +1,7 @@
 """Live gait explorer: change gait and servo parameters while the physics runs, and watch the robot in a browser.
 
 The physics (MuJoCo, servo model, IK) runs in this Python process; the browser only draws the state and sends
-slider changes. Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine
+slider changes and drive commands (keyboard or gamepad, see the Drive card). Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine
 (the server listens on 127.0.0.1 only).
 
     pip install numpy scipy mujoco
@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.sim import live_sim  # noqa: E402
 
 PAGE = os.path.join(os.path.dirname(__file__), "live_gait.html")
+DRIVE_JS = os.path.join(os.path.dirname(__file__), "..", "..", "site", "assets", "drive.js")  # shared with the playground
 FRAME_SECONDS = 1.0 / 60.0
 
 
@@ -94,11 +95,14 @@ def make_handler(runner):
             elif self.path in ("/", "/index.html"):
                 with open(PAGE, "rb") as f:
                     self._send(f.read(), "text/html; charset=utf-8")
+            elif self.path == "/drive.js":
+                with open(DRIVE_JS, "rb") as f:
+                    self._send(f.read(), "text/javascript; charset=utf-8")
             elif self.path == "/favicon.ico":
                 self.send_response(204)
                 self.end_headers()
             elif self.path == "/meta":
-                self._send({"limits": live_sim.LIMITS, "presets": live_sim.PRESETS, "defaults": live_sim.DEFAULTS})
+                self._send({"limits": live_sim.LIMITS, "presets": live_sim.PRESETS, "defaults": live_sim.DEFAULTS, "drive": live_sim.DRIVE})
             else:
                 self.send_error(404)
 

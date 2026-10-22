@@ -29,6 +29,8 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .stat span{color:var(--muted);font-size:12px}
 #warn{color:var(--warn);font-weight:600;min-height:1.4em}
 .hint{color:var(--muted);font-size:12px;margin-top:6px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px;margin:6px 0}.keys b{font-weight:600}
+.keys span{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -45,11 +47,24 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   </div>
 </section>
 <aside class="card">
+  <h2 style="margin-top:0">Drive</h2>
+  <div class="btns"><button id="drive" class="on">Drive: on</button><button id="chase" class="on">Chase cam</button></div>
+  <div class="keys">
+    <b>W S / left stick</b><span>forward, back</span>
+    <b>A D / left stick</b><span>sidestep left, right</span>
+    <b>Q E / right stick</b><span>turn left, right</span>
+    <b>Space / A</b><span>keep walking on the spot</span>
+    <b>1 2 / LB RB</b><span>trot, crawl</span>
+    <b>R / B</b><span>reset</span>
+    <b>C / X</b><span>chase cam</span>
+  </div>
+  <div class="hint" id="padstatus"></div>
   <div class="btns" id="actions"></div>
   <div class="btns" id="presets"></div>
   <div id="controls"></div>
 </aside>
 </main>
+<script src="/drive.js"></script>
 <script>
 const LEGS=['FL','FR','RL','RR'];
 const SPEC=[
@@ -58,7 +73,7 @@ const SPEC=[
  ['Servo, body, speed',[['kp','kp N·m/rad',1,300,1],['kd','kd',0,5,0.05],['mass','mass kg',0.5,8,0.1],['speed','sim speed x',0.1,2,0.1]]]];
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let meta=null,state=null,dragging=null,history=[],sendTimer=null,pending={};
-const view={az:-45,el:35.264,zoom:1,follow:true,start:null};
+const view={az:-45,el:35.264,zoom:1.6,follow:true,start:null,chase:true,chaseOffset:20};
 
 function send(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})}).catch(()=>{});}
 function queue(change){Object.assign(pending,change);clearTimeout(sendTimer);sendTimer=setTimeout(()=>{send('/params',pending);pending={};},60);}
@@ -85,10 +100,21 @@ function build(){
   actions.innerHTML='<button id="walk">Walk</button><button id="pause">Pause</button><button id="reset">Reset</button><button id="follow" class="on">Follow</button>';
   document.getElementById('walk').onclick=()=>send('/params',{walk:!(state&&state.params.walk)});
   document.getElementById('pause').onclick=()=>send('/params',{paused:!(state&&state.paused)});
-  document.getElementById('reset').onclick=()=>{history=[];view.start=null;send('/reset');};
-  document.getElementById('follow').onclick=e=>{view.follow=!view.follow;e.target.classList.toggle('on',view.follow);view.start=state?state.origin.slice():null;};
+  document.getElementById('reset').onclick=resetRun;
+  document.getElementById('follow').onclick=e=>{view.follow=!view.follow;if(!view.follow)setChase(false);e.target.classList.toggle('on',view.follow);view.start=state?state.origin.slice():null;};
   const presets=document.getElementById('presets');
-  for(const name of Object.keys(meta.presets)){const b=document.createElement('button');b.textContent=name;b.onclick=()=>send('/preset',{name});presets.appendChild(b);}
+  for(const name of Object.keys(meta.presets)){const b=document.createElement('button');b.textContent=name;b.onclick=()=>choosePreset(name);presets.appendChild(b);}
+  document.getElementById('drive').onclick=()=>setDrive(!drive.on);
+  document.getElementById('chase').onclick=()=>setChase(!view.chase);
+}
+function choosePreset(name){if(drive)drive.forget();send('/preset',{name});}
+function setDrive(on){drive.setOn(on);const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
+function setChase(on){view.chase=on;document.getElementById('chase').classList.toggle('on',on);if(on){view.zoom=Math.max(view.zoom,1.6);view.follow=true;document.getElementById('follow').classList.add('on');}}
+function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/reset');}
+// ---- drive: keyboard and gamepad (shared with the playground, site/assets/drive.js) ----
+let drive=null;
+function startDrive(){
+  drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase)});
 }
 function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
 
@@ -114,6 +140,10 @@ function project(p,centre,W,H,scale){
 function drawView(){
   const d=fit(vc),W=vc.width,H=vc.height;vx.clearRect(0,0,W,H);
   if(!state)return;
+  if(view.chase){ // camera behind the robot, turning with it
+    const target=state.yaw_deg+180+view.chaseOffset;
+    view.az+=(((target-view.az+540)%360)-180)*0.12;
+  }
   const centre=view.follow?state.origin:(view.start||state.origin);
   const scale=Math.min(W,H*1.25)*0.95*view.zoom/1.0;
   const P=p=>project(p,centre,W,H,scale);
@@ -140,7 +170,27 @@ function drawView(){
       vx.fillStyle=colour;vx.font=`${11*d}px system-ui`;vx.fillText(name,pts[0][0]+6*d,pts[0][1]-6*d);
     }});
   });
+  // heading arrow (body x, dark) and commanded direction (blue), on the floor in front of the robot
+  const arrow=(dx,dy,len,colour)=>{
+    const a=Math.atan2(R[1][0],R[0][0]),c=Math.cos(a),s=Math.sin(a),wx=c*dx-s*dy,wy=s*dx+c*dy,n=Math.hypot(wx,wy)||1;
+    const u=[wx/n,wy/n],base=[o[0]+u[0]*L*0.6,o[1]+u[1]*L*0.6,0],tip=[base[0]+u[0]*len,base[1]+u[1]*len,0];
+    const l=[tip[0]-u[0]*0.03-u[1]*0.02,tip[1]-u[1]*0.03+u[0]*0.02,0],r=[tip[0]-u[0]*0.03+u[1]*0.02,tip[1]-u[1]*0.03-u[0]*0.02,0];
+    const q=[base,tip,l,tip,r].map(P);
+    items.push({depth:-1,draw:()=>{vx.strokeStyle=colour;vx.lineWidth=3*d;vx.beginPath();q.forEach((t,i)=>i?vx.lineTo(t[0],t[1]):vx.moveTo(t[0],t[1]));vx.stroke();}});
+  };
+  arrow(1,0,0.12,css('--muted'));
+  const cmd=drive.cmd,mag=Math.hypot(cmd[0],cmd[1]);
+  if(drive.on&&mag>1e-3)arrow(cmd[0],cmd[1],0.1+mag*0.5,css('--accent'));
   items.sort((a,b)=>a.depth-b.depth).forEach(it=>it.draw()); // far first: depth grows toward the camera
+  drawHud();
+}
+function drawHud(){
+  const d=vc.width/vc.getBoundingClientRect().width||1,v=state.measured_velocity,speed=Math.hypot(v[0],v[1]);
+  vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d);
+  vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
+  const lim=drive.limits();
+  vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d);
+  vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d);
 }
 function drawTiming(){
   const d=fit(tc),W=tc.width,H=tc.height;tx.clearRect(0,0,W,H);
@@ -171,7 +221,7 @@ async function poll(){
     if(history.length&&state.time<history[history.length-1].t)history=[];
     history.push({t:state.time,down:state.down,cmd:state.commanded_down});
     while(history.length&&history[0].t<state.time-4.5)history.shift();
-    syncControls();drawStats();
+    drive.sync(state.params);syncControls();drawStats();
   }catch(e){}
   setTimeout(poll,33);
 }
@@ -180,12 +230,12 @@ function frame(){drawView();drawTiming();requestAnimationFrame(frame);}
 // ---- mouse and touch: rotate and zoom ----
 let drag=null;
 vc.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};vc.setPointerCapture(e.pointerId);});
-vc.addEventListener('pointermove',e=>{if(!drag)return;view.az-=(e.clientX-drag.x)*0.4;view.el=Math.max(3,Math.min(88,view.el+(e.clientY-drag.y)*0.3));drag={x:e.clientX,y:e.clientY};});
+vc.addEventListener('pointermove',e=>{if(!drag)return;if(view.chase)view.chaseOffset-=(e.clientX-drag.x)*0.4;else view.az-=(e.clientX-drag.x)*0.4;view.el=Math.max(3,Math.min(88,view.el+(e.clientY-drag.y)*0.3));drag={x:e.clientX,y:e.clientY};});
 vc.addEventListener('pointerup',()=>drag=null);vc.addEventListener('pointercancel',()=>drag=null);
 vc.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(0.4,Math.min(5,view.zoom*Math.exp(-e.deltaY*0.001)));},{passive:false});
-vc.addEventListener('dblclick',()=>{view.az=-45;view.el=35.264;view.zoom=1;});
+vc.addEventListener('dblclick',()=>{view.chaseOffset=20;view.az=-45;view.el=35.264;view.zoom=1;});
 
-fetch('/meta').then(r=>r.json()).then(m=>{meta=m;build();poll();frame();});
+fetch('/meta').then(r=>r.json()).then(m=>{meta=m;build();startDrive();poll();frame();});
 </script>
 </body>
 </html>
