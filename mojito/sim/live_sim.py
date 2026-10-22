@@ -32,6 +32,8 @@ CONTACT_FORCE = 0.5        # N, a foot carrying more is "down"
 DEFAULTS = dict(
     period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.022, sway=0.0,
     vx=0.15, vy=0.0, yaw_rate=0.0,
+    # body posture while the feet stay planted (rad): the body rolls, pitches and yaws about its own centre
+    body_roll=0.0, body_pitch=0.0, body_yaw=0.0,
     kp=50.0, kd=0.9, mass=1.72, speed=1.0, walk=False,
     # robot design: these rebuild the model (like mass). Metres.
     la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.16,
@@ -51,13 +53,17 @@ PRESETS = {
 # (forward, back, sideways and turning each alone, and the trot with all three at once): none fell. The pace is left out,
 # it barely moves in physics. The measured speed is lower than the command, see docs/STAGE2.md.
 DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8), "crawl": dict(vx=0.06, vy=0.03, yaw_rate=0.3)}
+# Full-stick body posture (rad) for the drive mode that tilts the body instead of walking. Probed standing for 3 s at all 27 corners
+# of the stick box (each of roll, pitch, yaw at -1, 0, +1) with the trot settings: no servo saturated, four feet stayed down. Larger
+# values (0.2, 0.2, 0.3) saturate the servos at some corners. docs/STAGE2.md has the measured angles.
+POSE = dict(body_roll=0.15, body_pitch=0.15, body_yaw=0.2)
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
-              yaw_rate=(-3.0, 3.0), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
+              yaw_rate=(-3.0, 3.0), body_roll=(-0.4, 0.4), body_pitch=(-0.4, 0.4), body_yaw=(-0.5, 0.5), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
               la=(0.02, 0.09), lu=(0.08, 0.24), ll=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
               height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
 REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width", "height")  # changing any of these needs a new model
-SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway")
+SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw")
 
 
 DEFAULT_TOTAL_MASS = mjcf.DEFAULT_MASSES["body"] + 4 * sum(v for k, v in mjcf.DEFAULT_MASSES.items() if k != "body")  # 1.72 kg
@@ -146,12 +152,15 @@ class LiveSim:
             feet, contact, _ = gaits.foot_targets(gait, gait_time, self.home, velocity, self._smooth["yaw_rate"])
             self.commanded_contact = contact[0] if self.blend_progress > 0 else np.ones(4, bool)
             blend = float(stand.smoothstep(self.blend_progress))
+            # feet in the unposed body frame, then the body is moved over them: shifted by the sway and rotated by the posture
+            # angles (with zero posture this is home + blend (walking - home), what the replays do)
             if blend > 0.0:
-                sway = gaits.body_sway(gait, gait_time, self.home)
-                walking = body.apply_posture(feet, offset=sway)[0]
-                targets = self.home + blend * (walking - self.home)
+                sway = blend * gaits.body_sway(gait, gait_time, self.home)[0]
+                unposed = self.home + blend * (feet[0] - self.home)
             else:
-                targets = self.home
+                sway, unposed = np.zeros(3), self.home
+            targets = body.apply_posture(unposed, offset=sway, roll=self._smooth["body_roll"], pitch=self._smooth["body_pitch"],
+                                         yaw=self._smooth["body_yaw"])
             limit = MAX_TARGET_SPEED * dt
             targets = self._previous_targets + np.clip(targets - self._previous_targets, -limit, limit)
             self._previous_targets = targets
@@ -206,13 +215,15 @@ class LiveSim:
         legs = np.array([[d.body(f"{n}_hip").xpos, d.body(f"{n}_shank").xpos, d.site(f"{n}_foot").xpos]
                          for n in body.LEG_NAMES])
         yaw = float(np.degrees(np.arctan2(rotation[1, 0], rotation[0, 0])))
+        pitch = float(np.degrees(np.arcsin(np.clip(-rotation[2, 0], -1.0, 1.0))))  # R = Rz(yaw) Ry(pitch) Rx(roll), body to world
+        roll = float(np.degrees(np.arctan2(rotation[2, 1], rotation[2, 2])))
         fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * self.params["height"])
         return {
             "time": self.time, "legs": legs.round(5).tolist(), "origin": origin.xpos.round(5).tolist(),
             "rotation": rotation.round(5).tolist(), "loads": self.loads.round(3).tolist(),
             "down": (self.loads > CONTACT_FORCE).tolist(), "commanded_down": self.commanded_contact.tolist(),
             "torque_fraction": round(self.torque_fraction, 3), "saturated": self.saturated,
-            "tilt_deg": round(tilt, 1), "yaw_deg": round(yaw, 1), "measured_velocity": [round(v, 3) for v in self.measured_velocity()],
+            "tilt_deg": round(tilt, 1), "yaw_deg": round(yaw, 1), "pitch_deg": round(pitch, 1), "roll_deg": round(roll, 1), "measured_velocity": [round(v, 3) for v in self.measured_velocity()],
             "feet_down": int((self.loads > CONTACT_FORCE).sum()), "fell": fell, "total_mass_kg": round(float(self.model.body_subtreemass[1]), 3),
             "blend": round(float(stand.smoothstep(self.blend_progress)), 2), "cycle_phase": round(self.cycles % 1.0, 3),
             "body_size": [self.params["body_length"], self.params["body_width"]],

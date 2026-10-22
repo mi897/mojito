@@ -1,6 +1,6 @@
 /* Drive mode for the live physics pages (scripts/gait/live_gait.html and the playground's Live physics tab):
- * keyboard or gamepad -> forward, left and yaw command -> {vx, vy, yaw_rate, walk} sent to the local server.
- * The full-stick values per preset come from the server (live_sim.DRIVE, served in /meta), not from this file.
+ * keyboard or gamepad -> {vx, vy, yaw_rate, walk} (walk mode) or {body_roll, body_pitch, body_yaw} (pose mode, the body tilts on
+ * planted feet) sent to the local server. The full-stick values come from the server (live_sim.DRIVE and POSE, served in /meta).
  * Nothing here knows about drawing; the page passes callbacks. */
 (function () {
   'use strict';
@@ -22,6 +22,18 @@
     if (n > 1) { c[0] /= n; c[1] /= n; }
     return c;
   }
+  /* Pose mode: the same inputs tilt the body. Returns [roll, pitch, yaw] fractions (-1..1), spring-loaded to zero on release.
+   * Flight-stick sense: forward (W, stick up) pitches the nose down, right (D, stick right) rolls the right side down,
+   * Q or the right stick left yaws the body left (counter-clockwise from above). Right-hand rules about x forward, y left, z up. */
+  function poseFractions(keys, padAxes) {
+    let c = [(keys.has('right') ? 1 : 0) - (keys.has('left') ? 1 : 0), (keys.has('fwd') ? 1 : 0) - (keys.has('back') ? 1 : 0), (keys.has('turnl') ? 1 : 0) - (keys.has('turnr') ? 1 : 0)];
+    if (padAxes) {
+      const p = [stick(padAxes[0]), -stick(padAxes[1]), -stick(padAxes[2])];
+      if (p.some(v => v !== 0)) c = p;
+    }
+    return c;
+  }
+  const scalePose = (c, lim) => [c[0] * lim.body_roll, c[1] * lim.body_pitch, c[2] * lim.body_yaw];
   const scale = (c, lim) => [c[0] * lim.vx, c[1] * lim.vy, c[2] * lim.yaw_rate];
   /* The preset whose stance height and period match the running parameters, or null. */
   function detectPreset(params, presets) {
@@ -30,7 +42,7 @@
 
   /* opts: send(path, body), meta (from /meta), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false). */
   function create(opts) {
-    const D = { on: true, hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [] };
+    const D = { on: true, mode: 'walk', pose: [0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [] };
     const typing = e => e.target && e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
     const onKeyDown = e => {
       if (!opts.canvasActive() || typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -38,6 +50,7 @@
       if (e.repeat) return;
       if (e.code === 'Space') { D.hold = !D.hold; e.preventDefault(); }
       else if (e.code === 'Digit1') opts.setPreset('trot'); else if (e.code === 'Digit2') opts.setPreset('crawl');
+      else if (e.code === 'KeyM') D.setMode(D.mode === 'walk' ? 'pose' : 'walk');
       else if (e.code === 'KeyR') opts.reset(); else if (e.code === 'KeyC') opts.toggleChase();
     };
     const onKeyUp = e => { if (KEYMAP[e.code]) D.keys.delete(KEYMAP[e.code]); };
@@ -54,6 +67,7 @@
         if (edge(0)) D.hold = !D.hold;
         if (edge(1)) opts.reset();
         if (edge(2)) opts.toggleChase();
+        if (edge(3)) D.setMode(D.mode === 'walk' ? 'pose' : 'walk');
         if (edge(4)) opts.setPreset('trot');
         if (edge(5)) opts.setPreset('crawl');
       }
@@ -63,16 +77,23 @@
     function tick() {
       const pad = readPad();
       if (!D.on || !opts.canvasActive()) { D.cmd = [0, 0, 0]; return; }
-      const f = fractions(D.keys, pad && pad.axes, pad ? pad.dpad : 0);
-      const lim = opts.meta.drive[D.preset] || opts.meta.drive.trot, now = performance.now();
-      D.cmd = scale(f, lim);
-      const moving = f.some(v => v !== 0);
-      if (moving) D.idleSince = now;
-      const out = { vx: D.cmd[0], vy: D.cmd[1], yaw_rate: D.cmd[2], walk: moving || D.hold || now - D.idleSince < STOP_DELAY };
+      const now = performance.now();
+      let out;
+      if (D.mode === 'pose') {   // stand and tilt: no walking command
+        D.cmd = [0, 0, 0]; D.pose = scalePose(poseFractions(D.keys, pad && pad.axes), opts.meta.pose);
+        out = { vx: 0, vy: 0, yaw_rate: 0, walk: false, body_roll: D.pose[0], body_pitch: D.pose[1], body_yaw: D.pose[2] };
+      } else {
+        const f = fractions(D.keys, pad && pad.axes, pad ? pad.dpad : 0), lim = opts.meta.drive[D.preset] || opts.meta.drive.trot;
+        D.cmd = scale(f, lim); D.pose = [0, 0, 0];
+        const moving = f.some(v => v !== 0);
+        if (moving) D.idleSince = now;
+        out = { vx: D.cmd[0], vy: D.cmd[1], yaw_rate: D.cmd[2], walk: moving || D.hold || now - D.idleSince < STOP_DELAY, body_roll: 0, body_pitch: 0, body_yaw: 0 };
+      }
       const key = JSON.stringify(out);
       if (key !== D.sent) { D.sent = key; opts.send('params', out); }
     }
     const timer = setInterval(tick, 33);
+    D.setMode = mode => { D.mode = mode; D.sent = null; D.hold = false; if (opts.onMode) opts.onMode(mode); };
     D.setOn = on => { D.on = on; D.sent = null; };
     D.forget = () => { D.sent = null; };                              // call after anything else changed the command (reset, preset)
     D.sync = params => { const p = detectPreset(params, opts.meta.presets); if (p) D.preset = p; };
@@ -80,6 +101,6 @@
     D.destroy = () => { clearInterval(timer); removeEventListener('keydown', onKeyDown); removeEventListener('keyup', onKeyUp); removeEventListener('blur', onBlur); };
     return D;
   }
-  const api = { create, fractions, scale, detectPreset, stick, DEAD };
+  const api = { create, fractions, poseFractions, scalePose, scale, detectPreset, stick, DEAD };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else window.MojitoDrive = api;
 })();
