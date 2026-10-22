@@ -48,6 +48,17 @@ class TestDriveMapping(unittest.TestCase):
         self.assertEqual(run_js("D.fractions(new Set(['fwd']),[0.05,0.05,0,0])"), [1, 0, 0])
         self.assertEqual(run_js("D.fractions(new Set(['fwd']),[0,1,0,0])"), [-1, 0, 0])
 
+    def test_pose_signs(self):
+        # flight-stick sense: forward pitches the nose down (+), right rolls the right side down (+), Q yaws left (+)
+        self.assertEqual(run_js("D.poseFractions(new Set(['fwd','right','turnl']),null)"), [1, 1, 1])
+        self.assertEqual(run_js("D.poseFractions(new Set(['back','left','turnr']),null)"), [-1, -1, -1])
+        self.assertEqual(run_js("D.poseFractions(new Set(),[1,-1,-1,0])"), [1, 1, 1])      # stick right, up; right stick left
+        self.assertEqual(run_js("D.poseFractions(new Set(['fwd']),[0.05,0.05,0.05,0])"), [0, 1, 0])  # resting sticks do not override keys
+
+    def test_pose_scaling_and_release(self):
+        self.assertEqual(run_js("D.scalePose([1,-1,0.5],{body_roll:0.15,body_pitch:0.15,body_yaw:0.2})"), [0.15, -0.15, 0.1])
+        self.assertEqual(run_js("D.poseFractions(new Set(),null)"), [0, 0, 0])
+
     def test_scale_by_preset_limits(self):
         self.assertEqual(run_js("D.scale([1,-1,0.5],{vx:0.25,vy:0.12,yaw_rate:0.8})"), [0.25, -0.12, 0.4])
 

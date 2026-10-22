@@ -48,7 +48,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 </section>
 <aside class="card">
   <h2 style="margin-top:0">Drive</h2>
-  <div class="btns"><button id="drive" class="on">Drive: on</button><button id="chase" class="on">Chase cam</button></div>
+  <div class="btns"><button id="drive" class="on">Drive: on</button><button id="chase" class="on">Chase cam</button><button id="mode">Mode: walk</button></div>
   <div class="keys">
     <b>W S / left stick</b><span>forward, back</span>
     <b>A D / left stick</b><span>sidestep left, right</span>
@@ -57,6 +57,13 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
     <b>1 2 / LB RB</b><span>trot, crawl</span>
     <b>R / B</b><span>reset</span>
     <b>C / X</b><span>chase cam</span>
+    <b>M / Y</b><span>walk or pose mode</span>
+  </div>
+  <div class="keys" id="posekeys" hidden>
+    <b>Pose mode</b><span>the feet stay put and the body tilts</span>
+    <b>W S / left stick up, down</b><span>pitch nose down, up</span>
+    <b>A D / left stick left, right</b><span>roll left, right side down</span>
+    <b>Q E / right stick</b><span>yaw left, right</span>
   </div>
   <div class="hint" id="padstatus"></div>
   <div class="btns" id="actions"></div>
@@ -70,6 +77,7 @@ const LEGS=['FL','FR','RL','RR'];
 const SPEC=[
  ['Gait timing',[['period','period s',0.2,4,0.05],['duty','duty',0.1,0.95,0.01],['o0','offset FL',0,1,0.01],['o1','offset FR',0,1,0.01],['o2','offset RL',0,1,0.01],['o3','offset RR',0,1,0.01],['lift','lift m',0,0.1,0.005],['sway','sway m',0,0.06,0.005]]],
  ['Command',[['vx','forward m/s',-0.5,0.5,0.01],['vy','left m/s',-0.3,0.3,0.01],['yaw_rate','yaw rad/s',-3,3,0.1]]],
+ ['Body posture (pose mode, rad)',[['body_roll','roll',-0.4,0.4,0.01],['body_pitch','pitch',-0.4,0.4,0.01],['body_yaw','yaw',-0.5,0.5,0.01]]],
  ['Servo, body, speed',[['kp','kp N·m/rad',1,300,1],['kd','kd',0,5,0.05],['mass','mass kg',0.5,8,0.1],['speed','sim speed x',0.1,2,0.1]]]];
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let meta=null,state=null,dragging=null,history=[],sendTimer=null,pending={};
@@ -108,20 +116,28 @@ function build(){
   document.getElementById('chase').onclick=()=>setChase(!view.chase);
 }
 function choosePreset(name){if(drive)drive.forget();send('/preset',{name});}
+let poseYawRef=0; // heading when pose mode was entered: the body yaw in pose mode is measured from it
+const poseYaw=()=>((state.yaw_deg-poseYawRef+540)%360)-180;
+function showMode(mode){
+  if(mode==='pose'&&state)poseYawRef=state.yaw_deg;
+  document.getElementById('mode').textContent='Mode: '+mode;document.getElementById('mode').classList.toggle('on',mode==='pose');
+  document.getElementById('posekeys').hidden=mode!=='pose';
+}
 function setDrive(on){drive.setOn(on);const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
 function setChase(on){view.chase=on;document.getElementById('chase').classList.toggle('on',on);if(on){view.zoom=Math.max(view.zoom,1.6);view.follow=true;document.getElementById('follow').classList.add('on');}}
 function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/reset');}
 // ---- drive: keyboard and gamepad (shared with the playground, site/assets/drive.js) ----
 let drive=null;
 function startDrive(){
-  drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase)});
+  drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase),onMode:showMode});
+  document.getElementById('mode').onclick=()=>drive.setMode(drive.mode==='walk'?'pose':'walk');
 }
 function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
 
 function syncControls(){
   const p=state.params;
   const set=(k,v)=>{if(dragging===k||pending[k]!==undefined)return;const el=document.getElementById(k);if(el){el.value=v;document.getElementById(k+'_v').textContent=fmt(v,parseFloat(el.step));}};
-  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','kp','kd','mass','speed'])set(k,p[k]);
+  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','body_roll','body_pitch','body_yaw','kp','kd','mass','speed'])set(k,p[k]);
   p.offsets.forEach((v,i)=>{if(!(dragging&&dragging[0]==='o'))set('o'+i,v)});
   document.getElementById('walk').classList.toggle('on',p.walk);document.getElementById('walk').textContent=p.walk?'Stand':'Walk';
   document.getElementById('pause').classList.toggle('on',state.paused);
@@ -140,7 +156,7 @@ function project(p,centre,W,H,scale){
 function drawView(){
   const d=fit(vc),W=vc.width,H=vc.height;vx.clearRect(0,0,W,H);
   if(!state)return;
-  if(view.chase){ // camera behind the robot, turning with it
+  if(view.chase&&drive.mode==='walk'){ // (held still in pose mode, so the tilt is seen against the floor) camera behind the robot, turning with it
     const target=state.yaw_deg+180+view.chaseOffset;
     view.az+=(((target-view.az+540)%360)-180)*0.12;
   }
@@ -188,8 +204,9 @@ function drawHud(){
   const d=vc.width/vc.getBoundingClientRect().width||1,v=state.measured_velocity,speed=Math.hypot(v[0],v[1]);
   vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d);
   vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
-  const lim=drive.limits();
-  vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d);
+  const lim=drive.limits(),deg=r=>(r*180/Math.PI).toFixed(0);
+  if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d);}
+  else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d);
   vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d);
 }
 function drawTiming(){
@@ -210,7 +227,7 @@ function drawTiming(){
 function drawStats(){
   const s=state,p=s.params;
   const items=[['forward m/s',s.measured_velocity[0].toFixed(3)+' ('+p.vx.toFixed(2)+')'],['left m/s',s.measured_velocity[1].toFixed(3)+' ('+p.vy.toFixed(2)+')'],
-   ['tilt °',s.tilt_deg.toFixed(1)],['feet down',s.feet_down],['torque/stall',s.torque_fraction.toFixed(2)+(s.saturated?' sat':'')],['time s',s.time.toFixed(1)],['mass kg',s.total_mass_kg.toFixed(2)],['yaw °',s.yaw_deg.toFixed(0)]];
+   ['tilt °',s.tilt_deg.toFixed(1)],['feet down',s.feet_down],['torque/stall',s.torque_fraction.toFixed(2)+(s.saturated?' sat':'')],['time s',s.time.toFixed(1)],['mass kg',s.total_mass_kg.toFixed(2)],['yaw °',s.yaw_deg.toFixed(0)],['roll °',s.roll_deg.toFixed(1)],['pitch °',s.pitch_deg.toFixed(1)]];
   document.getElementById('stats').innerHTML=items.map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
   document.getElementById('warn').textContent=s.fell?'The robot has fallen. Press Reset.':(s.params.walk?'':'Standing. Press Walk.');
 }

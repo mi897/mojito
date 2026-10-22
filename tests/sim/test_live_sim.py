@@ -96,6 +96,34 @@ class TestLiveSim(unittest.TestCase):
             sim.step(int(4.0 / sim.timestep))
             self.assertFalse(sim.snapshot()["fell"], name)
 
+    def test_pose_tilts_the_body_on_planted_feet(self):
+        # conservation: the feet stay where they are in the world while the body tilts over them
+        sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False, body_roll=0.15, body_pitch=-0.15, body_yaw=0.2))
+        sim.step(int(1.5 / sim.timestep))
+        before = np.array(sim.snapshot()["legs"])[:, 2]
+        sim.step(int(1.5 / sim.timestep))
+        snap = sim.snapshot()
+        self.assertLess(np.abs(np.array(snap["legs"])[:, 2] - before).max(), 0.005)
+        self.assertEqual(snap["feet_down"], 4)
+        self.assertAlmostEqual(snap["roll_deg"], np.degrees(0.15), delta=2.0)
+        self.assertAlmostEqual(snap["pitch_deg"], np.degrees(-0.15), delta=2.0)
+
+    def test_full_pose_stick_corners_hold(self):
+        # the page sends these values at full stick; every corner of the stick box: no saturation, all four feet down
+        import itertools
+
+        for signs in itertools.product((-1, 1), repeat=3):
+            sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False, **{k: s * v for (k, v), s in zip(live_sim.POSE.items(), signs)}))
+            sim.step(int(3.0 / sim.timestep))
+            snap = sim.snapshot()
+            self.assertEqual(snap["feet_down"], 4, signs)
+            self.assertFalse(snap["saturated"] or snap["fell"], signs)
+
+    def test_pose_limits_are_inside_the_slider_limits(self):
+        for key, value in live_sim.POSE.items():
+            low, high = live_sim.LIMITS[key]
+            self.assertTrue(low <= -value and value <= high, key)
+
 
 if __name__ == "__main__":
     unittest.main()

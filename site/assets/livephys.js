@@ -11,6 +11,7 @@
     ['Gait timing', false, [['period', 'period', 0.2, 4, 0.05, ' s', 1], ['duty', 'duty', 0.1, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000], ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000],
       ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1], ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
     ['Command', false, [['vx', 'forward', -0.5, 0.5, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['yaw_rate', 'turn rate', -3, 3, 0.1, ' rad/s', 1]]],
+    ['Body posture (pose mode)', false, [['body_roll', 'roll', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_pitch', 'pitch', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_yaw', 'yaw', -0.5, 0.5, 0.01, ' °', 57.29578]]],
     ['Servos and clock', false, [['kp', 'kp', 1, 300, 1, ' N·m/rad', 1], ['kd', 'kd', 0, 5, 0.05, '', 1], ['voltage', 'supply', 5, 6, 0.1, ' V', 1], ['speed', 'sim speed', 0.1, 2, 0.1, '×', 1]]],
   ];
   const L = { chase: true, drive: null, lastYaw: null, built: false, state: null, history: [], dragging: null, pending: {}, timer: null, ctl: {}, polling: false, view: null };
@@ -25,6 +26,15 @@
     L.chase = on; $('live-chase').classList.toggle('on', on); $('live-chase').setAttribute('aria-pressed', on);
     if (on) { L.lastYaw = null; L.view.follow = true; $('live-follow').classList.add('on'); L.view.recentre(); }
   }
+  let poseYawRef = 0;   // heading when pose mode was entered: the body yaw in pose mode is measured from it
+  const poseYaw = s => ((s.yaw_deg - poseYawRef + 540) % 360) - 180;
+  function showMode(mode) {
+    if (mode === 'pose' && L.state) poseYawRef = L.state.yaw_deg;
+    $('live-mode').textContent = 'Mode: ' + mode; $('live-mode').classList.toggle('on', mode === 'pose'); $('live-mode').setAttribute('aria-pressed', mode === 'pose');
+    $('live-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
+  }
+  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
+  const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · R reset · M walk mode. Gamepad: left stick pitch and roll, right stick yaw, Y walk mode.';
   function setDrive(on) { L.drive.setOn(on); $('live-drive').classList.toggle('on', on); $('live-drive').setAttribute('aria-pressed', on); $('live-drive').textContent = 'Drive: ' + (on ? 'on' : 'off'); }
   function build(meta) {
     const box = $('live-controls'); box.innerHTML = '';
@@ -71,7 +81,10 @@
       const v = s.measured_velocity, lim = L.drive ? L.drive.limits() : null;
       ctx.fillStyle = css('--ink'); ctx.font = `600 ${22 * d}px system-ui`; ctx.fillText(fmt(Math.hypot(v[0], v[1]), 2) + ' m/s', 14 * d, 30 * d);
       ctx.font = `${12 * d}px system-ui`; ctx.fillStyle = css('--muted');
-      if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d); }
+      if (L.drive && L.drive.mode === 'pose') {
+        const dg = r => (r * 180 / Math.PI).toFixed(0), p = L.drive.pose;
+        ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d);
+      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d); }
     };
     const inv = p => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [0, 1, 2].map(j => R[0][j] * d[0] + R[1][j] * d[1] + R[2][j] * d[2]); };
     return { origin: o, R, bodySize: s.body_size, points: s.legs.map(l => [inv(l[0]), inv(l[0]), inv(l[1]), inv(l[2])]), down: s.down, bad: [false, false, false, false], arrows, overlay };
@@ -80,7 +93,7 @@
   function readouts(s) {
     const p = s.params;
     $('live-kpis').innerHTML = kpi('forward speed, m/s', `${fmt(s.measured_velocity[0], 3)} <small class="muted">(cmd ${fmt(p.vx, 2)})</small>`) + kpi('sideways, m/s', `${fmt(s.measured_velocity[1], 3)} <small class="muted">(cmd ${fmt(p.vy, 2)})</small>`)
-      + kpi('tilt', fmt(s.tilt_deg, 1) + '°', s.tilt_deg > 20 ? 'bad' : '') + kpi('feet down', String(s.feet_down), s.feet_down <= 2 && p.walk ? 'bad' : '')
+      + kpi('tilt', fmt(s.tilt_deg, 1) + '°', s.tilt_deg > 20 && !(L.drive && L.drive.mode === 'pose') ? 'bad' : '') + kpi('roll / pitch', `${fmt(s.roll_deg, 1)}° / ${fmt(s.pitch_deg, 1)}°`) + kpi('feet down', String(s.feet_down), s.feet_down <= 2 && p.walk ? 'bad' : '')
       + kpi('servo torque / stall', fmt(s.torque_fraction, 2) + (s.saturated ? ' sat' : ''), s.saturated ? 'bad' : '') + kpi('total mass', fmt(s.total_mass_kg, 2) + ' kg') + kpi('time', fmt(s.time, 1) + ' s');
     const m = [];
     if (s.fell) m.push('<div class="w">The robot has fallen. Press Reset.</div>');
@@ -109,7 +122,7 @@
       if (L.state && s.time < L.state.time) L.history = [];
       L.state = s; L.history.push({ t: s.time, down: s.down, cmd: s.commanded_down });
       while (L.history.length && L.history[0].t < s.time - 4.5) L.history.shift();
-      if (L.chase) { // the camera turns with the robot; a drag changes the angle and the change is kept
+      if (L.chase && L.drive.mode === 'walk') { // (held still in pose mode, so the tilt is seen against the floor) the camera turns with the robot; a drag changes the angle and the change is kept
         const yaw = s.yaw_deg; if (L.lastYaw !== null) L.view.az += ((yaw - L.lastYaw + 540) % 360) - 180; L.lastYaw = yaw;
       }
       L.drive.sync(s.params); L.view.setScene(scene(s)); sync(); readouts(s); drawTiming();
@@ -125,10 +138,11 @@
     note.hidden = true; $('live-ui').hidden = false;
     if (!L.built) {
       L.built = true; L.view = new RobotView($('live-view'), { az: 180 + 20, el: 24, zoom: 1.4, span: 1.2 }); build(meta);
-      L.drive = MojitoDrive.create({ meta, send, canvasActive: () => !!L.running, reset: resetRun, setPreset: choosePreset, toggleChase: () => setChase(!L.chase) });
+      L.drive = MojitoDrive.create({ meta, send, canvasActive: () => !!L.running, reset: resetRun, setPreset: choosePreset, toggleChase: () => setChase(!L.chase), onMode: showMode });
+      $('live-mode').onclick = () => L.drive.setMode(L.drive.mode === 'walk' ? 'pose' : 'walk');
       $('live-chase').classList.add('on'); $('live-chase').onclick = () => setChase(!L.chase);
       $('live-drive').classList.add('on'); $('live-drive').onclick = () => setDrive(!L.drive.on);
-      $('live-keys').textContent = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · C chase cam. Gamepad: sticks, A, B, X, LB, RB.';
+      $('live-keys').textContent = KEYS_WALK;
       $('live-follow').classList.add('on'); $('live-follow').onclick = e => { L.view.follow = !L.view.follow; if (!L.view.follow) setChase(false); e.target.classList.toggle('on', L.view.follow); L.view.recentre(); };
       $('live-zin').onclick = () => L.view.zoomBy(1.25); $('live-zout').onclick = () => L.view.zoomBy(0.8);
       window.addEventListener('themechange', () => { L.view.draw(); drawTiming(); });
