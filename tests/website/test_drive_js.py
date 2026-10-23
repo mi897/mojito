@@ -125,6 +125,20 @@ class TestGamepadMapping(unittest.TestCase):
         self.assertAlmostEqual(out["last"][1][1], -0.12 / 2 ** 0.5, places=6)  # forward and right together: right is negative left, on the unit circle
         self.assertLess(out["last"][2][2], 0)
 
+    def test_selected_pad_wins_over_the_one_that_moves(self):
+        out = self.run_pad([0, 0, 0, 0], "'standard'", """
+            const mk=(id,ax)=>({connected:true,id,index:id==='dead'?0:1,mapping:'standard',axes:ax,buttons:Array.from({length:16},()=>({pressed:false}))});
+            let live=[0,0,0,0];
+            Object.defineProperty(global,'navigator',{configurable:true,value:{getGamepads:()=>[mk('dead',[0,0,0,0]),mk('live',live)]}});
+            tick(); live=[0,-1,0,0]; tick();
+            const auto=drive.pad; drive.selectPad('dead'); tick();
+            console.log(JSON.stringify({auto, chosen:drive.pad, list:drive.list.map(g=>[g.id,g.live]), saved:store['mojito-gamepad-choice'], last:sent[sent.length-1].vx}));""")
+        self.assertEqual(out["auto"], "live")
+        self.assertEqual(out["chosen"], "dead")
+        self.assertEqual(out["list"], [["dead", False], ["live", True]])
+        self.assertEqual(out["saved"], "dead")
+        self.assertEqual(out["last"], 0)
+
     def test_nothing_is_sent_while_mapping(self):
         out = self.run_pad([0, 0, 0, 0], "'standard'", "drive.calibrate(); set([0,-1,0,0]); set([0,0,0,0]); console.log(JSON.stringify(sent));")
         self.assertEqual(out, [])

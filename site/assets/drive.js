@@ -54,11 +54,13 @@
   const MAPS_KEY = 'mojito-gamepad-maps';
   function loadMaps() { try { return JSON.parse(localStorage.getItem(MAPS_KEY)) || {}; } catch (e) { return {}; } }
   function saveMaps(m) { try { localStorage.setItem(MAPS_KEY, JSON.stringify(m)); } catch (e) { /* private window: the map lasts until reload */ } }
+  const CHOICE_KEY = 'mojito-gamepad-choice';
+  function loadChoice() { try { return localStorage.getItem(CHOICE_KEY) || 'auto'; } catch (e) { return 'auto'; } }
   const CALIB_STEPS = [['ly', 'push the LEFT stick UP and release'], ['lx', 'push the LEFT stick RIGHT and release'], ['rx', 'push the RIGHT stick RIGHT and release']];
 
   /* opts: send(path, body), meta (from /meta), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false). */
   function create(opts) {
-    const D = { maps: loadMaps(), rest: {}, calib: null, padInfo: null, on: true, mode: 'walk', pose: [0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [] };
+    const D = { maps: loadMaps(), rest: {}, calib: null, padInfo: null, on: true, mode: 'walk', pose: [0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [], sigs: {}, active: -1, list: [], choice: loadChoice() };
     const typing = e => e.target && e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
     const onKeyDown = e => {
       if (!opts.canvasActive() || typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -75,7 +77,17 @@
 
     function readPad() {
       const pads = (navigator.getGamepads ? navigator.getGamepads() : []) || [];
-      const pad = [...pads].find(g => g && g.connected && g.axes.length >= 2);
+      const cands = [...pads].filter(g => g && g.connected && g.axes.length >= 2);
+      /* Several devices can show up for one controller (input-remapper and similar grab the real one and forward a clone), and the
+       * silent one may come first. A pad chosen in the selector (D.choice, a pad id) wins; with "auto", follow whichever has moved
+       * or been pressed most recently, and until then the first. */
+      for (const g of cands) {
+        const sig = g.axes.map(v => Math.round(v * 20)).join() + '|' + g.buttons.map(b => (b.pressed ? 1 : 0)).join('');
+        if (D.sigs[g.index] !== undefined && D.sigs[g.index] !== sig) D.active = g.index;
+        D.sigs[g.index] = sig;
+      }
+      D.list = cands.map(g => ({ index: g.index, id: g.id, live: g.index === D.active }));
+      const pad = (D.choice !== 'auto' && cands.find(g => g.id === D.choice)) || cands.find(g => g.index === D.active) || cands[0];
       D.pad = pad ? pad.id : null;
       if (!pad) { D.lastButtons = []; D.padInfo = null; return null; }
       if (!D.rest[pad.id]) D.rest[pad.id] = Array.from(pad.axes);   // first reading: where a trigger axis rests
@@ -132,6 +144,14 @@
     D.clearMap = () => { if (D.pad) { delete D.maps[D.pad]; saveMaps(D.maps); } };
     D.status = () => D.calib ? 'Mapping: ' + CALIB_STEPS[D.calib.step][1] + ' (step ' + (D.calib.step + 1) + ' of ' + CALIB_STEPS.length + ')'
       : D.padInfo ? `${D.padInfo.mapping === 'standard' ? 'standard' : 'non-standard'} mapping${D.padInfo.mapped ? ', your map' : ''} · axes ${D.padInfo.axes.join(' ')} · buttons ${D.padInfo.pressed.join(' ') || 'none'}` : 'no gamepad seen (press a button on it)';
+    /* Keep a <select> in step with the pads the browser reports: "Auto" plus one entry per pad, a dot marking the one that last moved. */
+    D.fillSelect = el => {
+      const opts = [['auto', 'Auto (follow the pad that moves)']].concat(D.list.map(g => [g.id, (g.live ? '\u25cf ' : '') + g.index + ': ' + g.id]));
+      const shown = Array.from(el.options, o => o.value + '|' + o.textContent).join('\n'), want = opts.map(o => o[0] + '|' + o[1]).join('\n');
+      if (shown !== want) { el.textContent = ''; for (const [v, t] of opts) { const o = document.createElement('option'); o.value = v; o.textContent = t; el.appendChild(o); } }
+      el.value = opts.some(o => o[0] === D.choice) ? D.choice : 'auto';
+    };
+    D.selectPad = v => { D.choice = v; D.sent = null; try { localStorage.setItem(CHOICE_KEY, v); } catch (e) { /* lasts until reload */ } };
     D.setOn = on => { D.on = on; D.sent = null; };
     D.forget = () => { D.sent = null; };                              // call after anything else changed the command (reset, preset)
     D.sync = params => { const p = detectPreset(params, opts.meta.presets); if (p) D.preset = p; };
