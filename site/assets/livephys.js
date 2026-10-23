@@ -125,7 +125,7 @@
       if (L.chase && L.drive.mode === 'walk') { // (held still in pose mode, so the tilt is seen against the floor) the camera turns with the robot; a drag changes the angle and the change is kept
         const yaw = s.yaw_deg; if (L.lastYaw !== null) L.view.az += ((yaw - L.lastYaw + 540) % 360) - 180; L.lastYaw = yaw;
       }
-      L.drive.sync(s.params); L.view.setScene(scene(s)); sync(); readouts(s); drawTiming();
+      L.drive.sync(s.params); L.drive.fillSelect($('live-padsel')); $('live-pad').textContent = 'Gamepad: ' + L.drive.status(); $('live-map').classList.toggle('on', !!L.drive.calib); L.view.setScene(scene(s)); sync(); readouts(s); drawTiming();
     } catch (e) { /* server stopped */ }
     setTimeout(poll, 33);
   }
@@ -139,6 +139,8 @@
     if (!L.built) {
       L.built = true; L.view = new RobotView($('live-view'), { az: 180 + 20, el: 24, zoom: 1.4, span: 1.2 }); build(meta);
       L.drive = MojitoDrive.create({ meta, send, canvasActive: () => !!L.running, reset: resetRun, setPreset: choosePreset, toggleChase: () => setChase(!L.chase), onMode: showMode });
+      $('live-padsel').onchange = e => L.drive.selectPad(e.target.value);
+      $('live-map').onclick = () => L.drive.calibrate();
       $('live-mode').onclick = () => L.drive.setMode(L.drive.mode === 'walk' ? 'pose' : 'walk');
       $('live-chase').classList.add('on'); $('live-chase').onclick = () => setChase(!L.chase);
       $('live-drive').classList.add('on'); $('live-drive').onclick = () => setDrive(!L.drive.on);

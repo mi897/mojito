@@ -128,6 +128,8 @@ details[open] summary { margin-bottom: 8px; }
 .filters button, .tabs button, .btn { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: .92rem; cursor: pointer; }
 .filters button[aria-pressed="true"], .tabs button[aria-selected="true"], .btn.on { background: var(--blue); border-color: var(--blue); color: #fff; }
 .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.stage .bar select { appearance: none; -webkit-appearance: none; flex: 1 1 100%; min-width: 0; background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23898781' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 5px 28px 5px 10px; font: inherit; cursor: pointer; text-overflow: ellipsis; }
+.stage .bar select:hover, .stage .bar select:focus-visible { border-color: var(--blue); outline: none; }
 .btn:disabled { opacity: .5; cursor: default; }
 iframe.leg { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 

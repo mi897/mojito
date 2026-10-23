@@ -22,6 +22,9 @@ canvas:active{cursor:grabbing}
 input[type=range]{width:100%}
 h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
 .btns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+select{appearance:none;-webkit-appearance:none;flex:1 1 100%;min-width:0;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9a94' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 28px 6px 10px;font:inherit;cursor:pointer;text-overflow:ellipsis}
+select:hover,select:focus-visible{border-color:var(--accent);outline:none}
+select option{background:var(--panel);color:var(--ink)}
 button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
@@ -65,6 +68,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
     <b>A D / left stick left, right</b><span>roll left, right side down</span>
     <b>Q E / right stick</b><span>yaw left, right</span>
   </div>
+  <div class="btns"><select id="padSel" aria-label="Gamepad"></select><button id="mapPad">Map gamepad</button><button id="clearMap">Clear map</button></div>
   <div class="hint" id="padstatus"></div>
   <div class="btns" id="actions"></div>
   <div class="btns" id="presets"></div>
@@ -130,6 +134,9 @@ function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/re
 let drive=null;
 function startDrive(){
   drive=MojitoDrive.create({meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase),onMode:showMode});
+  document.getElementById('mapPad').onclick=()=>drive.calibrate();
+  document.getElementById('padSel').onchange=e=>drive.selectPad(e.target.value);
+  document.getElementById('clearMap').onclick=()=>drive.clearMap();
   document.getElementById('mode').onclick=()=>drive.setMode(drive.mode==='walk'?'pose':'walk');
 }
 function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));return v.toFixed(d);}
@@ -238,7 +245,7 @@ async function poll(){
     if(history.length&&state.time<history[history.length-1].t)history=[];
     history.push({t:state.time,down:state.down,cmd:state.commanded_down});
     while(history.length&&history[0].t<state.time-4.5)history.shift();
-    drive.sync(state.params);syncControls();drawStats();
+    drive.sync(state.params);drive.fillSelect(document.getElementById('padSel'));document.getElementById('padstatus').textContent='Gamepad: '+drive.status();document.getElementById('mapPad').classList.toggle('on',!!drive.calib);syncControls();drawStats();
   }catch(e){}
   setTimeout(poll,33);
 }
