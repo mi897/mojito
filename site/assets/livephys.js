@@ -11,7 +11,7 @@
     ['Gait timing', false, [['period', 'period', 0.2, 4, 0.05, ' s', 1], ['duty', 'duty', 0.1, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000], ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000],
       ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1], ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
     ['Command', false, [['vx', 'forward', -0.5, 0.5, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['yaw_rate', 'turn rate', -3, 3, 0.1, ' rad/s', 1]]],
-    ['Body posture (pose mode)', false, [['body_roll', 'roll', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_pitch', 'pitch', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_yaw', 'yaw', -0.5, 0.5, 0.01, ' °', 57.29578]]],
+    ['Body posture (pose mode)', false, [['body_roll', 'roll', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_pitch', 'pitch', -0.4, 0.4, 0.01, ' °', 57.29578], ['body_yaw', 'yaw', -0.5, 0.5, 0.01, ' °', 57.29578], ['body_height', 'height', -0.04, 0.04, 0.005, ' mm', 1000]]],
     ['Servos and clock', false, [['kp', 'kp', 1, 300, 1, ' N·m/rad', 1], ['kd', 'kd', 0, 5, 0.05, '', 1], ['voltage', 'supply', 5, 6, 0.1, ' V', 1], ['speed', 'sim speed', 0.1, 2, 0.1, '×', 1]]],
   ];
   const L = { chase: true, drive: null, lastYaw: null, built: false, state: null, history: [], dragging: null, pending: {}, timer: null, ctl: {}, polling: false, view: null };
@@ -34,7 +34,7 @@
     $('live-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
   }
   const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
-  const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · R reset · M walk mode. Gamepad: left stick pitch and roll, right stick yaw, Y walk mode.';
+  const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · X Z body up/down · R reset · M walk mode. Gamepad: left stick pitch and roll, right stick left/right yaw, right stick up/down body height, Y walk mode.';
   function setDrive(on) { L.drive.setOn(on); $('live-drive').classList.toggle('on', on); $('live-drive').setAttribute('aria-pressed', on); $('live-drive').textContent = 'Drive: ' + (on ? 'on' : 'off'); }
   function build(meta) {
     const box = $('live-controls'); box.innerHTML = '';
@@ -83,7 +83,7 @@
       ctx.font = `${12 * d}px system-ui`; ctx.fillStyle = css('--muted');
       if (L.drive && L.drive.mode === 'pose') {
         const dg = r => (r * 180 / Math.PI).toFixed(0), p = L.drive.pose;
-        ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d);
+        ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° height ${(p[3] * 1000).toFixed(0)} mm commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d);
       } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d); }
     };
     const inv = p => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [0, 1, 2].map(j => R[0][j] * d[0] + R[1][j] * d[1] + R[2][j] * d[2]); };

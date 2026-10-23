@@ -50,14 +50,14 @@ class TestDriveMapping(unittest.TestCase):
 
     def test_pose_signs(self):
         # flight-stick sense: forward pitches the nose down (+), right rolls the right side down (+), Q yaws left (+)
-        self.assertEqual(run_js("D.poseFractions(new Set(['fwd','right','turnl']),null)"), [1, 1, 1])
-        self.assertEqual(run_js("D.poseFractions(new Set(['back','left','turnr']),null)"), [-1, -1, -1])
-        self.assertEqual(run_js("D.poseFractions(new Set(),[1,-1,-1,0])"), [1, 1, 1])      # stick right, up; right stick left
-        self.assertEqual(run_js("D.poseFractions(new Set(['fwd']),[0.05,0.05,0.05,0])"), [0, 1, 0])  # resting sticks do not override keys
+        self.assertEqual(run_js("D.poseFractions(new Set(['fwd','right','turnl','up']),null)"), [1, 1, 1, 1])
+        self.assertEqual(run_js("D.poseFractions(new Set(['back','left','turnr','downh']),null)"), [-1, -1, -1, -1])
+        self.assertEqual(run_js("D.poseFractions(new Set(),[1,-1,-1,-1])"), [1, 1, 1, 1])      # stick right, up; right stick left and up (up raises the body)
+        self.assertEqual(run_js("D.poseFractions(new Set(['fwd']),[0.05,0.05,0.05,0.05])"), [0, 1, 0, 0])  # resting sticks do not override keys
 
     def test_pose_scaling_and_release(self):
-        self.assertEqual(run_js("D.scalePose([1,-1,0.5],{body_roll:0.15,body_pitch:0.15,body_yaw:0.2})"), [0.15, -0.15, 0.1])
-        self.assertEqual(run_js("D.poseFractions(new Set(),null)"), [0, 0, 0])
+        self.assertEqual(run_js("D.scalePose([1,-1,0.5,-1],{body_roll:0.15,body_pitch:0.15,body_yaw:0.2,body_height:0.04})"), [0.15, -0.15, 0.1, -0.04])
+        self.assertEqual(run_js("D.poseFractions(new Set(),null)"), [0, 0, 0, 0])
 
     def test_scale_by_preset_limits(self):
         self.assertEqual(run_js("D.scale([1,-1,0.5],{vx:0.25,vy:0.12,yaw_rate:0.8})"), [0.25, -0.12, 0.4])
@@ -108,12 +108,13 @@ class TestGamepadMapping(unittest.TestCase):
         self.assertTrue(all(v == 0 for v in out))
 
     def test_calibration_learns_axes_and_signs(self):
-        # this pad: left stick up = axis 5 going +1, left stick right = axis 4 going -1, right stick right = axis 1 going +1
+        # this pad: left stick up = axis 5 going +1, left stick right = axis 4 going -1, right stick right = axis 1 going +1, right stick up = axis 2 going +1
         out = self.run_pad([0, 0, 0, 0, 0, 0], "''", """
             drive.calibrate(); set([0,0,0,0,0,0]);
             set([0,0,0,0,0,1]); set([0,0,0,0,0,0]);        // up on axis 5, release
             set([0,0,0,0,-1,0]); set([0,0,0,0,0,0]);       // right on axis 4 (negative), release
             set([0,1,0,0,0,0]); set([0,0,0,0,0,0]);        // right stick right on axis 1, release
+            set([0,0,1,0,0,0]); set([0,0,0,0,0,0]);        // right stick up on axis 2, release
             const calibrated = drive.calib === null;
             set([0,0,0,0,0,1]); set([0,0,0,0,-1,1]); set([0,1,0,0,0,0]);
             console.log(JSON.stringify({calibrated, maps: drive.maps['Android Pad'], last: sent.slice(-3).map(c=>[c.vx,c.vy,c.yaw_rate])}));""")
@@ -121,6 +122,7 @@ class TestGamepadMapping(unittest.TestCase):
         self.assertEqual(out["maps"]["ly"], {"i": 5, "sign": -1})
         self.assertEqual(out["maps"]["lx"], {"i": 4, "sign": -1})
         self.assertEqual(out["maps"]["rx"], {"i": 1, "sign": 1})
+        self.assertEqual(out["maps"]["ry"], {"i": 2, "sign": -1})
         self.assertAlmostEqual(out["last"][0][0], 0.25)                       # forward
         self.assertAlmostEqual(out["last"][1][1], -0.12 / 2 ** 0.5, places=6)  # forward and right together: right is negative left, on the unit circle
         self.assertLess(out["last"][2][2], 0)
