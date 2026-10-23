@@ -22,6 +22,9 @@ canvas:active{cursor:grabbing}
 input[type=range]{width:100%}
 h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
 .btns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+select{appearance:none;-webkit-appearance:none;flex:1 1 100%;min-width:0;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9a94' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 28px 6px 10px;font:inherit;cursor:pointer;text-overflow:ellipsis}
+select:hover,select:focus-visible{border-color:var(--accent);outline:none}
+select option{background:var(--panel);color:var(--ink)}
 button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
