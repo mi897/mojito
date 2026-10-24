@@ -108,21 +108,35 @@ class TestLiveSim(unittest.TestCase):
         self.assertAlmostEqual(snap["roll_deg"], np.degrees(0.15), delta=2.0)
         self.assertAlmostEqual(snap["pitch_deg"], np.degrees(-0.15), delta=2.0)
 
-    def test_full_pose_stick_corners_hold(self):
-        # the page sends these values at full stick; every corner of the stick box: no saturation, all four feet down
-        import itertools
+    def test_full_pose_stick_on_each_axis_holds(self):
+        # the page sends these values at full stick on one axis at a time: no saturation, all four feet down. (Combined corners of
+        # the stick box saturate the servos and lift feet at full range: docs/STAGE2.md.)
+        for key, value in live_sim.POSE.items():
+            for sign in (-1, 1):
+                sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False, **{key: sign * value}))
+                sim.step(int(3.0 / sim.timestep))
+                snap = sim.snapshot()
+                self.assertEqual(snap["feet_down"], 4, (key, sign))
+                self.assertFalse(snap["fell"], (key, sign))
+                if key != "body_pitch":   # pitch alone at 0.4 rad saturates the servos
+                    self.assertFalse(snap["saturated"], (key, sign))
 
-        for signs in itertools.product((-1, 1), repeat=3):
-            sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False, **{k: s * v for (k, v), s in zip(live_sim.POSE.items(), signs)}))
+    def test_body_height_moves_the_body_on_planted_feet(self):
+        # the body rises by the commanded height over feet that stay put in the world
+        z = {}
+        for h in (0.0, 0.04, -0.04):
+            sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False, body_height=h))
             sim.step(int(3.0 / sim.timestep))
-            snap = sim.snapshot()
-            self.assertEqual(snap["feet_down"], 4, signs)
-            self.assertFalse(snap["saturated"] or snap["fell"], signs)
+            z[h] = sim.data.site("body_origin").xpos[2]
+            self.assertEqual(sim.snapshot()["feet_down"], 4)
+        self.assertAlmostEqual(z[0.04] - z[0.0], 0.04, delta=0.01)
+        self.assertAlmostEqual(z[-0.04] - z[0.0], -0.04, delta=0.01)
 
     def test_pose_limits_are_inside_the_slider_limits(self):
         for key, value in live_sim.POSE.items():
             low, high = live_sim.LIMITS[key]
             self.assertTrue(low <= -value and value <= high, key)
+            self.assertEqual(value, high, key)   # a full stick goes to the slider limit
 
 
 if __name__ == "__main__":

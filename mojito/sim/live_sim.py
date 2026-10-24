@@ -34,6 +34,8 @@ DEFAULTS = dict(
     vx=0.15, vy=0.0, yaw_rate=0.0,
     # body posture while the feet stay planted (rad): the body rolls, pitches and yaws about its own centre
     body_roll=0.0, body_pitch=0.0, body_yaw=0.0,
+    # body height change (m) relative to the stance height, feet planted; positive raises the body
+    body_height=0.0,
     kp=50.0, kd=0.9, mass=1.72, speed=1.0, walk=False,
     # robot design: these rebuild the model (like mass). Metres.
     la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.16,
@@ -53,17 +55,16 @@ PRESETS = {
 # (forward, back, sideways and turning each alone, and the trot with all three at once): none fell. The pace is left out,
 # it barely moves in physics. The measured speed is lower than the command, see docs/STAGE2.md.
 DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8), "crawl": dict(vx=0.06, vy=0.03, yaw_rate=0.3)}
-# Full-stick body posture (rad) for the drive mode that tilts the body instead of walking. Probed standing for 3 s at all 27 corners
-# of the stick box (each of roll, pitch, yaw at -1, 0, +1) with the trot settings: no servo saturated, four feet stayed down. Larger
-# values (0.2, 0.2, 0.3) saturate the servos at some corners. docs/STAGE2.md has the measured angles.
-POSE = dict(body_roll=0.15, body_pitch=0.15, body_yaw=0.2)
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
-              yaw_rate=(-3.0, 3.0), body_roll=(-0.4, 0.4), body_pitch=(-0.4, 0.4), body_yaw=(-0.5, 0.5), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
+              yaw_rate=(-3.0, 3.0), body_roll=(-0.4, 0.4), body_pitch=(-0.4, 0.4), body_yaw=(-0.5, 0.5), body_height=(-0.04, 0.04), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
               la=(0.02, 0.09), lu=(0.08, 0.24), ll=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
               height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
 REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width", "height")  # changing any of these needs a new model
-SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw")
+SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw", "body_height")
+# Full-stick body posture for the drive mode that tilts the body instead of walking (rad, and m for the height): the whole slider
+# range, so a full stick goes as far as the page's sliders. Corners of the stick box beyond what the servos hold are in docs/STAGE2.md.
+POSE = {key: LIMITS[key][1] for key in ("body_roll", "body_pitch", "body_yaw", "body_height")}
 
 
 DEFAULT_TOTAL_MASS = mjcf.DEFAULT_MASSES["body"] + 4 * sum(v for k, v in mjcf.DEFAULT_MASSES.items() if k != "body")  # 1.72 kg
@@ -159,7 +160,7 @@ class LiveSim:
                 unposed = self.home + blend * (feet[0] - self.home)
             else:
                 sway, unposed = np.zeros(3), self.home
-            targets = body.apply_posture(unposed, offset=sway, roll=self._smooth["body_roll"], pitch=self._smooth["body_pitch"],
+            targets = body.apply_posture(unposed, offset=sway + np.array([0.0, 0.0, self._smooth["body_height"]]), roll=self._smooth["body_roll"], pitch=self._smooth["body_pitch"],
                                          yaw=self._smooth["body_yaw"])
             limit = MAX_TARGET_SPEED * dt
             targets = self._previous_targets + np.clip(targets - self._previous_targets, -limit, limit)

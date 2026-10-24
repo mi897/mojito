@@ -66,7 +66,8 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
     <b>Pose mode</b><span>the feet stay put and the body tilts</span>
     <b>W S / left stick up, down</b><span>pitch nose down, up</span>
     <b>A D / left stick left, right</b><span>roll left, right side down</span>
-    <b>Q E / right stick</b><span>yaw left, right</span>
+    <b>Q E / right stick left, right</b><span>yaw left, right</span>
+    <b>X Z / right stick up, down</b><span>raise, lower the body</span>
   </div>
   <div class="btns"><select id="padSel" aria-label="Gamepad"></select><button id="mapPad">Map gamepad</button><button id="clearMap">Clear map</button></div>
   <div class="hint" id="padstatus"></div>
@@ -81,7 +82,7 @@ const LEGS=['FL','FR','RL','RR'];
 const SPEC=[
  ['Gait timing',[['period','period s',0.2,4,0.05],['duty','duty',0.1,0.95,0.01],['o0','offset FL',0,1,0.01],['o1','offset FR',0,1,0.01],['o2','offset RL',0,1,0.01],['o3','offset RR',0,1,0.01],['lift','lift m',0,0.1,0.005],['sway','sway m',0,0.06,0.005]]],
  ['Command',[['vx','forward m/s',-0.5,0.5,0.01],['vy','left m/s',-0.3,0.3,0.01],['yaw_rate','yaw rad/s',-3,3,0.1]]],
- ['Body posture (pose mode, rad)',[['body_roll','roll',-0.4,0.4,0.01],['body_pitch','pitch',-0.4,0.4,0.01],['body_yaw','yaw',-0.5,0.5,0.01]]],
+ ['Body posture (pose mode, rad)',[['body_roll','roll',-0.4,0.4,0.01],['body_pitch','pitch',-0.4,0.4,0.01],['body_yaw','yaw',-0.5,0.5,0.01],['body_height','height',-0.04,0.04,0.005]]],
  ['Servo, body, speed',[['kp','kp N·m/rad',1,300,1],['kd','kd',0,5,0.05],['mass','mass kg',0.5,8,0.1],['speed','sim speed x',0.1,2,0.1]]]];
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let meta=null,state=null,dragging=null,history=[],sendTimer=null,pending={};
@@ -144,7 +145,7 @@ function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));retur
 function syncControls(){
   const p=state.params;
   const set=(k,v)=>{if(dragging===k||pending[k]!==undefined)return;const el=document.getElementById(k);if(el){el.value=v;document.getElementById(k+'_v').textContent=fmt(v,parseFloat(el.step));}};
-  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','body_roll','body_pitch','body_yaw','kp','kd','mass','speed'])set(k,p[k]);
+  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','body_roll','body_pitch','body_yaw','body_height','kp','kd','mass','speed'])set(k,p[k]);
   p.offsets.forEach((v,i)=>{if(!(dragging&&dragging[0]==='o'))set('o'+i,v)});
   document.getElementById('walk').classList.toggle('on',p.walk);document.getElementById('walk').textContent=p.walk?'Stand':'Walk';
   document.getElementById('pause').classList.toggle('on',state.paused);
@@ -212,7 +213,7 @@ function drawHud(){
   vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d);
   vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
   const lim=drive.limits(),deg=r=>(r*180/Math.PI).toFixed(0);
-  if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d);}
+  if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° height ${(drive.pose[3]*1000).toFixed(0)} mm commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d);}
   else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d);
   vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d);
 }
