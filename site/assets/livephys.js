@@ -30,6 +30,7 @@
   const poseYaw = s => ((s.yaw_deg - poseYawRef + 540) % 360) - 180;
   function showMode(mode) {
     if (mode === 'pose' && L.state) poseYawRef = L.state.yaw_deg;
+    if (L.touch) L.touch.setLabel(0, 'Mode: ' + mode);
     $('live-mode').textContent = 'Mode: ' + mode; $('live-mode').classList.toggle('on', mode === 'pose'); $('live-mode').setAttribute('aria-pressed', mode === 'pose');
     $('live-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
   }
@@ -79,12 +80,13 @@
     if (Math.hypot(cf, cl) > 1e-3) arrows.push(Object.assign(ahead(cf, cl, 0.1 + 0.5 * Math.hypot(cf, cl)), { colour: '--blue' }));
     const overlay = (ctx, d) => {
       const v = s.measured_velocity, lim = L.drive ? L.drive.limits() : null;
-      ctx.fillStyle = css('--ink'); ctx.font = `600 ${22 * d}px system-ui`; ctx.fillText(fmt(Math.hypot(v[0], v[1]), 2) + ' m/s', 14 * d, 30 * d);
+      const mw = L.touch && L.touch.visible ? ctx.canvas.width - 150 * d : undefined;   // leave room for the touch buttons
+      ctx.fillStyle = css('--ink'); ctx.font = `600 ${22 * d}px system-ui`; ctx.fillText(fmt(Math.hypot(v[0], v[1]), 2) + ' m/s', 14 * d, 30 * d, mw);
       ctx.font = `${12 * d}px system-ui`; ctx.fillStyle = css('--muted');
       if (L.drive && L.drive.mode === 'pose') {
         const dg = r => (r * 180 / Math.PI).toFixed(0), p = L.drive.pose;
-        ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° height ${(p[3] * 1000).toFixed(0)} mm commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d);
-      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d); }
+        ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° height ${(p[3] * 1000).toFixed(0)} mm commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw);
+      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw); }
     };
     const inv = p => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [0, 1, 2].map(j => R[0][j] * d[0] + R[1][j] * d[1] + R[2][j] * d[2]); };
     return { origin: o, R, bodySize: s.body_size, points: s.legs.map(l => [inv(l[0]), inv(l[0]), inv(l[1]), inv(l[2])]), down: s.down, bad: [false, false, false, false], arrows, overlay };
@@ -138,7 +140,14 @@
     note.hidden = true; $('live-ui').hidden = false;
     if (!L.built) {
       L.built = true; L.view = new RobotView($('live-view'), { az: 180 + 20, el: 24, zoom: 1.4, span: 1.2 }); build(meta);
-      L.drive = MojitoDrive.create({ meta, send, canvasActive: () => !!L.running, reset: resetRun, setPreset: choosePreset, toggleChase: () => setChase(!L.chase), onMode: showMode });
+      L.touch = MojitoTouchpad.create($('live-view'), [
+        { label: 'Mode: walk', onclick: () => L.drive.setMode(L.drive.mode === 'walk' ? 'pose' : 'walk') },
+        { label: 'Trot / crawl', onclick: () => choosePreset(L.drive.preset === 'trot' ? 'crawl' : 'trot') },
+        { label: 'Reset', onclick: () => resetRun() }, { label: 'Chase', onclick: () => setChase(!L.chase) }]);
+      const setTouch = on => { L.touch.setVisible(on); $('live-touch').classList.toggle('on', on); };
+      setTouch(matchMedia('(pointer: coarse)').matches);   // on by default on a phone or tablet
+      $('live-touch').onclick = () => setTouch(!L.touch.visible);
+      L.drive = MojitoDrive.create({ touch: L.touch, meta, send, canvasActive: () => !!L.running, reset: resetRun, setPreset: choosePreset, toggleChase: () => setChase(!L.chase), onMode: showMode });
       $('live-padsel').onchange = e => L.drive.selectPad(e.target.value);
       $('live-map').onclick = () => L.drive.calibrate();
       $('live-mode').onclick = () => L.drive.setMode(L.drive.mode === 'walk' ? 'pose' : 'walk');

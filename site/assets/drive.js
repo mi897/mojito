@@ -58,7 +58,8 @@
   function loadChoice() { try { return localStorage.getItem(CHOICE_KEY) || 'auto'; } catch (e) { return 'auto'; } }
   const CALIB_STEPS = [['ly', 'push the LEFT stick UP and release'], ['lx', 'push the LEFT stick RIGHT and release'], ['rx', 'push the RIGHT stick RIGHT and release'], ['ry', 'push the RIGHT stick UP and release']];
 
-  /* opts: send(path, body), meta (from /meta), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false). */
+  /* opts: send(path, body), meta (from /meta), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false),
+   touch (optional, touchpad.js): {axes(), active()}; while a finger is down its sticks replace the gamepad's. */
   function create(opts) {
     const D = { maps: loadMaps(), rest: {}, calib: null, padInfo: null, on: true, mode: 'walk', pose: [0, 0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [], sigs: {}, active: -1, list: [], choice: loadChoice() };
     const typing = e => e.target && e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
@@ -120,7 +121,8 @@
       if (c.step === CALIB_STEPS.length) { D.maps[pad.id] = c.map; saveMaps(D.maps); D.calib = null; D.sent = null; }
     }
     function tick() {
-      const pad = readPad();
+      let pad = readPad();
+      if (opts.touch && opts.touch.active()) pad = { axes: opts.touch.axes(), dpad: 0 };   // fingers on the on-screen sticks
       if (D.calib) return;   // mapping: send nothing
       if (!D.on || !opts.canvasActive()) { D.cmd = [0, 0, 0]; return; }
       const now = performance.now();

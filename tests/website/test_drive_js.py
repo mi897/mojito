@@ -146,5 +146,32 @@ class TestGamepadMapping(unittest.TestCase):
         self.assertEqual(out, [])
 
 
+
+def run_touchpad_js(expression):
+    script = "const T=require('../../site/assets/touchpad.js');console.log(JSON.stringify(%s));" % expression
+    return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+
+
+@unittest.skipIf(NODE is None, "node is not installed")
+class TestTouchpad(unittest.TestCase):
+    def test_stick_vector_limits_to_unit_circle(self):
+        radius = run_touchpad_js("T.RADIUS")
+        self.assertEqual(run_touchpad_js("T.stickVector(0,0)"), [0, 0])
+        self.assertEqual(run_touchpad_js("T.stickVector(%f,0)" % (radius / 2)), [0.5, 0])
+        x, y = run_touchpad_js("T.stickVector(%f,%f)" % (3 * radius, -3 * radius))   # far past the edge, up and right
+        self.assertAlmostEqual(x ** 2 + y ** 2, 1.0)
+        self.assertAlmostEqual(x, -y)
+        self.assertGreater(x, 0)
+        self.assertLess(y, 0)   # up on the screen is negative, like a gamepad stick
+
+    def test_touch_sticks_replace_the_gamepad_while_a_finger_is_down(self):
+        script = FAKE_PAD % {"rest": "[0,0,0,0]", "mapping": "'standard'"}
+        script = script.replace("send:(p,b)=>sent.push(b),", "touch:{active:()=>touching,axes:()=>[0,-1,0,0]},send:(p,b)=>sent.push(b),")
+        script = "let touching=false;" + script + "set([0,0,0,0]); touching=true; set([0,0,0,0]); touching=false; set([0,0,0,0]);" \
+            "console.log(JSON.stringify(sent.map(c=>c.vx)));"
+        out = json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(out, [0, 0.25, 0])   # idle, finger up on the left stick, released
+
+
 if __name__ == "__main__":
     unittest.main()
