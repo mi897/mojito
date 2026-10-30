@@ -29,6 +29,11 @@ BODY_THICKNESS = 0.06  # height of the box drawn for the body, m
 LINK_RADIUS = 0.01
 FLOOR_FRICTION = 1.0
 FOOT_FRICTION = 1.0
+GRAVITY = -9.81        # m/s^2, along z
+JOINT_DAMPING = 0.05   # N·m·s/rad
+JOINT_ARMATURE = 0.001  # kg·m^2
+FLOOR_HALF_SIZE = 5.0  # m, the floor plane drawn out to +-this in x and y
+FRICTION_TORSION, FRICTION_ROLLING = 0.005, 0.0001
 
 
 def _v(a) -> str:
@@ -58,14 +63,14 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
     root = model.root()
     mj = ET.Element("mujoco", model=model.name)
     ET.SubElement(mj, "compiler", angle="radian", autolimits="true")
-    ET.SubElement(mj, "option", timestep=str(timestep), gravity="0 0 -9.81")
+    ET.SubElement(mj, "option", timestep=str(timestep), gravity=f"0 0 {GRAVITY}")
     default = ET.SubElement(mj, "default")
-    ET.SubElement(default, "joint", damping="0.05", armature="0.001")
+    ET.SubElement(default, "joint", damping=str(JOINT_DAMPING), armature=str(JOINT_ARMATURE))
     # Only feet and the floor collide for now; the rest of the geometry is for looks and inertia.
     ET.SubElement(default, "geom", contype="0", conaffinity="0")
     wb = ET.SubElement(mj, "worldbody")
-    ET.SubElement(wb, "geom", name="floor", type="plane", size="5 5 0.1", contype="1", conaffinity="1",
-                  friction=f"{FLOOR_FRICTION} 0.005 0.0001")
+    ET.SubElement(wb, "geom", name="floor", type="plane", size=_v((FLOOR_HALF_SIZE, FLOOR_HALF_SIZE, 0.1)), contype="1", conaffinity="1",
+                  friction=f"{FLOOR_FRICTION} {FRICTION_TORSION} {FRICTION_ROLLING}")
 
     def build(parent_el: ET.Element, link: str, joint) -> None:
         """Add `link` below `parent_el`, hung from `joint` (None for the root)."""
@@ -87,7 +92,7 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
                 ET.SubElement(el, "site", name=link, size="0.004", rgba="0 0.6 1 1")
                 ET.SubElement(el, "geom", name=f"{link}_pad", type="sphere", size=str(FOOT_RADIUS),
                               mass=str(m["foot"]), contype="1", conaffinity="1",
-                              friction=f"{FOOT_FRICTION} 0.005 0.0001", rgba="0.1 0.1 0.1 1")
+                              friction=f"{FOOT_FRICTION} {FRICTION_TORSION} {FRICTION_ROLLING}", rgba="0.1 0.1 0.1 1")
             else:
                 # a capsule from this link's origin to the origin of its first child, or a ball if it has none
                 ends = [np.asarray(k.xyz, float) for k in kids]

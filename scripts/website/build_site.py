@@ -81,6 +81,10 @@ def build(out):
     else:
         print("missing physics_sweep.json under results/: run scripts/website/site_sweep.py (needs mujoco) for the physics playground", file=sys.stderr)
 
+    sys.path.insert(0, ROOT)
+    from mojito.sim import live_sim  # NumPy only (MuJoCo is imported lazily): the constants the browser simulation needs
+    write_js(os.path.join(data_dir, "livemeta.js"), "MOJITO_LIVE", live_sim.browser_constants())
+
     docs = {}
     for key, rel in DOCS.items():
         with open(os.path.join(ROOT, rel)) as f:

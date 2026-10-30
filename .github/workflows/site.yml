@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: NumPy, for the constants of the in-browser simulation
+        run: pip install numpy
       - name: Build site data from results/
         run: python scripts/website/build_site.py
       - uses: actions/configure-pages@v5

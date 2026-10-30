@@ -1,4 +1,5 @@
-/* Live physics tab: talks to scripts/website/serve_site.py on this machine (api/*). Absent when the site is hosted statically. */
+/* Live physics tab. The engine is the local server (scripts/website/serve_site.py, api/*) when one answers, else MuJoCo's WebAssembly build
+ * in this page (browsersim.js). Both answer the same requests, so everything below talks to `backend`. #live-browser forces the browser engine. */
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -16,7 +17,12 @@
   ];
   const L = { chase: true, drive: null, lastYaw: null, built: false, state: null, history: [], dragging: null, pending: {}, timer: null, ctl: {}, polling: false, view: null };
 
-  const send = (path, body) => fetch('api/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).catch(() => {});
+  const serverBackend = {
+    post: (path, body) => fetch('api/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }),
+    get: async path => (await fetch('api/' + path, { cache: 'no-store' })).json(),
+  };
+  let backend = serverBackend, runner = null;
+  const send = (path, body) => Promise.resolve().then(() => backend.post(path, body)).catch(() => {});
   const queue = change => { Object.assign(L.pending, change); clearTimeout(L.timer); L.timer = setTimeout(() => { send('params', L.pending); L.pending = {}; }, 60); };
   const dec = (step, scale) => Math.max(0, Math.ceil(-Math.log10(step * scale) - 1e-9));
 
@@ -120,7 +126,7 @@
   async function poll() {
     if (!L.running) return;
     try {
-      const s = await (await fetch('api/state', { cache: 'no-store' })).json();
+      const s = await backend.get('state');
       if (L.state && s.time < L.state.time) L.history = [];
       L.state = s; L.history.push({ t: s.time, down: s.down, cmd: s.commanded_down });
       while (L.history.length && L.history[0].t < s.time - 4.5) L.history.shift();
@@ -132,11 +138,23 @@
     setTimeout(poll, 33);
   }
   async function start() {
-    if (L.running) return; const note = $('live-note');
-    let meta;
-    try { const r = await fetch('api/meta', { cache: 'no-store' }); if (!r.ok) throw 0; meta = await r.json(); } catch (e) {
-      $('live-ui').hidden = true; note.hidden = false; return;
+    if (L.running || L.starting) return; const note = $('live-note'), loading = $('live-loading'); L.starting = true;
+    let meta, engine = '';
+    if (location.hash !== '#live-browser' && !runner) {
+      try { const r = await fetch('api/meta', { cache: 'no-store' }); if (!r.ok) throw 0; meta = await r.json(); backend = serverBackend; engine = 'the local Python server (MuJoCo as installed on that machine)'; } catch (e) { /* no server: use the browser */ }
     }
+    if (!meta && window.MOJITO_LIVE && window.BrowserSim) {
+      try {
+        if (!runner) { loading.hidden = false; runner = await window.BrowserSim.startBrowserRunner(window.MOJITO_LIVE); }
+        else runner.start();
+        loading.hidden = true;
+        backend = { get: async path => runner.get(path), post: (path, body) => runner.post(path, body) };
+        meta = runner.get('meta'); engine = 'MuJoCo ' + window.BrowserSim.MUJOCO_VERSION + ' in this page (WebAssembly)';
+      } catch (e) { loading.hidden = true; note.dataset.why = String(e && e.message || e); }
+    }
+    L.starting = false;
+    if (!meta) { $('live-ui').hidden = true; note.hidden = false; return; }
+    $('live-engine').textContent = 'Engine: ' + engine;
     note.hidden = true; $('live-ui').hidden = false;
     if (!L.built) {
       L.built = true; L.view = new RobotView($('live-view'), { az: 180 + 20, el: 24, zoom: 1.4, span: 1.2 }); build(meta);
@@ -160,5 +178,9 @@
     }
     L.running = true; poll();
   }
-  window.LivePhysics = { start, stop() { if (L.running && L.drive) { L.drive.keys.clear(); L.drive.forget(); send('params', { vx: 0, vy: 0, yaw_rate: 0, walk: false }); } L.running = false; } };
+  window.LivePhysics = { start, stop() {
+    if (L.running && L.drive) { L.drive.keys.clear(); L.drive.forget(); send('params', { vx: 0, vy: 0, yaw_rate: 0, walk: false }); }
+    if (runner && L.running) setTimeout(() => runner.stop(), 100);   // stop stepping while the tab is hidden (the zero command has been applied by then)
+    L.running = false;
+  } };
 })();
