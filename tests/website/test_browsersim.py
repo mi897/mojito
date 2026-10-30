@@ -128,6 +128,20 @@ class TestBrowserSim(unittest.TestCase):
         self.assert_close(theirs, sim.snapshot())
         self.assertAlmostEqual(theirs["total_mass_kg"], 2.4, places=3)
 
+    def test_changing_the_stance_height_while_walking_matches(self):
+        # the stance height is eased and needs no rebuild; the same schedule for both, trot and crawl
+        from mojito.sim import live_sim
+
+        for preset, vx, new_height in (("trot", 0.2, 0.24), ("crawl", 0.05, 0.16)):
+            schedule = [dict(changes=dict(walk=True, vx=vx), steps=1000), dict(changes=dict(height=new_height), steps=2000)]
+            theirs = node({"op": "run", "params": live_sim.PRESETS[preset], "schedule": schedule})["snapshots"][-1]
+            sim = live_sim.LiveSim(live_sim.PRESETS[preset])
+            for entry in schedule:
+                self.assertFalse(sim.set_params(**entry["changes"]))
+                sim.step(entry["steps"])
+            self.assert_close(theirs, sim.snapshot())
+            self.assertAlmostEqual(theirs["origin"][2], new_height + live_sim.mjcf.FOOT_RADIUS, delta=0.01)
+
 
 if __name__ == "__main__":
     unittest.main()

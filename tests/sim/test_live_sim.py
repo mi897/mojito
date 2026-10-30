@@ -86,6 +86,10 @@ class TestLiveSim(unittest.TestCase):
         for name, full in live_sim.DRIVE.items():
             self.assertIn(name, live_sim.PRESETS)
             for key, value in full.items():
+                if key == "height_rate":   # m/s, not a value with a slider range: it must cross the stance-height range in a few seconds
+                    low, high = live_sim.LIMITS["height"]
+                    self.assertTrue(0.0 < (high - low) / value < 15.0, (name, key))
+                    continue
                 low, high = live_sim.LIMITS[key]
                 self.assertTrue(low <= -value and value <= high, (name, key))
 
@@ -137,6 +141,41 @@ class TestLiveSim(unittest.TestCase):
             low, high = live_sim.LIMITS[key]
             self.assertTrue(low <= -value and value <= high, key)
             self.assertEqual(value, high, key)   # a full stick goes to the slider limit
+
+
+    def test_stance_height_changes_while_running_without_a_rebuild(self):
+        sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False))
+        sim.step(int(1.5 / sim.timestep))
+        self.assertFalse(sim.set_params(height=0.22))   # a design dimension would return True and need a reset
+        sim.step(int(2.0 / sim.timestep))
+        before = np.array(sim.snapshot()["legs"])[:, 2]
+        sim.step(int(1.0 / sim.timestep))
+        snap = sim.snapshot()
+        # the body rose to the new height (the foot tip is one pad radius above the floor) over feet that stayed where they were
+        self.assertAlmostEqual(snap["origin"][2], 0.22 + live_sim.mjcf.FOOT_RADIUS, delta=0.005)
+        self.assertLess(np.abs(np.array(snap["legs"])[:, 2] - before).max(), 0.002)
+        self.assertEqual(snap["feet_down"], 4)
+        self.assertTrue(snap["stance_reachable"])
+
+    def test_trot_and_crawl_keep_walking_after_a_height_change(self):
+        # the range probed in docs/STAGE2.md: both gaits at a lower and a higher stance than their preset
+        for name, vx, heights in (("trot", 0.2, (0.19, 0.24)), ("crawl", 0.05, (0.16, 0.24))):
+            for height in heights:
+                sim = live_sim.LiveSim(dict(live_sim.PRESETS[name], walk=True, vx=vx))
+                sim.step(int(2.0 / sim.timestep))
+                sim.set_params(height=height)
+                sim.step(int(4.0 / sim.timestep))
+                snap = sim.snapshot()
+                self.assertFalse(snap["fell"], (name, height))
+                self.assertFalse(snap["saturated"], (name, height))
+                self.assertGreater(snap["measured_velocity"][0], 0.5 * (0.15 if name == "trot" else 0.03), (name, height))
+                self.assertAlmostEqual(snap["origin"][2], height + live_sim.mjcf.FOOT_RADIUS, delta=0.01, msg=(name, height))
+
+    def test_unreachable_height_is_reported(self):
+        sim = live_sim.LiveSim(dict(live_sim.PRESETS["trot"], walk=False))
+        sim.set_params(height=0.31)   # longer than the legs can stand
+        sim.step(int(1.5 / sim.timestep))
+        self.assertFalse(sim.snapshot()["stance_reachable"])
 
 
 if __name__ == "__main__":

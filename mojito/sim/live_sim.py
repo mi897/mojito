@@ -54,14 +54,17 @@ PRESETS = {
 # Full-stick command (forward m/s, left m/s, yaw rad/s) for drive mode (keyboard or gamepad), per preset. Probed in 6 s runs
 # (forward, back, sideways and turning each alone, and the trot with all three at once): none fell. The pace is left out,
 # it barely moves in physics. The measured speed is lower than the command, see docs/STAGE2.md.
-DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8), "crawl": dict(vx=0.06, vy=0.03, yaw_rate=0.3)}
+# height_rate is how fast a held raise or lower input (X and Z, the right stick up and down) moves the stance height in walk mode, m/s.
+DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8, height_rate=0.04), "crawl": dict(vx=0.06, vy=0.03, yaw_rate=0.3, height_rate=0.04)}
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
               yaw_rate=(-3.0, 3.0), body_roll=(-0.4, 0.4), body_pitch=(-0.4, 0.4), body_yaw=(-0.5, 0.5), body_height=(-0.04, 0.04), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
               la=(0.02, 0.09), lu=(0.08, 0.24), ll=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
               height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
-REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width", "height")  # changing any of these needs a new model
-SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw", "body_height")
+REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width")  # changing any of these needs a new model (the stance height does not: see `height`)
+# `height` is the stance height (m): the feet are placed that far below the hips. It is eased like a command, so it can be changed while walking
+# and the body rises or sinks over the planted feet; the model is only built at that height when it is reset.
+SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw", "body_height", "height")
 # Full-stick body posture for the drive mode that tilts the body instead of walking (rad, and m for the height): the whole slider
 # range, so a full stick goes as far as the page's sliders. Corners of the stick box beyond what the servos hold are in docs/STAGE2.md.
 POSE = {key: LIMITS[key][1] for key in ("body_roll", "body_pitch", "body_yaw", "body_height")}
@@ -107,7 +110,7 @@ class LiveSim:
 
     # ----- parameters -----
     def set_params(self, **changes) -> bool:
-        """Apply changes (clamped). Returns True if the model must be rebuilt (the mass changed)."""
+        """Apply changes (clamped). Returns True if the model must be rebuilt (the mass or a design dimension changed)."""
         rebuild = False
         for key, value in changes.items():
             if key not in self.params:
@@ -167,6 +170,7 @@ class LiveSim:
             for key in SMOOTHED:
                 self._smooth[key] += alpha * (p[key] - self._smooth[key])
             gait = self.gait()
+            self.home = self.robot.stance(self._smooth["height"])   # the feet follow the eased stance height
             self.blend_progress = float(np.clip(self.blend_progress + (dt if p["walk"] else -dt) / BLEND_TIME, 0.0, 1.0))
             velocity = (self._smooth["vx"], self._smooth["vy"])
             gait_time = self.cycles * gait.period
@@ -238,7 +242,7 @@ class LiveSim:
         yaw = float(np.degrees(np.arctan2(rotation[1, 0], rotation[0, 0])))
         pitch = float(np.degrees(np.arcsin(np.clip(-rotation[2, 0], -1.0, 1.0))))  # R = Rz(yaw) Ry(pitch) Rx(roll), body to world
         roll = float(np.degrees(np.arctan2(rotation[2, 1], rotation[2, 2])))
-        fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * self.params["height"])
+        fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * self._smooth["height"])
         return {
             "time": self.time, "legs": legs.round(5).tolist(), "origin": origin.xpos.round(5).tolist(),
             "rotation": rotation.round(5).tolist(), "loads": self.loads.round(3).tolist(),

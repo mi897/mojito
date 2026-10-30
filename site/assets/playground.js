@@ -214,7 +214,7 @@
    * sliders always show the command; the full-stick values are the live simulation's (livemeta.js). Walking is the gait animation, standing
    * (what pose mode uses) is the standing pose with the sliders' posture. Nothing is applied until there is an input, so the lab's own
    * presets and autoplay are not interrupted by an idle controller. */
-  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · M pose mode. Gamepad: sticks, A, B, Y (mode), LB, RB.';
+  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · X Z stand height · Space keep walking · 1 2 trot/crawl · R reset · M pose mode. Gamepad: sticks, A, B, Y (mode), LB, RB.';
   const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · M walk mode. Gamepad: left stick pitch and roll, right stick yaw, Y walk mode.';
   function initKinDrive() {
     const live = window.MOJITO_LIVE;
@@ -246,6 +246,7 @@
       } else {
         kin.mode = out.walk ? 'gait' : 'stand';
         set('vx', out.vx); set('vy', out.vy); set('wz', out.yaw_rate);
+        if (out.height !== undefined) set('h', out.height);   // a held raise or lower input: the lab's own stand-height slider
         if (out.walk && !kin.playing) { kin.playing = true; $('kin-play').textContent = 'Pause'; }
       }
       kin.redraw = true; chartsSoon();
@@ -255,7 +256,7 @@
       if (mode === 'walk') ['roll', 'pitch', 'yaw', 'pz'].forEach(k => set(k, 0));   // back to level, as the live simulation does
       else { kin.engaged = true; }
     }
-    kin.drive = MojitoDrive.create({ touch, meta: { drive: live.meta.drive, pose: live.meta.pose, presets: {} }, send: apply,
+    kin.drive = MojitoDrive.create({ touch, meta: { drive: live.meta.drive, pose: live.meta.pose, limits: { height: live.meta.limits.height }, presets: {} }, send: apply, getHeight: () => kin.st.h,
       canvasActive: () => !$('kin').hidden, reset: () => kinPreset('stand'), setPreset: kinPreset, toggleChase: () => {}, onMode });
     $('kin-keys').textContent = KEYS_WALK;
   }

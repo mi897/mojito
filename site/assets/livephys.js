@@ -8,7 +8,8 @@
   const LEGS = ['FL', 'FR', 'RL', 'RR'];
   const SPEC = [
     ['Robot design (rebuilds the model on release)', true, [['la', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['lu', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000], ['ll', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000],
-      ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000], ['height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000], ['mass', 'total mass', 0.5, 8, 0.1, ' kg', 1]]],
+      ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000], ['mass', 'total mass', 0.5, 8, 0.1, ' kg', 1]]],
+    ['Body height (changes while it walks)', false, [['height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000]]],
     ['Gait timing', false, [['period', 'period', 0.2, 4, 0.05, ' s', 1], ['duty', 'duty', 0.1, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000], ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000],
       ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1], ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
     ['Command', false, [['vx', 'forward', -0.5, 0.5, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['yaw_rate', 'turn rate', -3, 3, 0.1, ' rad/s', 1]]],
@@ -40,7 +41,7 @@
     $('live-mode').textContent = 'Mode: ' + mode; $('live-mode').classList.toggle('on', mode === 'pose'); $('live-mode').setAttribute('aria-pressed', mode === 'pose');
     $('live-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
   }
-  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
+  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · X Z stand height · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
   const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · X Z body up/down · R reset · M walk mode. Gamepad: left stick pitch and roll, right stick left/right yaw, right stick up/down body height, Y walk mode.';
   function setDrive(on) { L.drive.setOn(on); $('live-drive').classList.toggle('on', on); $('live-drive').setAttribute('aria-pressed', on); $('live-drive').textContent = 'Drive: ' + (on ? 'on' : 'off'); }
   function build(meta) {
@@ -92,7 +93,7 @@
       if (L.drive && L.drive.mode === 'pose') {
         const dg = r => (r * 180 / Math.PI).toFixed(0), p = L.drive.pose;
         ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° height ${(p[3] * 1000).toFixed(0)} mm commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw);
-      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw); }
+      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s, stand ${(s.params.height * 1000).toFixed(0)} mm${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw); }
     };
     const inv = p => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [0, 1, 2].map(j => R[0][j] * d[0] + R[1][j] * d[1] + R[2][j] * d[2]); };
     return { origin: o, R, bodySize: s.body_size, points: s.legs.map(l => [inv(l[0]), inv(l[0]), inv(l[1]), inv(l[2])]), down: s.down, bad: [false, false, false, false], arrows, overlay };
@@ -105,7 +106,7 @@
       + kpi('servo torque / stall', fmt(s.torque_fraction, 2) + (s.saturated ? ' sat' : ''), s.saturated ? 'bad' : '') + kpi('total mass', fmt(s.total_mass_kg, 2) + ' kg') + kpi('time', fmt(s.time, 1) + ' s');
     const m = [];
     if (s.fell) m.push('<div class="w">The robot has fallen. Press Reset.</div>');
-    if (!s.stance_reachable) m.push('<div class="w">This design cannot reach its stand height with these leg lengths: the legs are too short for the body height. Lengthen the legs or lower the stand height, then Reset.</div>');
+    if (!s.stance_reachable) m.push('<div class="w">This design cannot reach its stand height with these leg lengths: the legs are too short for the body height. Lower the stand height (it changes while the robot runs) or lengthen the legs, then Reset.</div>');
     if (!m.length && !p.walk) m.push('<div class="muted">Standing. Press Walk.</div>');
     $('live-msgs').innerHTML = m.join('');
   }
