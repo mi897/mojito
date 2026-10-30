@@ -155,6 +155,7 @@
         const alpha = 1 - Math.exp(-dt / c.smoothing_time);
         for (const key of c.smoothed) this.smooth[key] += alpha * (p[key] - this.smooth[key]);
         const gait = this.gait();
+        this.home = this.robot.stance(this.smooth.height);   // the feet follow the eased stance height
         this.blendProgress = clamp(this.blendProgress + (p.walk ? dt : -dt) / c.blend_time, 0, 1);
         const gaitTime = this.cycles * gait.period;
         const t = Mojito.footTargets(gait, gaitTime, this.home, [this.smooth.vx, this.smooth.vy], this.smooth.yaw_rate);
@@ -230,7 +231,7 @@
         torque_fraction: rounded(this.torqueFraction), saturated: this.saturated, tilt_deg: rounded(tilt),
         yaw_deg: deg(Math.atan2(R[1][0], R[0][0])), pitch_deg: deg(Math.asin(clamp(-R[2][0], -1, 1))), roll_deg: deg(Math.atan2(R[2][1], R[2][2])),
         measured_velocity: this.measuredVelocity(), feet_down: down.filter(Boolean).length,
-        fell: tilt > 60 || o[2] < 0.5 * p.height, total_mass_kg: this.model.body_subtreemass[1],
+        fell: tilt > 60 || o[2] < 0.5 * this.smooth.height, total_mass_kg: this.model.body_subtreemass[1],
         blend: smoothstep(this.blendProgress), cycle_phase: (this.cycles % 1 + 1) % 1, body_size: [p.body_length, p.body_width],
         stall_torque_nm: this.servo.stallTorque, stance_reachable: this.robot.reachable(this.home).every(Boolean),
         params: JSON.parse(JSON.stringify(p)),

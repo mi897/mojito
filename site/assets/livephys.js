@@ -8,7 +8,8 @@
   const LEGS = ['FL', 'FR', 'RL', 'RR'];
   const SPEC = [
     ['Robot design (rebuilds the model on release)', true, [['la', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['lu', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000], ['ll', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000],
-      ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000], ['height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000], ['mass', 'total mass', 0.5, 8, 0.1, ' kg', 1]]],
+      ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000], ['mass', 'total mass', 0.5, 8, 0.1, ' kg', 1]]],
+    ['Body height (changes while it walks)', false, [['height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000]]],
     ['Gait timing', false, [['period', 'period', 0.2, 4, 0.05, ' s', 1], ['duty', 'duty', 0.1, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000], ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000],
       ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1], ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
     ['Command', false, [['vx', 'forward', -0.5, 0.5, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['yaw_rate', 'turn rate', -3, 3, 0.1, ' rad/s', 1]]],
@@ -105,7 +106,7 @@
       + kpi('servo torque / stall', fmt(s.torque_fraction, 2) + (s.saturated ? ' sat' : ''), s.saturated ? 'bad' : '') + kpi('total mass', fmt(s.total_mass_kg, 2) + ' kg') + kpi('time', fmt(s.time, 1) + ' s');
     const m = [];
     if (s.fell) m.push('<div class="w">The robot has fallen. Press Reset.</div>');
-    if (!s.stance_reachable) m.push('<div class="w">This design cannot reach its stand height with these leg lengths: the legs are too short for the body height. Lengthen the legs or lower the stand height, then Reset.</div>');
+    if (!s.stance_reachable) m.push('<div class="w">This design cannot reach its stand height with these leg lengths: the legs are too short for the body height. Lower the stand height (it changes while the robot runs) or lengthen the legs, then Reset.</div>');
     if (!m.length && !p.walk) m.push('<div class="muted">Standing. Press Walk.</div>');
     $('live-msgs').innerHTML = m.join('');
   }

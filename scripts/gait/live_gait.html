@@ -82,6 +82,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 const LEGS=['FL','FR','RL','RR'];
 const SPEC=[
  ['Gait timing',[['period','period s',0.2,4,0.05],['duty','duty',0.1,0.95,0.01],['o0','offset FL',0,1,0.01],['o1','offset FR',0,1,0.01],['o2','offset RL',0,1,0.01],['o3','offset RR',0,1,0.01],['lift','lift m',0,0.1,0.005],['sway','sway m',0,0.06,0.005]]],
+ ['Body height (changes while it walks)',[['height','stand height m',0.1,0.32,0.005]]],
  ['Command',[['vx','forward m/s',-0.5,0.5,0.01],['vy','left m/s',-0.3,0.3,0.01],['yaw_rate','yaw rad/s',-3,3,0.1]]],
  ['Body posture (pose mode, rad)',[['body_roll','roll',-0.4,0.4,0.01],['body_pitch','pitch',-0.4,0.4,0.01],['body_yaw','yaw',-0.5,0.5,0.01],['body_height','height',-0.04,0.04,0.005]]],
  ['Servo, body, speed',[['kp','kp N·m/rad',1,300,1],['kd','kd',0,5,0.05],['mass','mass kg',0.5,8,0.1],['speed','sim speed x',0.1,2,0.1]]]];
@@ -156,7 +157,7 @@ function fmt(v,step){const d=Math.max(0,Math.ceil(-Math.log10(step)-1e-9));retur
 function syncControls(){
   const p=state.params;
   const set=(k,v)=>{if(dragging===k||pending[k]!==undefined)return;const el=document.getElementById(k);if(el){el.value=v;document.getElementById(k+'_v').textContent=fmt(v,parseFloat(el.step));}};
-  for(const k of ['period','duty','lift','sway','vx','vy','yaw_rate','body_roll','body_pitch','body_yaw','body_height','kp','kd','mass','speed'])set(k,p[k]);
+  for(const k of ['period','duty','lift','sway','height','vx','vy','yaw_rate','body_roll','body_pitch','body_yaw','body_height','kp','kd','mass','speed'])set(k,p[k]);
   p.offsets.forEach((v,i)=>{if(!(dragging&&dragging[0]==='o'))set('o'+i,v)});
   document.getElementById('walk').classList.toggle('on',p.walk);document.getElementById('walk').textContent=p.walk?'Stand':'Walk';
   document.getElementById('pause').classList.toggle('on',state.paused);
@@ -249,7 +250,7 @@ function drawStats(){
   const items=[['forward m/s',s.measured_velocity[0].toFixed(3)+' ('+p.vx.toFixed(2)+')'],['left m/s',s.measured_velocity[1].toFixed(3)+' ('+p.vy.toFixed(2)+')'],
    ['tilt °',s.tilt_deg.toFixed(1)],['feet down',s.feet_down],['torque/stall',s.torque_fraction.toFixed(2)+(s.saturated?' sat':'')],['time s',s.time.toFixed(1)],['mass kg',s.total_mass_kg.toFixed(2)],['yaw °',s.yaw_deg.toFixed(0)],['roll °',s.roll_deg.toFixed(1)],['pitch °',s.pitch_deg.toFixed(1)]];
   document.getElementById('stats').innerHTML=items.map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
-  document.getElementById('warn').textContent=s.fell?'The robot has fallen. Press Reset.':(s.params.walk?'':'Standing. Press Walk.');
+  document.getElementById('warn').textContent=s.fell?'The robot has fallen. Press Reset.':!s.stance_reachable?'The legs cannot reach this stand height: lower it.':(s.params.walk?'':'Standing. Press Walk.');
 }
 async function poll(){
   try{
