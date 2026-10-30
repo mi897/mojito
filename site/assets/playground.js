@@ -218,20 +218,18 @@
   const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · M walk mode. Gamepad: left stick pitch and roll, right stick yaw, Y walk mode.';
   function initKinDrive() {
     const live = window.MOJITO_LIVE;
-    if (!live || !window.MojitoDrive || !window.MojitoTouchpad) { $('kin-touch').hidden = true; return; }
+    if (!live || !window.MojitoDrive || !window.MojitoTouchpad) { $('kin-touch').hidden = true; $('kin-mode').hidden = true; return; }
     function kinPreset(name) {   // a preset button of the on-screen pad, or the 1, 2 and R keys
       applyPreset(name);
       if (live.meta.drive[name]) kin.drive.preset = name;   // trot and crawl have full-stick values; stand does not
       kin.drive.forget();
     }
     const toggleMode = () => kin.drive.setMode(kin.drive.mode === 'walk' ? 'pose' : 'walk');
-    const touch = MojitoTouchpad.create($('kin-view'), [
-      { label: 'Mode: walk', onclick: toggleMode },
-      { label: 'Trot / crawl', onclick: () => kinPreset(kin.drive.preset === 'trot' ? 'crawl' : 'trot') },
-      { label: 'Reset', onclick: () => kinPreset('stand') }]);
+    const touch = MojitoTouchpad.create($('kin-view'));
     const setTouch = on => { touch.setVisible(on); $('kin-touch').classList.toggle('on', on); $('kin-touch').setAttribute('aria-pressed', on); };
     setTouch(matchMedia('(pointer: coarse)').matches);   // on by default on a phone or tablet
     $('kin-touch').onclick = () => setTouch(!touch.visible);
+    $('kin-mode').onclick = toggleMode;
     let chartTimer = null;   // the charts are redrawn a few times a second while the command changes, not on every input
     const chartsSoon = () => { kinSamples = null; if (!chartTimer) chartTimer = setTimeout(() => { chartTimer = null; kinCharts(); }, 300); };
     const set = (k, v) => kin.ctl[k].set(v);
@@ -252,7 +250,8 @@
       kin.redraw = true; chartsSoon();
     }
     function onMode(mode) {
-      touch.setLabel(0, 'Mode: ' + mode); $('kin-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
+      $('kin-mode').textContent = 'Mode: ' + mode; $('kin-mode').classList.toggle('on', mode === 'pose'); $('kin-mode').setAttribute('aria-pressed', mode === 'pose');
+      $('kin-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
       if (mode === 'walk') ['roll', 'pitch', 'yaw', 'pz'].forEach(k => set(k, 0));   // back to level, as the live simulation does
       else { kin.engaged = true; }
     }

@@ -1,4 +1,4 @@
-/* On-screen controls for a phone or tablet: two floating thumb sticks over the bottom of the 3D view and a few buttons.
+/* On-screen controls for a phone or tablet: two floating thumb sticks over the bottom of the 3D view (the buttons stay in the page's own rows).
  * It only produces stick values in the same sense as a standard gamepad ([left x, left y, right x, right y], down and right are +),
  * which drive.js reads like any other controller (create({touch})). Nothing here talks to the server. */
 (function () {
@@ -13,8 +13,8 @@
     return [x, y];
   }
 
-  /* canvas: the 3D view; the pad is laid over its lower half. buttons: [{label, onclick}] shown along the top of the view. */
-  function create(canvas, buttons = []) {
+  /* canvas: the 3D view; the pad is laid over its lower half. */
+  function create(canvas) {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative';
     canvas.parentNode.insertBefore(wrap, canvas); wrap.appendChild(canvas);
@@ -25,8 +25,7 @@
 .mtp-ring{width:${RADIUS * 2}px;height:${RADIUS * 2}px;margin:-${RADIUS}px 0 0 -${RADIUS}px;border:2px solid var(--muted,#888);opacity:.55}
 .mtp-knob{width:44px;height:44px;margin:-22px 0 0 -22px;background:var(--blue,#2a78d6);opacity:.7}
 .mtp-hint{position:absolute;bottom:8px;width:50%;text-align:center;font-size:12px;color:var(--muted,#888);pointer-events:none}
-.mtp-buttons{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:6px;align-items:stretch;width:128px}
-.mtp-buttons button{padding:8px 6px;font:inherit;font-size:13px;border-radius:8px;border:1px solid var(--line,#ccc);background:var(--panel,#fff);color:var(--ink,#222);touch-action:manipulation}`;
+`;
     document.head.appendChild(style);
     const root = document.createElement('div'); root.hidden = true; wrap.appendChild(root);
 
@@ -56,14 +55,10 @@
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
     }
     zone(0); zone(1);
-    const bar = document.createElement('div'); bar.className = 'mtp-buttons'; root.append(bar);
-    const made = {};
-    buttons.forEach(b => { const el = document.createElement('button'); el.textContent = b.label; el.onclick = b.onclick; bar.append(el); made[b.label] = el; });
     return {
       axes: () => state.axes.slice(), active: () => state.visible && state.touches > 0,
       setVisible(on) { state.visible = on; root.hidden = !on; if (!on) { state.axes.fill(0); } },
       get visible() { return state.visible; },
-      setLabel(i, text) { bar.children[i].textContent = text; },
     };
   }
   const api = { create, stickVector, RADIUS };
