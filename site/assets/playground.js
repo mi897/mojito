@@ -416,6 +416,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     initKin();
     $('tab-kin').onclick = () => show('kin'); $('tab-phys').onclick = () => show('phys'); $('tab-live').onclick = () => show('live');
-    if (location.hash === '#phys') show('phys'); else if (location.hash === '#live') show('live');
+    if (location.hash === '#phys') show('phys'); else if (/^#live/.test(location.hash)) show('live');
   });
 })();

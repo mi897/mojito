@@ -20,7 +20,7 @@ from collections import deque
 
 import numpy as np
 
-from ..robot import body, gaits
+from ..robot import body, gaits, leg
 from . import actuators, mjcf, stand
 
 SMOOTHING_TIME = 0.3       # s, low-pass on velocity, yaw rate, lift and sway
@@ -73,6 +73,26 @@ DEFAULT_TOTAL_MASS = mjcf.DEFAULT_MASSES["body"] + 4 * sum(v for k, v in mjcf.DE
 def scaled_masses(total):
     """The placeholder masses of mjcf.DEFAULT_MASSES, all multiplied by total / 1.72 kg."""
     return {k: v * total / DEFAULT_TOTAL_MASS for k, v in mjcf.DEFAULT_MASSES.items()}
+
+
+def browser_constants() -> dict:
+    """Everything the JavaScript port of this simulation (site/assets/browsersim.js) needs that is a number in Python: written to
+    site/data/livemeta.js by scripts/website/build_site.py, so no figure is copied by hand. `meta` is what the local server's /meta serves."""
+    servo = {k: float(v) for k, v in dataclasses.asdict(actuators.ServoParams()).items()}
+    return {
+        "meta": {"limits": LIMITS, "presets": PRESETS, "defaults": DEFAULTS, "drive": DRIVE, "pose": POSE},
+        "constants": {
+            "smoothing_time": SMOOTHING_TIME, "max_target_speed": MAX_TARGET_SPEED, "blend_time": BLEND_TIME, "history": HISTORY,
+            "contact_force": CONTACT_FORCE, "timestep": 0.002, "smoothed": list(SMOOTHED), "rebuild": list(REBUILD),
+            "default_total_mass": DEFAULT_TOTAL_MASS, "masses": mjcf.DEFAULT_MASSES,
+            "servo": servo, "servo_voltage_range": [actuators.V_MIN, actuators.V_MAX],
+            "joint_limits": np.asarray(leg.JOINT_LIMITS, float).tolist(),
+            "model": {"foot_radius": mjcf.FOOT_RADIUS, "body_thickness": mjcf.BODY_THICKNESS, "link_radius": mjcf.LINK_RADIUS,
+                      "floor_friction": mjcf.FLOOR_FRICTION, "foot_friction": mjcf.FOOT_FRICTION, "gravity": mjcf.GRAVITY,
+                      "joint_damping": mjcf.JOINT_DAMPING, "joint_armature": mjcf.JOINT_ARMATURE, "floor_half_size": mjcf.FLOOR_HALF_SIZE,
+                      "friction_torsion": mjcf.FRICTION_TORSION, "friction_rolling": mjcf.FRICTION_ROLLING},
+        },
+    }
 
 
 class LiveSim:

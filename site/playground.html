@@ -30,12 +30,12 @@
 <body>
 <main class="wrap" id="app">
   <h1 class="no-rule">Playground</h1>
-  <p class="lede">Change the robot and watch what it does. Three labs, because a web page can run the geometry live but not the physics engine: a kinematic lab (live, in your browser), a physics lab (stored MuJoCo runs), and live physics that runs on your own machine.</p>
+  <p class="lede">Change the robot and watch what it does. Three labs: a kinematic lab (geometry only, instant), a physics lab (stored MuJoCo runs), and live physics, where MuJoCo runs in your browser as WebAssembly or, if you start it, on your own machine through a local server.</p>
 
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-kin" aria-selected="true">Kinematic lab · live, any value</button>
     <button role="tab" id="tab-phys" aria-selected="false">Physics lab · MuJoCo runs, 144 combinations</button>
-    <button role="tab" id="tab-live" aria-selected="false">Live physics · runs on your machine</button>
+    <button role="tab" id="tab-live" aria-selected="false">Live physics · MuJoCo, live</button>
   </div>
 
   <!-- ====================== kinematic lab ====================== -->
@@ -117,16 +117,18 @@
   </section>
   <!-- ====================== live physics (local server only) ====================== -->
   <section id="live" hidden>
-    <div class="notice" id="live-note" hidden><b>This tab needs the local server.</b>
-      Real-time MuJoCo physics with any robot dimension, gait or servo setting cannot run in a web page, so it runs in Python on your computer and this page only draws it.
-      Nothing is sent anywhere: the server listens on 127.0.0.1 only and refuses other hosts and origins.
+    <div class="notice" id="live-note" hidden><b>Live physics did not start.</b>
+      It runs MuJoCo in this page (WebAssembly, downloaded once from jsDelivr, about 11 MB: that failed or is blocked, or this copy of the site was built without <code>data/livemeta.js</code>), or in Python on your computer, which this page then only draws.
+      The local server listens on 127.0.0.1 only and refuses other hosts and origins; nothing is sent anywhere.
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
 pip install numpy scipy matplotlib pillow mujoco
 python scripts/website/build_site.py
 python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
-      On this hosted copy the tab stays empty; use the Kinematic and Physics labs here.</div>
+      Meanwhile the Kinematic and Physics labs work without either.</div>
+    <div class="notice" id="live-loading" hidden><b>Loading the physics engine…</b> MuJoCo's WebAssembly build is about 11 MB; the browser keeps it afterwards.</div>
     <div id="live-ui" hidden>
-      <div class="notice"><b>Real physics, your settings, placeholder everything.</b> This is the same MuJoCo model, servo model and gait generator as the stored runs, stepped live. Changing a robot dimension or the mass rebuilds the model (the robot stands again).
+      <div class="small muted" id="live-engine" style="margin-bottom:6px"></div>
+      <div class="notice"><b>Real physics, your settings, placeholder everything.</b> This is the same MuJoCo model, servo model and gait generator as the stored runs, stepped live. In this page the engine is MuJoCo compiled to WebAssembly (the version is shown below); how fast it runs depends on your device, and <code>tests/website/test_browsersim.py</code> checks it against the Python simulation. Changing a robot dimension or the mass rebuilds the model (the robot stands again).
         Dimensions, masses, friction and servo figures are placeholders; what you see is how the model behaves, not what a built robot would do. Playing with sliders is exploration, not a measurement: for numbers use <code>scripts/gait/try_gait.py</code> and put them in <code>results/</code>.</div>
       <div class="pg">
         <aside class="pg-side card"><div id="live-controls"></div></aside>
@@ -151,6 +153,8 @@ python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/pl
 <script src="assets/mojito.js"></script>
 <script src="assets/viewer.js"></script>
 <script src="assets/playground.js"></script>
+<script src="data/livemeta.js"></script>
+<script src="assets/browsersim.js"></script>
 <script src="assets/touchpad.js"></script>
 <script src="assets/drive.js"></script>
 <script src="assets/livephys.js"></script>

@@ -41,7 +41,7 @@ mojito/                the library, in four subpackages (each holds at most abou
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
-site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html); data/ and media/ are generated
+site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html), touchpad.js, browsersim.js (live_sim in the browser on MuJoCo WebAssembly; constants from the generated data/livemeta.js); data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
@@ -147,6 +147,7 @@ else NumPy.
 
 - The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/website/test_build_site.py`) or draw it from the JSON in a script.
 - `site/assets/mojito.js` is a port of `mojito/robot/leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/website/test_site_js.py` compares them.
+- `site/assets/browsersim.js` is a port of `mojito/sim/live_sim.py`, `actuators.py` (Servo) and `mjcf.py` (the quadruped). Change one, change the other; `tests/website/test_browsersim.py` compares them (needs `npm install --no-save @mujoco/mujoco@3.16.0`, the version `uv.lock` pins for Python). A constant it needs goes in `live_sim.browser_constants()`, never copied into the JavaScript.
 - `scripts/website/serve_site.py` is local only: it binds 127.0.0.1 and checks Host and Origin (tested in `tests/website/test_serve_site.py`). Do not add a public mode without asking the owner.
 - Say in the page what a lab does not model. The kinematic lab is static (no dynamics); the physics lab replays stored runs, no interpolation.
 

@@ -29,3 +29,22 @@ jobs:
           uv run python scripts/learning/calibrate.py --out /tmp/cal.json
           uv run python scripts/body/make_body_demos.py --no-gif
           git diff --stat
+
+  # The in-browser simulation (site/assets/browsersim.js, MuJoCo WebAssembly) against the Python simulation: needs MuJoCo for Python,
+  # node, the npm package at the same MuJoCo version, and the site data that carries the constants. Skipped in the jobs above.
+  browser-sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --extra sim
+      - name: MuJoCo WebAssembly package
+        run: npm install --no-save --no-package-lock @mujoco/mujoco@3.16.0
+      - name: Build site data
+        run: uv run python scripts/website/build_site.py
+      - name: Browser simulation against the Python simulation
+        run: uv run python -m unittest tests.website.test_browsersim -v
