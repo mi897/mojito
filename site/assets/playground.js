@@ -37,7 +37,10 @@
     period: 1.7, duty: 0.5, lift: 0.022, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0,
     vx: 0.15, vy: 0, wz: 0, mass: 1.5, volts: 5,
   };
-  const kin = { st: Object.assign({}, DEFAULTS), mode: 'gait', gaitName: 'trot', t: 0, playing: true, speed: 1, ctl: {} };
+  const kin = { st: Object.assign({}, DEFAULTS), mode: 'gait', gaitName: 'trot', t: 0, playing: true, speed: 1, ctl: {},
+    eff: { vx: DEFAULTS.vx, vy: DEFAULTS.vy, wz: DEFAULTS.wz }, pose: { x: 0, y: 0, yaw: 0 }, drive: null };
+  // time constant of the easing of the commanded velocity (s): the live simulation's, so a steered robot does not jump (livemeta.js)
+  const commandTau = () => (window.MOJITO_LIVE ? window.MOJITO_LIVE.constants.smoothing_time : 0);
 
   function robotOf(st) {
     const r = new M.Robot({ lengths: [st.la, st.lu, st.ll], bodyLength: st.bl, bodyWidth: st.bw });
@@ -47,20 +50,20 @@
   function gaitOf(st) {
     return { name: kin.gaitName, period: st.period, duty: st.duty, lift: st.lift, sway: st.sway, offsets: [st.o0, st.o1, st.o2, st.o3] };
   }
-  function evalAt(t) {
+  // v: the velocity to evaluate at, default the sliders'; the frame being drawn uses kin.eff, the eased one
+  function evalAt(t, v = kin.st) {
     const st = kin.st, robot = robotOf(st), standing = kin.mode === 'stand';
     return M.evaluate({
-      robot, gait: standing ? null : gaitOf(st), t, velocity: [st.vx, st.vy], yawRate: st.wz, height: st.h,
+      robot, gait: standing ? null : gaitOf(st), t, velocity: [v.vx, v.vy], yawRate: v.wz, height: st.h,
       posture: { x: st.px, y: st.py, z: st.pz, roll: st.roll * D2R, pitch: st.pitch * D2R, yaw: st.yaw * D2R }, mass: st.mass, volts: st.volts,
     });
   }
   function kinScene(res, t) {
-    const st = kin.st, moving = kin.mode === 'gait';
-    const [angle, shift] = moving ? M.planarFlow(t, [st.vx, st.vy], st.wz) : [0, [0, 0]];
-    const c = Math.cos(angle), s = Math.sin(angle), Rz = [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+    const st = kin.st, p = kin.pose;   // where the body is in the world: the dead-reckoned pose, which a changed command cannot make jump
+    const c = Math.cos(p.yaw), s = Math.sin(p.yaw), Rz = [[c, -s, 0], [s, c, 0], [0, 0, 1]];
     const off = res.offset;
     return {
-      origin: [shift[0] + c * off[0] - s * off[1], shift[1] + s * off[0] + c * off[1], st.h + off[2]],
+      origin: [p.x + c * off[0] - s * off[1], p.y + s * off[0] + c * off[1], st.h + off[2]],
       R: matMul(Rz, res.R), bodySize: [st.bl, st.bw], points: res.points,
       down: res.loadsN.map(l => l > 1e-6), bad: res.reachable.map(r => !r),
     };
@@ -94,7 +97,8 @@
     kin.mode = p.mode; kin.gaitName = p.gait;
     base.forEach(k => kin.ctl[k].set(0));
     Object.entries(p.set).forEach(([k, v]) => kin.ctl[k].set(v));
-    kin.t = 0; kinDirty('preset');
+    kin.engaged = false; kin.t = 0; kin.pose = { x: 0, y: 0, yaw: 0 }; kin.eff = { vx: kin.st.vx, vy: kin.st.vy, wz: kin.st.wz }; kinDirty('preset');
+    if (kinView) kinView.recentre();
   }
 
   let kinView, kinPending = false, kinSamples = null;
@@ -184,7 +188,7 @@
 
   function kinFrame() {
     const st = kin.st, standing = kin.mode === 'stand', T = standing ? 1 : st.period;
-    const res = evalAt(kin.t);
+    const res = evalAt(kin.t, kin.eff);
     kinView.setScene(kinScene(res, kin.t));
     const nDown = res.loadsN.filter(l => l > 1e-6).length;
     $('kin-kpis').innerHTML = kpi('feet carrying weight', nDown + ' of 4', nDown <= 2 ? 'bad' : '')
@@ -206,6 +210,56 @@
     }
   }
 
+  /* Driving the lab: keyboard, gamepad and on-screen sticks (drive.js, touchpad.js), as on the live tab. They set this lab's own sliders, so the
+   * sliders always show the command; the full-stick values are the live simulation's (livemeta.js). Walking is the gait animation, standing
+   * (what pose mode uses) is the standing pose with the sliders' posture. Nothing is applied until there is an input, so the lab's own
+   * presets and autoplay are not interrupted by an idle controller. */
+  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · M pose mode. Gamepad: sticks, A, B, Y (mode), LB, RB.';
+  const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · M walk mode. Gamepad: left stick pitch and roll, right stick yaw, Y walk mode.';
+  function initKinDrive() {
+    const live = window.MOJITO_LIVE;
+    if (!live || !window.MojitoDrive || !window.MojitoTouchpad) { $('kin-touch').hidden = true; return; }
+    function kinPreset(name) {   // a preset button of the on-screen pad, or the 1, 2 and R keys
+      applyPreset(name);
+      if (live.meta.drive[name]) kin.drive.preset = name;   // trot and crawl have full-stick values; stand does not
+      kin.drive.forget();
+    }
+    const toggleMode = () => kin.drive.setMode(kin.drive.mode === 'walk' ? 'pose' : 'walk');
+    const touch = MojitoTouchpad.create($('kin-view'), [
+      { label: 'Mode: walk', onclick: toggleMode },
+      { label: 'Trot / crawl', onclick: () => kinPreset(kin.drive.preset === 'trot' ? 'crawl' : 'trot') },
+      { label: 'Reset', onclick: () => kinPreset('stand') }]);
+    const setTouch = on => { touch.setVisible(on); $('kin-touch').classList.toggle('on', on); $('kin-touch').setAttribute('aria-pressed', on); };
+    setTouch(matchMedia('(pointer: coarse)').matches);   // on by default on a phone or tablet
+    $('kin-touch').onclick = () => setTouch(!touch.visible);
+    let chartTimer = null;   // the charts are redrawn a few times a second while the command changes, not on every input
+    const chartsSoon = () => { kinSamples = null; if (!chartTimer) chartTimer = setTimeout(() => { chartTimer = null; kinCharts(); }, 300); };
+    const set = (k, v) => kin.ctl[k].set(v);
+    function apply(path, out) {
+      if (path !== 'params') return;
+      const pose = kin.drive.mode === 'pose', asked = pose || ['vx', 'vy', 'yaw_rate', 'body_roll', 'body_pitch', 'body_yaw', 'body_height'].some(k => out[k] !== 0);
+      if (!asked && !kin.engaged) return;
+      kin.engaged = true;
+      if (pose) {
+        kin.mode = 'stand'; set('vx', 0); set('vy', 0); set('wz', 0);
+        set('roll', out.body_roll / D2R); set('pitch', out.body_pitch / D2R); set('yaw', out.body_yaw / D2R); set('pz', out.body_height);
+      } else {
+        kin.mode = out.walk ? 'gait' : 'stand';
+        set('vx', out.vx); set('vy', out.vy); set('wz', out.yaw_rate);
+        if (out.walk && !kin.playing) { kin.playing = true; $('kin-play').textContent = 'Pause'; }
+      }
+      kin.redraw = true; chartsSoon();
+    }
+    function onMode(mode) {
+      touch.setLabel(0, 'Mode: ' + mode); $('kin-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
+      if (mode === 'walk') ['roll', 'pitch', 'yaw', 'pz'].forEach(k => set(k, 0));   // back to level, as the live simulation does
+      else { kin.engaged = true; }
+    }
+    kin.drive = MojitoDrive.create({ touch, meta: { drive: live.meta.drive, pose: live.meta.pose, presets: {} }, send: apply,
+      canvasActive: () => !$('kin').hidden, reset: () => kinPreset('stand'), setPreset: kinPreset, toggleChase: () => {}, onMode });
+    $('kin-keys').textContent = KEYS_WALK;
+  }
+
   function initKin() {
     const box = $('kin-controls');
     buttons(box, [['Trot', () => applyPreset('trot')], ['Crawl', () => applyPreset('crawl')], ['Pace', () => applyPreset('pace'), 'left legs together, then right: goes backward in physics'],
@@ -225,10 +279,18 @@
     let last = performance.now();
     (function loop(now) {
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
-      if (kin.playing && kin.mode === 'gait' && !$('kin').hidden) { kin.t += dt * kin.speed; kinFrame(); }
+      if (!$('kin').hidden) {
+        const tau = commandTau(), st = kin.st, e = kin.eff;
+        e.vx = M.easeTo(e.vx, st.vx, dt, tau); e.vy = M.easeTo(e.vy, st.vy, dt, tau); e.wz = M.easeTo(e.wz, st.wz, dt, tau);
+        const moving = kin.playing && kin.mode === 'gait';
+        if (moving) { kin.t += dt * kin.speed; kin.pose = M.advancePose(kin.pose, [e.vx, e.vy], e.wz, dt * kin.speed); }
+        // a stopped lab is redrawn only while the eased command is still settling or the drive has just changed something
+        if (moving || kin.redraw) { kin.redraw = false; kinFrame(); }
+      }
       requestAnimationFrame(loop);
     })(last);
     applyPreset('trot');
+    initKinDrive();
     window.addEventListener('themechange', kinCharts);
   }
 

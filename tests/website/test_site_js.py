@@ -164,5 +164,37 @@ class TestSiteStatics(unittest.TestCase):
                 self.assertTrue(np.any(loads < 0))
 
 
+
+@unittest.skipIf(NODE is None, "node is not installed")
+class TestSteering(unittest.TestCase):
+    """The pose integrator and the command easing that the kinematic lab uses when it is steered live, against their closed forms."""
+
+    def js(self, expression):
+        script = "const M=require('../../site/assets/mojito.js');console.log(JSON.stringify(%s));" % expression
+        return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+
+    def test_advance_pose_follows_the_closed_form_arc(self):
+        # a constant command from rest: stepping the pose must land where planarFlow (the exact solution) says
+        for velocity, rate in (([0.2, 0.0], 0.0), ([0.25, 0.1], 0.7), ([-0.1, 0.12], -1.3), ([0.0, 0.0], 0.9)):
+            out = self.js("""(()=>{let p={x:0,y:0,yaw:0};const v=%s,w=%s,T=6,dt=1/120;for(let i=0;i<T/dt;i++)p=M.advancePose(p,v,w,dt);
+                const [angle,shift]=M.planarFlow(T,v,w);return {p,angle,shift};})()""" % (json.dumps(velocity), rate))
+            self.assertAlmostEqual(out["p"]["yaw"], out["angle"], places=9)
+            self.assertAlmostEqual(out["p"]["x"], out["shift"][0], delta=2e-3)
+            self.assertAlmostEqual(out["p"]["y"], out["shift"][1], delta=2e-3)
+
+    def test_changing_the_command_does_not_move_the_body(self):
+        # the old form, planarFlow(t, v) with an unbounded t, put the body at t * v: a new v at t = 100 s moved it by metres at once
+        out = self.js("""(()=>{let p={x:0,y:0,yaw:0};for(let i=0;i<60000;i++)p=M.advancePose(p,[0.25,0],0,1/600);   // 100 s at 0.25 m/s
+            const stopped=M.advancePose(p,[0,0],0,1/60);return {x:p.x,dx:Math.abs(stopped.x-p.x)};})()""")
+        self.assertAlmostEqual(out["x"], 25.0, delta=0.01)
+        self.assertEqual(out["dx"], 0)
+
+    def test_ease_to_is_the_exponential_approach(self):
+        out = self.js("""(()=>{let v=0.2;const target=-0.1,tau=0.3,dt=1/60;for(let i=0;i<60;i++)v=M.easeTo(v,target,dt,tau);   // 1 s
+            return {v,jump:M.easeTo(5,2,0.1,0)};})()""")
+        self.assertAlmostEqual(out["v"], -0.1 + 0.3 * np.exp(-1.0 / 0.3), places=9)   # target + (start - target) exp(-t / tau)
+        self.assertEqual(out["jump"], 2)   # tau = 0 jumps
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -143,6 +143,15 @@
     const ic = Math.sin(angle) / w, is = (1 - Math.cos(angle)) / w;
     return [angle, [ic * v[0] - is * v[1], is * v[0] + ic * v[1]]];
   }
+  // Dead reckoning for a body that is steered live (the closed form above needs the velocity to stay constant from t = 0).
+  // pose {x, y, yaw} advanced by dt s at body-frame velocity v = [forward, left] m/s and yaw rate w rad/s: the heading used for the step
+  // is the one halfway through it, so a constant command traces the same arc as planarFlow (tests/website/test_site_js.py checks that).
+  function advancePose(pose, v, w, dt) {
+    const mid = pose.yaw + 0.5 * w * dt, c = Math.cos(mid), s = Math.sin(mid);
+    return { x: pose.x + (c * v[0] - s * v[1]) * dt, y: pose.y + (s * v[0] + c * v[1]) * dt, yaw: pose.yaw + w * dt };
+  }
+  // First-order approach of `value` to `target` with time constant tau (s): target + (value - target) exp(-dt / tau). tau = 0 jumps.
+  const easeTo = (value, target, dt, tau) => (tau > 0 ? target + (value - target) * Math.exp(-dt / tau) : target);
   // Body-frame position of a grounded foot that sits at `home` when T = 0.
   function stancePoint(home, T, v, w) {
     const [angle, shift] = planarFlow(T, v, w), c = Math.cos(angle), s = Math.sin(angle);
@@ -291,7 +300,7 @@
   }
 
   const api = { NOMINAL, STAGE01, LIMITS, LEG_NAMES, IS_RIGHT, G, leg, rotation, matVec, matTVec, applyPosture, toWorld, Robot,
-    TROT, CRAWL, PACE, planarFlow, stancePoint, footTargets, bodySway, stabilityMargin, footLoads, jointTorques,
+    TROT, CRAWL, PACE, planarFlow, advancePose, easeTo, stancePoint, footTargets, bodySway, stabilityMargin, footLoads, jointTorques,
     stallTorque, evaluate };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Mojito = api;
 })(typeof self !== 'undefined' ? self : this);
