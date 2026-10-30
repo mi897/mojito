@@ -128,7 +128,6 @@ let poseYawRef=0; // heading when pose mode was entered: the body yaw in pose mo
 const poseYaw=()=>((state.yaw_deg-poseYawRef+540)%360)-180;
 function setTouch(on){touchpad.setVisible(on);document.getElementById('touch').classList.toggle('on',on);}
 function showMode(mode){
-  if(touchpad)touchpad.setLabel(0,'Mode: '+mode);
   if(mode==='pose'&&state)poseYawRef=state.yaw_deg;
   document.getElementById('mode').textContent='Mode: '+mode;document.getElementById('mode').classList.toggle('on',mode==='pose');
   document.getElementById('posekeys').hidden=mode!=='pose';
@@ -140,11 +139,7 @@ function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/re
 let drive=null;
 let touchpad=null;
 function startDrive(){
-  touchpad=MojitoTouchpad.create(vc,[
-    {label:'Mode: walk',onclick:()=>drive.setMode(drive.mode==='walk'?'pose':'walk')},
-    {label:'Trot / crawl',onclick:()=>choosePreset(drive.preset==='trot'?'crawl':'trot')},
-    {label:'Reset',onclick:resetRun},
-    {label:'Chase',onclick:()=>setChase(!view.chase)}]);
+  touchpad=MojitoTouchpad.create(vc);
   setTouch(matchMedia('(pointer: coarse)').matches);   // on by default on a phone or tablet
   document.getElementById('touch').onclick=()=>setTouch(!touchpad.visible);
   drive=MojitoDrive.create({touch:touchpad,meta,send:(p,b)=>send('/'+p,b),canvasActive:()=>true,reset:resetRun,setPreset:choosePreset,toggleChase:()=>setChase(!view.chase),onMode:showMode});
@@ -223,13 +218,12 @@ function drawView(){
 }
 function drawHud(){
   const d=vc.width/vc.getBoundingClientRect().width||1,v=state.measured_velocity,speed=Math.hypot(v[0],v[1]);
-  const mw=touchpad&&touchpad.visible?vc.width-150*d:undefined; // leave room for the touch buttons
-  vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d,mw);
+  vx.fillStyle=css('--ink');vx.font=`600 ${22*d}px system-ui`;vx.fillText(speed.toFixed(2)+' m/s',14*d,30*d);
   vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
   const lim=drive.limits(),deg=r=>(r*180/Math.PI).toFixed(0);
-  if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° height ${(drive.pose[3]*1000).toFixed(0)} mm commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d,mw);}
-  else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s, stand ${(state.params.height*1000).toFixed(0)} mm${drive.hold?', walking on the spot':''}`,14*d,48*d,mw);
-  vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d,mw);
+  if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° height ${(drive.pose[3]*1000).toFixed(0)} mm commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d);}
+  else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s, stand ${(state.params.height*1000).toFixed(0)} mm${drive.hold?', walking on the spot':''}`,14*d,48*d);
+  vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d);
 }
 function drawTiming(){
   const d=fit(tc),W=tc.width,H=tc.height;tx.clearRect(0,0,W,H);
