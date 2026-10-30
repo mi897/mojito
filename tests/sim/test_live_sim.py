@@ -86,6 +86,10 @@ class TestLiveSim(unittest.TestCase):
         for name, full in live_sim.DRIVE.items():
             self.assertIn(name, live_sim.PRESETS)
             for key, value in full.items():
+                if key == "height_rate":   # m/s, not a value with a slider range: it must cross the stance-height range in a few seconds
+                    low, high = live_sim.LIMITS["height"]
+                    self.assertTrue(0.0 < (high - low) / value < 15.0, (name, key))
+                    continue
                 low, high = live_sim.LIMITS[key]
                 self.assertTrue(low <= -value and value <= high, (name, key))
 

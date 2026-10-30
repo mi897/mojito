@@ -59,6 +59,7 @@ button.on{background:var(--accent);border-color:var(--accent);color:#fff}
     <b>Space / A</b><span>keep walking on the spot</span>
     <b>1 2 / LB RB</b><span>trot, crawl</span>
     <b>R / B</b><span>reset</span>
+    <b>X Z / right stick up, down</b><span>stand height up, down</span>
     <b>C / X</b><span>chase cam</span>
     <b>M / Y</b><span>walk or pose mode</span>
   </div>
@@ -227,7 +228,7 @@ function drawHud(){
   vx.font=`${12*d}px system-ui`;vx.fillStyle=css('--muted');
   const lim=drive.limits(),deg=r=>(r*180/Math.PI).toFixed(0);
   if(drive.mode==='pose'){vx.fillText(`pose mode: roll ${deg(drive.pose[0])}° pitch ${deg(drive.pose[1])}° yaw ${deg(drive.pose[2])}° height ${(drive.pose[3]*1000).toFixed(0)} mm commanded, ${state.roll_deg.toFixed(0)}° ${state.pitch_deg.toFixed(0)}° ${poseYaw().toFixed(0)}° measured`,14*d,48*d,mw);}
-  else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s${drive.hold?', walking on the spot':''}`,14*d,48*d,mw);
+  else vx.fillText(`${drive.preset}, full stick ${lim.vx} m/s, stand ${(state.params.height*1000).toFixed(0)} mm${drive.hold?', walking on the spot':''}`,14*d,48*d,mw);
   vx.fillText(drive.pad?'gamepad: '+drive.pad.slice(0,38):'keyboard (connect a gamepad and press a button)',14*d,64*d,mw);
 }
 function drawTiming(){

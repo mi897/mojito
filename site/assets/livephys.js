@@ -41,7 +41,7 @@
     $('live-mode').textContent = 'Mode: ' + mode; $('live-mode').classList.toggle('on', mode === 'pose'); $('live-mode').setAttribute('aria-pressed', mode === 'pose');
     $('live-keys').textContent = mode === 'pose' ? KEYS_POSE : KEYS_WALK;
   }
-  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
+  const KEYS_WALK = 'Drive: W S forward/back · A D sidestep · Q E turn · X Z stand height · Space keep walking · 1 2 trot/crawl · R reset · C chase cam · M pose mode. Gamepad: sticks, A, B, X, Y (mode), LB, RB.';
   const KEYS_POSE = 'Pose mode (feet stay put, body tilts): W S pitch nose down/up · A D roll left/right · Q E yaw left/right · X Z body up/down · R reset · M walk mode. Gamepad: left stick pitch and roll, right stick left/right yaw, right stick up/down body height, Y walk mode.';
   function setDrive(on) { L.drive.setOn(on); $('live-drive').classList.toggle('on', on); $('live-drive').setAttribute('aria-pressed', on); $('live-drive').textContent = 'Drive: ' + (on ? 'on' : 'off'); }
   function build(meta) {
@@ -93,7 +93,7 @@
       if (L.drive && L.drive.mode === 'pose') {
         const dg = r => (r * 180 / Math.PI).toFixed(0), p = L.drive.pose;
         ctx.fillText(`pose mode: roll ${dg(p[0])}° pitch ${dg(p[1])}° yaw ${dg(p[2])}° height ${(p[3] * 1000).toFixed(0)} mm commanded, ${fmt(s.roll_deg, 0)}° ${fmt(s.pitch_deg, 0)}° ${fmt(poseYaw(s), 0)}° measured`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw);
-      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw); }
+      } else if (lim) { ctx.fillText(`${L.drive.preset}, full stick ${lim.vx} m/s, stand ${(s.params.height * 1000).toFixed(0)} mm${L.drive.hold ? ', walking on the spot' : ''}`, 14 * d, 48 * d, mw); ctx.fillText(L.drive.pad ? 'gamepad: ' + L.drive.pad.slice(0, 38) : 'keyboard (connect a gamepad and press a button)', 14 * d, 64 * d, mw); }
     };
     const inv = p => { const d = [p[0] - o[0], p[1] - o[1], p[2] - o[2]]; return [0, 1, 2].map(j => R[0][j] * d[0] + R[1][j] * d[1] + R[2][j] * d[2]); };
     return { origin: o, R, bodySize: s.body_size, points: s.legs.map(l => [inv(l[0]), inv(l[0]), inv(l[1]), inv(l[2])]), down: s.down, bad: [false, false, false, false], arrows, overlay };

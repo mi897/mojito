@@ -44,6 +44,15 @@
     }
     return c;
   }
+  /* Walk mode: the right stick up (X) raises the stance height, down (Z) lowers it, at a rate while held (the height stays where it was left,
+   * unlike pose mode, where the body springs back). Returns -1..1. */
+  function heightFraction(keys, padAxes) {
+    let h = (keys.has('up') ? 1 : 0) - (keys.has('downh') ? 1 : 0);
+    if (padAxes) { const p = -stick(padAxes[3]); if (p !== 0) h = p; }
+    return h;
+  }
+  // The stance height after dt s of input fraction f at `rate` m/s, kept inside [low, high].
+  const stepHeight = (height, f, rate, dt, low, high) => Math.min(high, Math.max(low, height + f * rate * dt));
   const scalePose = (c, lim) => [c[0] * lim.body_roll, c[1] * lim.body_pitch, c[2] * lim.body_yaw, c[3] * lim.body_height];
   const scale = (c, lim) => [c[0] * lim.vx, c[1] * lim.vy, c[2] * lim.yaw_rate];
   /* The preset whose stance height and period match the running parameters, or null. */
@@ -58,10 +67,10 @@
   function loadChoice() { try { return localStorage.getItem(CHOICE_KEY) || 'auto'; } catch (e) { return 'auto'; } }
   const CALIB_STEPS = [['ly', 'push the LEFT stick UP and release'], ['lx', 'push the LEFT stick RIGHT and release'], ['rx', 'push the RIGHT stick RIGHT and release'], ['ry', 'push the RIGHT stick UP and release']];
 
-  /* opts: send(path, body), meta (from /meta), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false),
+  /* opts: send(path, body), meta (from /meta), getHeight() (optional: the current stance height, when sync(params) is not called), reset(), setPreset(name), toggleChase(), canvasActive() -> bool (keys are ignored when false),
    touch (optional, touchpad.js): {axes(), active()}; while a finger is down its sticks replace the gamepad's. */
   function create(opts) {
-    const D = { maps: loadMaps(), rest: {}, calib: null, padInfo: null, on: true, mode: 'walk', pose: [0, 0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [], sigs: {}, active: -1, list: [], choice: loadChoice() };
+    const D = { heightTarget: null, currentHeight: null, lastTick: null, maps: loadMaps(), rest: {}, calib: null, padInfo: null, on: true, mode: 'walk', pose: [0, 0, 0, 0], hold: false, keys: new Set(), cmd: [0, 0, 0], pad: null, preset: 'trot', sent: null, idleSince: 0, lastButtons: [], sigs: {}, active: -1, list: [], choice: loadChoice() };
     const typing = e => e.target && e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
     const onKeyDown = e => {
       if (!opts.canvasActive() || typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -125,7 +134,8 @@
       if (opts.touch && opts.touch.active()) pad = { axes: opts.touch.axes(), dpad: 0 };   // fingers on the on-screen sticks
       if (D.calib) return;   // mapping: send nothing
       if (!D.on || !opts.canvasActive()) { D.cmd = [0, 0, 0]; return; }
-      const now = performance.now();
+      const now = performance.now(), tickDt = D.lastTick === null ? 0 : Math.min(0.1, (now - D.lastTick) / 1000);
+      D.lastTick = now;
       let out;
       if (D.mode === 'pose') {   // stand and tilt: no walking command
         D.cmd = [0, 0, 0]; D.pose = scalePose(poseFractions(D.keys, pad && pad.axes), opts.meta.pose);
@@ -136,6 +146,12 @@
         const moving = f.some(v => v !== 0);
         if (moving) D.idleSince = now;
         out = { vx: D.cmd[0], vy: D.cmd[1], yaw_rate: D.cmd[2], walk: moving || D.hold || now - D.idleSince < STOP_DELAY, body_roll: 0, body_pitch: 0, body_yaw: 0, body_height: 0 };
+        // a held raise or lower input moves the stance height from where it is; idle, no height is sent, so the page's slider is left alone
+        const hf = heightFraction(D.keys, pad && pad.axes), base = D.heightTarget ?? (opts.getHeight ? opts.getHeight() : D.currentHeight);
+        if (hf !== 0 && base !== null && base !== undefined) {
+          const [low, high] = (opts.meta.limits || {}).height || [-Infinity, Infinity];
+          D.heightTarget = stepHeight(base, hf, lim.height_rate, tickDt, low, high); out.height = D.heightTarget;
+        } else if (hf === 0) D.heightTarget = null;
       }
       const key = JSON.stringify(out);
       if (key !== D.sent) { D.sent = key; opts.send('params', out); }
@@ -156,11 +172,11 @@
     D.selectPad = v => { D.choice = v; D.sent = null; try { localStorage.setItem(CHOICE_KEY, v); } catch (e) { /* lasts until reload */ } };
     D.setOn = on => { D.on = on; D.sent = null; };
     D.forget = () => { D.sent = null; };                              // call after anything else changed the command (reset, preset)
-    D.sync = params => { const p = detectPreset(params, opts.meta.presets); if (p) D.preset = p; };
+    D.sync = params => { const p = detectPreset(params, opts.meta.presets); if (p) D.preset = p; if (params.height !== undefined) D.currentHeight = params.height; };
     D.limits = () => opts.meta.drive[D.preset] || opts.meta.drive.trot;
     D.destroy = () => { clearInterval(timer); removeEventListener('keydown', onKeyDown); removeEventListener('keyup', onKeyUp); removeEventListener('blur', onBlur); };
     return D;
   }
-  const api = { create, stickAxes, fractions, poseFractions, scalePose, scale, detectPreset, stick, DEAD };
+  const api = { create, stickAxes, fractions, poseFractions, heightFraction, stepHeight, scalePose, scale, detectPreset, stick, DEAD };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else window.MojitoDrive = api;
 })();

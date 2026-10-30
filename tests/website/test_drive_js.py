@@ -59,6 +59,21 @@ class TestDriveMapping(unittest.TestCase):
         self.assertEqual(run_js("D.scalePose([1,-1,0.5,-1],{body_roll:0.15,body_pitch:0.15,body_yaw:0.2,body_height:0.04})"), [0.15, -0.15, 0.1, -0.04])
         self.assertEqual(run_js("D.poseFractions(new Set(),null)"), [0, 0, 0, 0])
 
+    def test_height_fraction_signs(self):
+        self.assertEqual(run_js("D.heightFraction(new Set(['up']),null)"), 1)
+        self.assertEqual(run_js("D.heightFraction(new Set(['downh']),null)"), -1)
+        self.assertEqual(run_js("D.heightFraction(new Set(['up','downh']),null)"), 0)
+        self.assertEqual(run_js("D.heightFraction(new Set(),[0,0,0,-1])"), 1)    # right stick up is negative y on a standard pad
+        self.assertEqual(run_js("D.heightFraction(new Set(),[0,0,0,1])"), -1)
+        self.assertEqual(run_js("D.heightFraction(new Set(['up']),[0,0,0,0.05])"), 1)   # a resting stick does not override keys
+
+    def test_step_height_moves_at_the_rate_and_stays_in_range(self):
+        self.assertAlmostEqual(run_js("D.stepHeight(0.16,1,0.04,0.5,0.1,0.32)"), 0.18)
+        self.assertAlmostEqual(run_js("D.stepHeight(0.16,-0.5,0.04,1,0.1,0.32)"), 0.14)
+        self.assertEqual(run_js("D.stepHeight(0.31,1,0.04,5,0.1,0.32)"), 0.32)
+        self.assertEqual(run_js("D.stepHeight(0.11,-1,0.04,5,0.1,0.32)"), 0.1)
+        self.assertEqual(run_js("D.stepHeight(0.2,0,0.04,1,0.1,0.32)"), 0.2)
+
     def test_scale_by_preset_limits(self):
         self.assertEqual(run_js("D.scale([1,-1,0.5],{vx:0.25,vy:0.12,yaw_rate:0.8})"), [0.25, -0.12, 0.4])
 
@@ -171,6 +186,42 @@ class TestTouchpad(unittest.TestCase):
             "console.log(JSON.stringify(sent.map(c=>c.vx)));"
         out = json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
         self.assertEqual(out, [0, 0.25, 0])   # idle, finger up on the left stick, released
+
+
+
+@unittest.skipIf(NODE is None, "node is not installed")
+class TestDriveHeight(unittest.TestCase):
+    """A held raise or lower input moves the stance height at drive's rate from the height the page reports, and only then sends one."""
+
+    def run_height(self, body):
+        script = FAKE_PAD % {"rest": "[0,0,0,0]", "mapping": "'standard'"}
+        script = script.replace("yaw_rate:0.8}},", "yaw_rate:0.8,height_rate:0.04}},limits:{height:[0.1,0.32]},").replace("body_yaw:0.2}", "body_yaw:0.2,body_height:0.04}")
+        script = "let clock=0;Object.defineProperty(performance,'now',{configurable:true,value:()=>clock});" + script + \
+            "const tickFor=(n,axes)=>{for(let i=0;i<n;i++){clock+=33;set(axes||[0,0,0,0]);}};drive.sync({height:0.16});" + body
+        return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+
+    def test_a_held_key_raises_the_height_at_the_rate(self):
+        out = self.run_height("""tickFor(2); drive.keys.add('up'); tickFor(30); const raised=sent[sent.length-1].height;
+            drive.keys.delete('up'); tickFor(2); const idle=sent[sent.length-1].height;
+            console.log(JSON.stringify({raised, idle: idle===undefined}));""")
+        self.assertAlmostEqual(out["raised"], 0.16 + 0.04 * 0.033 * 30, delta=0.002)   # 30 ticks of 33 ms at 0.04 m/s
+        self.assertTrue(out["idle"])   # released: no height is sent, the slider is left alone
+
+    def test_the_height_continues_from_where_it_was_left_and_clamps(self):
+        out = self.run_height("""drive.keys.add('up'); tickFor(15); const first=sent[sent.length-1].height; drive.keys.delete('up'); tickFor(2);
+            drive.sync({height:first}); drive.keys.add('up'); tickFor(15); const second=sent[sent.length-1].height;
+            drive.keys.delete('up'); drive.keys.add('downh'); tickFor(2000); const low=sent[sent.length-1].height;
+            console.log(JSON.stringify({first, second, low}));""")
+        self.assertAlmostEqual(out["second"] - out["first"], 0.04 * 0.033 * 15, delta=0.002)
+        self.assertEqual(out["low"], 0.1)   # the lower limit of the slider
+
+    def test_right_stick_up_raises_and_pose_mode_leaves_the_height_alone(self):
+        out = self.run_height("""tickFor(20,[0,0,0,-1]); const up=sent[sent.length-1].height; tickFor(2);
+            drive.setMode('pose'); drive.keys.add('up'); tickFor(10); const pose=sent[sent.length-1];
+            console.log(JSON.stringify({up, poseHasHeight: 'height' in pose, bodyHeight: pose.body_height}));""")
+        self.assertGreater(out["up"], 0.16)
+        self.assertFalse(out["poseHasHeight"])   # pose mode raises the body over the feet (body_height), not the stance
+        self.assertGreater(out["bodyHeight"], 0)
 
 
 if __name__ == "__main__":
