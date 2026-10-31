@@ -4,7 +4,7 @@
 over the physics lab's grid: 3 servo gains x 3 masses x 2 swing heights, trot at 0.15 m/s, duty 0.5, diagonal offsets.
 Only `period` changes. One run per cell, no randomisation. The 0.5 s baseline runs 4 cycles, the others 3.
 
-    python scripts/gait/sweeps/trot_period_robustness.py        # needs mujoco; 144 runs
+    uv run --extra sim python scripts/gait/sweeps/trot_period_robustness.py        # needs mujoco; 144 runs
 """
 import dataclasses
 import itertools

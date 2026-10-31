@@ -3,7 +3,7 @@
     results/learning/step_demo.gif  three different-sized legs tracing the same step
     docs/demo.html         interactive page: drag the target, change the lengths
 
-    python scripts/learning/make_demo.py [--weights weights/ik_leg.npz]
+    uv run --extra sim python scripts/learning/make_demo.py [--weights weights/ik_leg.npz]
 """
 import argparse
 import os

@@ -10,7 +10,7 @@ Checks, each from a MuJoCo run (placeholder dimensions, masses, servo figures, f
   4. variants: period, duty, swing height;
   5. a lateral body shift toward the stance side (the crawl's lean idea), which should unload the swing feet.
 
-    python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
+    uv run --extra sim python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
 """
 import dataclasses
 

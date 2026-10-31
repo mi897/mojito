@@ -6,7 +6,7 @@ speed it made); mean tilt and mean peak torque over the runs that stayed upright
 mean speed ratio, the range of kd whose mean is within 0.01 of that peak (the plateau), and the first kd above the peak whose mean falls
 more than 0.05 below it (the cliff). The spread is from the random mass and latency draws only.
 
-    python scripts/gait/sweeps/plot_trot_1p7_kp_kd_grid.py
+    uv run --extra sim python scripts/gait/sweeps/plot_trot_1p7_kp_kd_grid.py
 """
 import json
 import os

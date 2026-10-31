@@ -10,7 +10,10 @@ markers, so any error the network makes is in the picture and in the numbers.
     results/body/crawl_forward.gif  crawl with the body leaning away from the lifted foot
     results/body/body_metrics.json  tracking error, joint-limit margin, stability
 
-    python scripts/body/make_body_demos.py [--weights weights/ik_leg.npz] [--only posture trot_forward ...]
+    uv run --extra sim python scripts/body/make_body_demos.py [--weights weights/ik_leg.npz] [--only posture trot_forward ...]
+
+With --only, the other entries of body_metrics.json are kept from the earlier run, and the provenance block describes
+this (last) run only: its `entries_written` lists the entries it recomputed.
 """
 import argparse
 import json
@@ -219,15 +222,17 @@ def main():
     }
     metrics_path = results_path("body", "body_metrics.json")
     metrics = json.load(open(metrics_path)) if os.path.exists(metrics_path) else {}
+    written = []
     for name, build in demos.items():
         if args.only and name not in args.only:
             continue
+        written.append(name)
         s = build()
         metrics[name] = measure(robot, reference, s)
         if not args.no_gif:
             animate(robot, s, results_path("body", f"{name}.gif"))
         print(name, json.dumps(metrics[name]), flush=True)
-    write_result(metrics_path, metrics)
+    write_result(metrics_path, metrics, note={"entries_written": written})
 
 
 if __name__ == "__main__":

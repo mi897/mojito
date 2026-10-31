@@ -10,7 +10,7 @@ gives a speed the commanded motion can deliver:
 body to move backward). Whatever falls short of `ask` is the servo not following the command.
 Runs variants of the servo and the gait, writes results/gait/gait_speed_diagnosis.json. Needs mujoco.
 
-    python scripts/gait/gait_speed_diagnosis.py
+    uv run --extra sim python scripts/gait/gait_speed_diagnosis.py
 """
 import dataclasses
 

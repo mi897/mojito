@@ -4,7 +4,7 @@ Same model as scripts/gait/gait_replay.py (placeholder dimensions, masses 1.72 k
 figures). Duty 0.5 and the diagonal offsets stay as in `gaits.TROT`; only `period` changes. One run per cell, no
 randomisation. The baseline runs 4 cycles, the longer periods 3 (so each walks 6 s or more).
 
-    python scripts/gait/sweeps/trot_period_sweep.py        # needs mujoco; a few minutes
+    uv run --extra sim python scripts/gait/sweeps/trot_period_sweep.py        # needs mujoco; a few minutes
 """
 import dataclasses
 

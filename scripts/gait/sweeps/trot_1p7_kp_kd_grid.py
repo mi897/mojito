@@ -6,7 +6,7 @@ the speed falls away). Everything else is the baseline of trot_1p7_one_at_a_time
 0.15 m/s, stance height 0.19 m, swing height 30 mm, 1.72 kg. Each cell is run 10 times with the same random mass (+-5%) and latency
 (18 to 22 ms) draws as that script (draw i uses seed i, the same draws in every cell); the spread is from those draws only.
 
-    python scripts/gait/sweeps/trot_1p7_kp_kd_grid.py        # needs mujoco; 2380 runs, parallel over the CPU cores, about two hours
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_kp_kd_grid.py        # needs mujoco; 2380 runs, parallel over the CPU cores, about two hours
 """
 import dataclasses
 import multiprocessing

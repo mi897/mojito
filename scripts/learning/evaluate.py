@@ -1,6 +1,6 @@
 """Measure the trained network against closed-form IK and draw the result plots.
 
-    python scripts/learning/evaluate.py [--weights weights/ik_leg.npz] [--out results/learning]
+    uv run --extra sim python scripts/learning/evaluate.py [--weights weights/ik_leg.npz] [--out results/learning]
 """
 import argparse
 import json

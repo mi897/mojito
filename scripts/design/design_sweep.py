@@ -6,7 +6,7 @@ placeholder masses times 0.6, 1.0, 1.75); each stood once and walked with the tr
 each run 10 s of simulated time (the walks stand 1 s, blend 0.5 s, walk 8.5 s). One run per cell, no random draws. Gait timings and servo gains are not re-tuned; the standing height scales
 so each leg keeps the placeholder knee bend (docs/STAGE2.md, work package 5).
 
-    python scripts/design/design_sweep.py        # needs mujoco; 33 design-and-mass cells of 7 runs, parallel over the CPU cores
+    uv run --extra sim python scripts/design/design_sweep.py        # needs mujoco; 33 design-and-mass cells of 7 runs, parallel over the CPU cores
 """
 import multiprocessing
 

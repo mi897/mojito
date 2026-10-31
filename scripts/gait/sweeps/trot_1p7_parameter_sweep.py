@@ -4,7 +4,7 @@ Period stays 1.7 s (offsets diagonal). Varied together: duty, commanded speed, s
 height. Mass stays at the placeholder 1.72 kg (`trot_period_robustness.py` covers mass). One run per cell, 3 cycles,
 no randomisation.
 
-    python scripts/gait/sweeps/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
 """
 import dataclasses
 import itertools

@@ -4,7 +4,7 @@ The pages in site/ never hold a measured number of their own: they read `data/re
 from the JSON files under `results/`, so a regenerated result shows up on the site after a rebuild. It also copies the plots and
 animations from results/, the interactive leg demo from docs/, and the Markdown reports.
 
-    python scripts/website/build_site.py                     # writes site/data/ and site/media/
+    uv run --extra sim python scripts/website/build_site.py                     # writes site/data/ and site/media/
     python -m http.server -d site 8000               # then open http://127.0.0.1:8000
 
 Generated files (site/data, site/media) are not committed; the `site` workflow runs this before publishing.

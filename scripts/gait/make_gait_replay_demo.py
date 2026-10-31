@@ -9,7 +9,7 @@ servo figures and friction. The turning run is drawn from the side, so only its 
     results/gait/trot_replay.gif    trot at 0, 0.05, 0.15, 0.30 m/s and turning at 0.6 rad/s (1.7 s period)
     results/gait/crawl_replay.gif   crawl at 0, 0.02, 0.04, 0.08 m/s
 
-    python scripts/gait/make_gait_replay_demo.py
+    uv run --extra sim python scripts/gait/make_gait_replay_demo.py
 """
 import os
 

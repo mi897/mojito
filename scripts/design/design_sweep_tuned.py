@@ -6,7 +6,7 @@ scripts/design/design_sweep_draws.py (masses times a uniform 0.95 to 1.05, laten
 settings are in design_sweep_draws.json for comparison. A tuned setting is only as good as its search: it was picked on one speed and
 the nominal run, so the other two speeds and the draws are a check on it, not part of the fit.
 
-    python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, about 20 min on 4 cores
+    uv run --extra sim python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, about 20 min on 4 cores
 """
 import json
 import multiprocessing

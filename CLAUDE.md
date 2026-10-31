@@ -84,6 +84,7 @@ torque, stand, gait, sweeps, design, site_sweep, build_site); it takes several h
 slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tuned sweep).
 
 ```bash
+# Inside the activated .venv (source .venv/bin/activate); otherwise prefix each line with: uv run --extra sim
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
 just results                               # every committed result in dependency order (SLOW, hours); just results-fast skips the slow steps
 python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz

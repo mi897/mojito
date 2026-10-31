@@ -6,7 +6,7 @@ A walk is "valid" when every commanded foot target stayed inside the joint limit
 The plot shows, for the leg designs at the placeholder body, the measured speed over the commanded speed at 0.10 m/s;
 a cross marks a walk that is not valid. A valid walk can still be slow: read the number.
 
-    python scripts/design/plot_design_sweep.py
+    uv run --extra sim python scripts/design/plot_design_sweep.py
 """
 import json
 import os

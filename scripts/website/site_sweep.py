@@ -8,7 +8,7 @@ Grid: gait and forward speed, servo gain (kd = kp/10 except kp 10 where kd = 0.2
 total mass (the placeholder masses scaled together), swing height. Everything else is as in
 `scripts/gait/gait_replay.py`: placeholder 50/150/150 mm legs, 300 x 150 mm body, 5 V, unverified servo figures.
 
-    python scripts/website/site_sweep.py            # writes results/gait/physics_sweep.json (about 2 minutes)
+    uv run --extra sim python scripts/website/site_sweep.py            # writes results/gait/physics_sweep.json (about 2 minutes)
 
 Frame layout (25 Hz, from 0.5 s into the run): integers, to keep the file small
     [ox mm, oy mm, oz mm, roll 0.01 deg, pitch 0.01 deg, yaw 0.01 deg,

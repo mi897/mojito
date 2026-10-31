@@ -6,7 +6,7 @@ limits, body upright, measured speed positive) and the mean and sample standard 
 valid or not. The spread is from the random mass and latency draws only. The plot shows the mean speed ratio at 0.10 m/s with the
 valid count (k/10) under it.
 
-    python scripts/design/plot_design_sweep_draws.py
+    uv run --extra sim python scripts/design/plot_design_sweep_draws.py
 """
 import json
 import os

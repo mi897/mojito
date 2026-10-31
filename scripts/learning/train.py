@@ -1,13 +1,13 @@
 """Train the leg IK network.
 
-    python scripts/learning/train.py                       # defaults
-    python scripts/learning/train.py --tolerance 0.2       # wider range of leg lengths
-    python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05
-    python scripts/learning/train.py --backend torch       # PyTorch instead of NumPy
+    uv run --extra sim python scripts/learning/train.py                       # defaults
+    uv run --extra sim python scripts/learning/train.py --tolerance 0.2       # wider range of leg lengths
+    uv run --extra sim python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05
+    uv run --extra sim python scripts/learning/train.py --backend torch       # PyTorch instead of NumPy
 
     # Build the network from a URDF instead of the built-in leg:
-    python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
-    python scripts/learning/train.py --urdf robots/planar/planar.urdf --out weights/ik_planar.npz
+    uv run --extra sim python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+    uv run --extra sim python scripts/learning/train.py --urdf robots/planar/planar.urdf --out weights/ik_planar.npz
 """
 import argparse
 import os
@@ -18,7 +18,7 @@ import numpy as np
 import mojito
 from mojito.geometry import spec as specmod
 from mojito.learning.backend import add_backend_argument
-from mojito.results import relative_to_root, repo_path, results_path, write_result
+from mojito.results import portable_path, repo_path, results_path, write_result
 from mojito.robot import leg
 
 
@@ -75,7 +75,7 @@ def main():
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     net.save(args.out)
-    recorded = dict(vars(args), out=relative_to_root(args.out), log=relative_to_root(args.log), backend=net.backend)
+    recorded = dict({k: portable_path(v) for k, v in vars(args).items()}, backend=net.backend)  # paths without this machine's folders
     write_result(args.log, dict(args=recorded, log=log))
     print(f"saved {args.out}")
 

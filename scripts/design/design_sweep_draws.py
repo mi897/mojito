@@ -5,7 +5,7 @@ scripts/design/design_sweep.py, but each cell is run for 10 draws. Draw k seeds 
 mass by a uniform 0.95 to 1.05 and draws the servo latency uniformly from 18 to 22 ms; the same 10 draws in every cell
 (as in scripts/gait/sweeps/trot_1p7_combined.py). The spread is from those draws only, not model error.
 
-    python scripts/design/design_sweep_draws.py        # needs mujoco; 330 design-mass-draw cells of 7 runs, about 25 min on 4 cores
+    uv run --extra sim python scripts/design/design_sweep_draws.py        # needs mujoco; 330 design-mass-draw cells of 7 runs, about 25 min on 4 cores
 """
 import multiprocessing
 

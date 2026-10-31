@@ -15,7 +15,7 @@ every value, so values are compared on the same perturbations): every body mass 
 and the servo latency drawn uniformly from 18 to 22 ms (the baseline is 20 ms). The spread in the results is the spread from these
 perturbations only; it is not a measurement of anything on a real robot.
 
-    python scripts/gait/sweeps/trot_1p7_one_at_a_time.py        # needs mujoco; 420 runs, parallel over the CPU cores
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_one_at_a_time.py        # needs mujoco; 420 runs, parallel over the CPU cores
 """
 import dataclasses
 import math

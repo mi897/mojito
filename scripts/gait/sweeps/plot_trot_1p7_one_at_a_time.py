@@ -7,7 +7,7 @@ runs that stayed upright (tilt under 30 degrees; a fall is near 180 degrees and 
 every commanded foot target inside the joint limits; "in limits" counts the runs for which that last condition held. The spread comes only from the random
 mass and latency draws described in trot_1p7_one_at_a_time.py.
 
-    python scripts/gait/sweeps/plot_trot_1p7_one_at_a_time.py
+    uv run --extra sim python scripts/gait/sweeps/plot_trot_1p7_one_at_a_time.py
 """
 import json
 import os

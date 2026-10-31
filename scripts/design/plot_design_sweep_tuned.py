@@ -6,7 +6,7 @@ upright, measured speed positive) and the mean and sample standard deviation (n 
 untuned figures are the same cells from design_sweep_draws_summary.json. The plot shows the tuned mean speed ratio at 0.10 m/s
 with the valid count (k/10) under it.
 
-    python scripts/design/plot_design_sweep_tuned.py
+    uv run --extra sim python scripts/design/plot_design_sweep_tuned.py
 """
 import json
 import os

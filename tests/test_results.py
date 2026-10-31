@@ -46,17 +46,22 @@ class TestWriteResult(unittest.TestCase):
         numbers, record = results.without_provenance(written)
         self.assertEqual(numbers, payload)
         self.assertEqual(list(written)[-1], "provenance")
-        for key in ("git_commit", "git_dirty", "script", "argv", "python", "numpy", "mujoco", "utc"):
+        for key in ("git_commit", "git_dirty", "script", "argv", "python", "numpy", "utc"):
             self.assertIn(key, record)
+        for package in ("mujoco", "torch"):  # recorded only when the run imported it
+            self.assertEqual(package in record, package in sys.modules, package)
 
     def test_provenance_against_independent_sources(self):
         _, text = self.write({"x": 1})
         record = json.loads(text)["provenance"]
         # git, asked directly here rather than through the helper
         self.assertEqual(record["git_commit"], git("rev-parse", "HEAD"))
-        status = git("status", "--porcelain", "--untracked-files=no")
-        if status is not None:
-            self.assertEqual(record["git_dirty"], bool(status))
+        # dirty: a tracked change outside results/, or an untracked file under mojito/ or scripts/
+        changed = git("status", "--porcelain", "--untracked-files=no")
+        if changed is not None:
+            outside_results = [line for line in changed.splitlines() if not line[3:].startswith("results/")]
+            untracked = git("ls-files", "--others", "--exclude-standard", "--", "mojito", "scripts")
+            self.assertEqual(record["git_dirty"], bool(outside_results or untracked))
         self.assertEqual(record["python"], platform.python_version())
         import numpy
         self.assertEqual(record["numpy"], numpy.__version__)
@@ -77,6 +82,28 @@ class TestWriteResult(unittest.TestCase):
         self.assertEqual(one_line.count("\n"), 0)
         _, indented = self.write({"x": [1, 2]})
         self.assertIn('\n "x": [\n  1,', indented)
+
+    def test_note_goes_into_the_block(self):
+        _, text = self.write({"x": 1}, note={"entries_written": ["a"]})
+        record = json.loads(text)["provenance"]
+        self.assertEqual(record["entries_written"], ["a"])
+        self.assertIn("git_commit", record)
+
+    def test_argv_paths_are_portable(self):
+        inside = os.path.join(HERE_ROOT, "weights", "ik_leg.npz")
+        home_file = os.path.join(os.path.expanduser("~"), "elsewhere", "out.json")
+        saved = sys.argv
+        sys.argv = ["script.py", "--weights", inside, f"--out={home_file}", "--steps", "10", "cpu"]
+        try:
+            argv = results.provenance()["argv"]
+        finally:
+            sys.argv = saved
+        self.assertEqual(argv[1], os.path.join("weights", "ik_leg.npz"))
+        if os.path.expanduser("~") not in ("", "/") and not HERE_ROOT.startswith(os.path.expanduser("~") + os.sep + "elsewhere"):
+            self.assertEqual(argv[2], "--out=" + os.path.join("~", "elsewhere", "out.json"))
+        self.assertEqual(argv[0], "--weights")
+        self.assertEqual(argv[3:], ["--steps", "10", "cpu"])
+        self.assertFalse(any(os.path.expanduser("~") + os.sep in a for a in argv if os.path.expanduser("~") not in ("", "/")))
 
     def test_only_objects(self):
         with self.assertRaises(TypeError):
@@ -104,6 +131,16 @@ class TestPaths(unittest.TestCase):
     def test_relative_to_root(self):
         self.assertEqual(results.relative_to_root(results.repo_path("weights", "ik_leg.npz")), os.path.join("weights", "ik_leg.npz"))
         self.assertEqual(results.relative_to_root("/somewhere/else.json"), "/somewhere/else.json")
+
+    def test_a_copied_install_is_refused(self):
+        saved = results.ROOT
+        with tempfile.TemporaryDirectory() as not_a_repo:
+            results.ROOT = not_a_repo
+            try:
+                with self.assertRaises(results.NotInRepository):
+                    results.results_path("gait")
+            finally:
+                results.ROOT = saved
 
     def test_defaults_of(self):
         def run(a, b=2, *, c=(1, 2), **rest):

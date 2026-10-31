@@ -62,7 +62,7 @@ def model_class(name: str | None = None):
     except ImportError as e:  # torch itself is missing
         raise ImportError(
             "The torch backend needs PyTorch, which is not installed. "
-            "Install it (pip install torch) or use the numpy backend."
+            "Install it (./scripts/setup.sh --torch, or uv sync --extra torch-cpu) or use the numpy backend."
         ) from e
     return TorchIKNet
 

@@ -837,7 +837,7 @@ Each is one branch-sized step. Tick them off here as they land.
    Gait timings and servo gains are **not re-tuned** (those tuned on the 150 mm legs: trot kp 50, kd 0.9; crawl the originals). Only the standing height changes: each leg stands with the same knee bend as the
    150 / 150 mm leg does at the tuned height (`design_sweep.scaled_height`). My first version scaled the height with upper + lower length; it bent the knee to its limit on unequal legs, so the failures were mine, and I replaced it.
    A walk is "valid" when every commanded foot target stayed inside the joint limits, the body stayed upright and the measured speed was positive; valid does not mean fast, so the speed ratio (measured over commanded) is reported too.
-   *What was measured* (`python scripts/design/plot_design_sweep.py` prints the full table):
+   *What was measured* (`uv run --extra sim python scripts/design/plot_design_sweep.py` prints the full table):
    - Standing: 11 of 11 designs stand at 1.03 and 1.72 kg, 10 of 11 at 3.01 kg. The one that does not is 200 / 200 mm (peak torque 1.00 of stall, body low; its static bound is 5.4 kg, so it fails below the bound, as the
      150 / 150 mm leg did in the stand test). Peak torque over stall in the whole stand run at 1.72 kg runs from 0.19 (100 / 100 mm) to 0.52 (200 / 200 mm); the longer the legs, the closer to stall. The static bound for four feet runs from 10.8 kg (100 / 100) to 5.4 kg (200 / 200).
    - Trot (valid walks, of 33 = 11 designs × 3 speeds): 26 at 1.03 kg, 26 at 1.72 kg, 22 at 3.01 kg. At 1.03 and 1.72 kg every design with the lower link no longer than the upper walks at all three speeds. At 3.01 kg the 150 / 150 and 200 / 150 mm legs reach only 0.18 to 0.44 of the commanded speed, the 150 / 200 mm leg goes backward or leaves the limits, and the 200 / 200 mm leg cannot stand; peak torque is at stall in all of them. The 100 / 100, 150 / 100 and 200 / 100 mm legs still make 0.80 to 0.95 (peak torque 0.90 to 1.00).
@@ -886,7 +886,7 @@ Each is one branch-sized step. Tick them off here as they land.
 
 ## Environment
 
-MuJoCo (`pip install mujoco`) installs in the cloud session; version 3.15.0
+MuJoCo (the `sim` extra: `uv sync --extra sim`) installs in the cloud session; version 3.15.0
 was installed when this plan was written. It is optional for the rest of the
 repo, so tests that need it must skip when it is absent, as the PyTorch tests
 do.

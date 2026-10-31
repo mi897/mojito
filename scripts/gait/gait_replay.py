@@ -4,7 +4,7 @@ The trot uses the tuned settings (`gait_replay.TROT_STANCE_HEIGHT`, `TROT_SERVO`
 height (0.2125 m) and servo (kp 10, kd 0.2). Placeholder dimensions, masses (1.72 kg), servo figures (5 V, unverified), friction. Writes
 results/gait/gait_replay.json. Needs mujoco.
 
-    python scripts/gait/gait_replay.py
+    uv run --extra sim python scripts/gait/gait_replay.py
 """
 from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import gaits

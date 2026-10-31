@@ -5,7 +5,7 @@ For each of the 11 designs, three masses and both gaits, runs every GaitSettings
 and latency (no draw), 10 s per run. The best by design_sweep.tuning_score (valid first, then speed ratio closest to 1, then lowest
 peak torque) is kept per design, mass and gait, with all candidates. Period, duty, offsets and stride are not tuned.
 
-    python scripts/design/design_tune.py        # needs mujoco; 11 x 3 x 2 x 45 = 2970 runs, about 35 min on 4 cores
+    uv run --extra sim python scripts/design/design_tune.py        # needs mujoco; 11 x 3 x 2 x 45 = 2970 runs, about 35 min on 4 cores
 """
 import dataclasses
 import multiprocessing

@@ -8,7 +8,7 @@ peak torque over the runs that stayed upright (tilt under 30 degrees), and the c
 other config's ratio for the same draw (same mass and latency draw), then take the mean and sample standard deviation over the 10 draws.
 The spread is from the random mass and latency draws only.
 
-    python scripts/gait/sweeps/plot_trot_1p7_combined.py
+    uv run --extra sim python scripts/gait/sweeps/plot_trot_1p7_combined.py
 """
 import json
 import os

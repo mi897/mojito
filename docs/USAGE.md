@@ -75,7 +75,7 @@ only when asked for.
 
 | Scope | How |
 |---|---|
-| One command | `python scripts/learning/train.py --backend torch` |
+| One command | `uv run --extra sim python scripts/learning/train.py --backend torch` |
 | Whole shell session | `export MOJITO_BACKEND=torch` |
 | The rest of a Python process | `mojito.set_backend("torch")` |
 | One call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
@@ -99,7 +99,7 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 ## Training for a different leg
 
 ```bash
-python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
+uv run --extra sim python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
@@ -123,9 +123,9 @@ robots/quadruped/quadruped.urdf + .json   <- the definition (any tool can read t
 ```
 
 ```bash
-python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
-python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
-python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
+uv run python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
+uv run --extra sim python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+uv run --extra sim python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
 ```
 
 ```python

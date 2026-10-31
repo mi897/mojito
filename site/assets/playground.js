@@ -472,7 +472,7 @@
       if ($('phys-controls').dataset.ready) { physChanged(); return; }
       $('phys-controls').innerHTML = '<p class="muted">Loading the 144 recorded runs…</p>';
       window.loadSweep().then(() => { $('phys-controls').dataset.ready = '1'; initPhys(); })
-        .catch(() => { $('phys-controls').innerHTML = '<p class="w">The recorded runs (data/sweep.js) are missing. Run <code>python scripts/website/build_site.py</code>.</p>'; });
+        .catch(() => { $('phys-controls').innerHTML = '<p class="w">The recorded runs (data/sweep.js) are missing. Run <code>uv run --extra sim python scripts/website/build_site.py</code>.</p>'; });
     }
   }
   document.addEventListener('DOMContentLoaded', () => {

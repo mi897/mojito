@@ -12,7 +12,7 @@ Period 1.7 s, duty 0.5, diagonal offsets. Speeds 0.05, 0.10, 0.15, 0.20 m/s. Mas
 Each run is a random draw (seed = iteration) of every body mass (times a uniform 0.95 to 1.05) and servo latency (uniform 18 to 22 ms),
 the same 10 draws in every cell, so cells are compared on the same draws. The spread is from those draws only.
 
-    python scripts/gait/sweeps/trot_1p7_combined.py        # needs mujoco; 1080 runs, parallel over the CPU cores, about an hour
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_combined.py        # needs mujoco; 1080 runs, parallel over the CPU cores, about an hour
 """
 import dataclasses
 import multiprocessing

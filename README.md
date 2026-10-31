@@ -21,12 +21,12 @@ where the robot's dimensions, posture, gait, mass and servo settings can be chan
 MuJoCo runs). It reads the numbers from the JSON files under `results/`; it holds none of its own.
 
 ```bash
-python scripts/website/build_site.py                 # site/data and site/media from results/ (not committed)
-python -m http.server -d site 8000           # open http://127.0.0.1:8000
-python scripts/website/site_sweep.py                 # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
+uv run --extra sim python scripts/website/build_site.py   # site/data and site/media from results/ (not committed)
+python -m http.server -d site 8000                        # open http://127.0.0.1:8000
+uv run --extra sim python scripts/website/site_sweep.py   # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
 ```
 
-**Live physics, local only.** `python scripts/website/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
+**Live physics, local only.** `uv run --extra sim python scripts/website/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
 
 The `site` workflow publishes it with GitHub Pages when `main` changes (one-time: Settings, Pages, Source: GitHub Actions). The kinematic lab uses
 the closed-form IK in JavaScript (`site/assets/mojito.js`), checked against the Python by `tests/website/test_site_js.py` (needs Node).

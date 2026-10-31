@@ -6,7 +6,7 @@ leg mass, no motion: a first bound for comparing designs, not a prediction.
 
     results/body/torque_envelope.json
 
-    python scripts/body/torque_envelope.py [--height 0.2125] [--body-length 0.30] [--body-width 0.15]
+    uv run --extra sim python scripts/body/torque_envelope.py [--height 0.2125] [--body-length 0.30] [--body-width 0.15]
 """
 import argparse
 import json

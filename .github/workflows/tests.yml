@@ -18,7 +18,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        run: uv sync --extra sim ${{ matrix.backend == 'torch' && '--extra torch-cpu' || '' }}
+        run: uv sync --locked --extra sim ${{ matrix.backend == 'torch' && '--extra torch-cpu' || '' }}
       - name: Unit tests
         run: uv run python -m unittest discover tests -v
       - name: Short training run and scripts on this backend
@@ -45,7 +45,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        run: uv sync --extra sim
+        run: uv sync --locked --extra sim
       - name: MuJoCo WebAssembly package
         run: npm install --no-save --no-package-lock @mujoco/mujoco@3.16.0
       - name: Build site data

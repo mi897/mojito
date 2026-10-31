@@ -7,7 +7,7 @@
 Same model as scripts/gait/gait_replay.py (placeholder dimensions, masses, servo figures, friction).
 For other timings use scripts/gait/try_gait.py.
 
-    python scripts/gait/make_gait_iso_demos.py
+    uv run --extra sim python scripts/gait/make_gait_iso_demos.py
 """
 import os
 

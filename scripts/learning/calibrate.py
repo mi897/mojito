@@ -5,12 +5,12 @@ offsets differ from the drawing. We command some poses, "measure" where the
 foot ended up (with noise), fit the six unknowns through forward kinematics,
 and hand the fitted lengths to the same network. No retraining.
 
-    python scripts/learning/calibrate.py [--measurements 30] [--noise-mm 1.0]
+    uv run --extra sim python scripts/learning/calibrate.py [--measurements 30] [--noise-mm 1.0]
 
 With --urdf the network is checked against that URDF's limb, and the fitted
 lengths are written back into a copy of the URDF (--out-urdf):
 
-    python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FL
+    uv run --extra sim python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FL
 """
 import argparse
 import json
@@ -22,7 +22,7 @@ from scipy.optimize import least_squares
 import mojito
 from mojito.geometry import spec as specmod, urdf as urdf_mod
 from mojito.learning.backend import add_backend_argument
-from mojito.results import relative_to_root, repo_path, results_path, write_result
+from mojito.results import portable_path, repo_path, results_path, write_result
 
 
 def main():
@@ -87,7 +87,7 @@ def main():
         calibrated = robot.write_back({limb.name: est_lengths})
         os.makedirs(os.path.dirname(args.out_urdf) or ".", exist_ok=True)
         urdf_mod.write(calibrated, args.out_urdf)
-        out.update(limb=limb.name, calibrated_urdf=relative_to_root(args.out_urdf), outside_trained_range=warn)
+        out.update(limb=limb.name, calibrated_urdf=portable_path(args.out_urdf), outside_trained_range=warn)
     write_result(args.out, out)
     print(json.dumps(out, indent=1))
 

@@ -5,7 +5,7 @@ One column per parameter. Top row: measured speed / commanded speed for every ru
 (line). Bottom row: largest body tilt of those runs and their median. Runs that fell are not drawn; the number that fell
 at each value is printed under the column title. A speed ratio of 1 is the commanded speed.
 
-    python scripts/gait/sweeps/plot_trot_1p7_parameter_sweep.py
+    uv run --extra sim python scripts/gait/sweeps/plot_trot_1p7_parameter_sweep.py
 """
 import json
 import os
