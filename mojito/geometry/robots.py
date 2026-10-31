@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 
-from ..robot import leg
+from . import placeholders
 from .urdf import Joint, URDFModel, write
 
 
@@ -37,16 +37,16 @@ def _flip(lim, right):
 
 def leg_urdf(lengths=None, limits=None, name: str = "leg") -> URDFModel:
     """A single left leg hanging from a body link: the Stage 0 placeholder."""
-    lengths = leg.NOMINAL_LENGTHS if lengths is None else lengths
-    limits = leg.JOINT_LIMITS if limits is None else limits
+    lengths = placeholders.NOMINAL_LENGTHS if lengths is None else lengths
+    limits = placeholders.JOINT_LIMITS if limits is None else limits
     links, joints = _leg_joints("L", "body", (0.0, 0.0, 0.0), False, lengths, limits)
     return URDFModel(name, ["body"] + links, {j.name: j for j in joints})
 
 
 def legged_urdf(name: str, mounts: dict, lengths=None, limits=None, body_size=None) -> URDFModel:
     """A body with one leg per entry in `mounts` (name -> (x, y, z)); y < 0 is a right leg."""
-    lengths = leg.NOMINAL_LENGTHS if lengths is None else lengths
-    limits = leg.JOINT_LIMITS if limits is None else limits
+    lengths = placeholders.NOMINAL_LENGTHS if lengths is None else lengths
+    limits = placeholders.JOINT_LIMITS if limits is None else limits
     links, joints = ["body"], {}
     for leg_name, xyz in mounts.items():
         l, js = _leg_joints(leg_name, "body", xyz, xyz[1] < 0, lengths, limits)
@@ -55,7 +55,7 @@ def legged_urdf(name: str, mounts: dict, lengths=None, limits=None, body_size=No
     return URDFModel(name, links, joints)
 
 
-def quadruped_urdf(body_length=0.24, body_width=0.10, lengths=None, limits=None) -> URDFModel:
+def quadruped_urdf(body_length=placeholders.BODY_LENGTH, body_width=placeholders.BODY_WIDTH, lengths=None, limits=None) -> URDFModel:
     """The Stage 1 placeholder quadruped. Leg order FL, FR, RL, RR matches mojito.robot.body."""
     x, y = body_length / 2, body_width / 2
     return legged_urdf("mojito_quadruped", {"FL": (x, y, 0.0), "FR": (x, -y, 0.0),
@@ -90,15 +90,15 @@ QUADRUPED_MANIFEST = {
         {"name": "RL", "tip": "RL_foot", "group": "leg"},
         {"name": "RR", "tip": "RR_foot", "group": "leg", "mirror_of": "RL"},
     ],
-    # Positions are divided by this to make them dimensionless. 0.24 m = upper + lower leg.
-    "groups": {"leg": {"reach": 0.24}},
+    # Positions are divided by this to make them dimensionless: upper + lower leg length.
+    "groups": {"leg": {"reach": placeholders.LEG_REACH}},
 }
 
 HEXAPOD_MANIFEST = {
     "length_tolerance": 0.10,
     "limbs": [{"name": n, "tip": f"{n}_foot", "group": "leg", **({"mirror_of": n[0] + "L"} if n[1] == "R" else {})}
               for n in ("FL", "FR", "ML", "MR", "RL", "RR")],
-    "groups": {"leg": {"reach": 0.24}},
+    "groups": {"leg": {"reach": placeholders.LEG_REACH}},
 }
 
 

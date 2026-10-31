@@ -34,10 +34,12 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
 ```
 mojito/                the library, in four subpackages (each holds at most about a dozen files)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
-                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/)
+                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
+                       placeholders.py (placeholder leg and body dimensions), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
-  learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
+  learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
+                       torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
@@ -118,8 +120,11 @@ else NumPy.
   limits and the number of free lengths come from `robots/*/*.urdf` (plus the
   JSON manifest) via `mojito/geometry/spec.py`, not from Python constants. Weight files
   embed the limb spec; loading them against a different URDF raises
-  `SpecMismatch`. The example URDFs in `robots/` come from the generators
-  in `mojito/geometry/robots.py`, so change the generator and regenerate rather than
+  `SpecMismatch`. The example URDFs and manifests in `robots/` come from the generators
+  in `mojito/geometry/robots.py`, which take their placeholder dimensions from
+  `mojito/geometry/placeholders.py` (the one place they are written; `leg.NOMINAL_LENGTHS`,
+  `leg.JOINT_LIMITS`, `body.BODY_LENGTH` and `body.BODY_WIDTH` re-export them for the
+  built-in leg model). Change the placeholder or generator and regenerate rather than
   hand-editing both. Joint-limit changes need retraining;
   link-length changes do not.
 - **Link lengths are arguments, never module constants.** For the built-in
@@ -138,7 +143,7 @@ else NumPy.
   they do not depend on trained weights.
 - **Backends:** both must keep the same public methods (`predict`,
   `predict_leg`, `train_step`, `loss_and_grads`, `state`, `save`, `load`,
-  `to_json`) and the same `.npz` layout, with `W[i]` shaped (inputs, outputs).
+  `to_json`; the shared part is `IKNetBase` in `mojito/learning/base.py`) and the same `.npz` layout, with `W[i]` shaped (inputs, outputs).
   `predict` takes and returns NumPy arrays on both. A change to one backend
   needs the matching change to the other and a parity test in
   `tests/learning/test_backends.py`.

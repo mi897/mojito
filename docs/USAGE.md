@@ -70,7 +70,8 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 - `predict` takes and returns NumPy arrays on both, so the body, gait and demo
   code does not care which is active.
 - Inside a larger PyTorch model, use `net.angles(target_position, lengths)` and
-  `mojito.torch_model.forward_kinematics(joint_angles, lengths)`: tensors in, tensors
+  `net.forward_kinematics(joint_angles, lengths)` (which is `net.config.forward`;
+  `leg.forward` and `LimbSpec.forward` both accept tensors): tensors in, tensors
   out, differentiable.
 - The tests check that the two backends agree on predictions, gradients and
   the path training takes. They run on both backends for every push.
@@ -82,7 +83,8 @@ python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --to
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
-Joint limits live in `JOINT_LIMITS` in `mojito/robot/leg.py`. After retraining,
+Joint limits live in `JOINT_LIMITS` in `mojito/geometry/placeholders.py` (`leg.JOINT_LIMITS` re-exports
+it; edit the placeholder, not leg.py, and regenerate `robots/` so the URDFs agree). After retraining,
 re-run the other scripts so the results match the new weights.
 
 ## Robots from URDF
