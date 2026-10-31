@@ -99,7 +99,7 @@ Renaming these breaks saved files or the interface between modules:
 ## Where this has and has not been applied
 
 Applied to the numerical core: `leg.py`, `kinematics.py`, `gaits.py`,
-`statics.py`, `model.py`, `torch_model.py`, `actuators.py`, `sensors.py`,
+`statics.py`, `base.py`, `model.py`, `torch_model.py`, `actuators.py`, `sensors.py`,
 `body.py`, and the public arguments of `spec.py`'s `LimbSpec` and `Mirror`.
 
 Not yet swept, so shorthand remains there: the loaders and checks in

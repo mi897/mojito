@@ -70,7 +70,8 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 - `predict` takes and returns NumPy arrays on both, so the body, gait and demo
   code does not care which is active.
 - Inside a larger PyTorch model, use `net.angles(target_position, lengths)` and
-  `mojito.torch_model.forward_kinematics(joint_angles, lengths)`: tensors in, tensors
+  `net.forward_kinematics(joint_angles, lengths)` (which is `net.config.forward`;
+  `leg.forward` and `LimbSpec.forward` both accept tensors): tensors in, tensors
   out, differentiable.
 - The tests check that the two backends agree on predictions, gradients and
   the path training takes. They run on both backends for every push.
