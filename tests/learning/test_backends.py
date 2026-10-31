@@ -61,6 +61,17 @@ class TestSwitch(unittest.TestCase):
             again = mojito.load_model(os.path.join(d, "n.npz"), backend="numpy")
         np.testing.assert_allclose(again.predict(p, lengths), net.predict(p, lengths))
 
+    def test_train_script_runs_on_each_backend(self):
+        # The CI script step, shortened: catches breakage in how train.py builds its config (unit tests build their own).
+        for name in ("numpy", "torch") if HAS_TORCH else ("numpy",):
+            with self.subTest(backend=name), tempfile.TemporaryDirectory() as d:
+                subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "learning", "train.py"), "--steps", "2",
+                                "--batch", "32", "--hidden", "8", "--backend", name,
+                                "--out", os.path.join(d, "w.npz"), "--log", os.path.join(d, "log.json")],
+                               cwd=ROOT, capture_output=True, text=True, check=True)
+                net = mojito.load_model(os.path.join(d, "w.npz"), backend="numpy")
+                np.testing.assert_array_equal(net.config.limits, leg.JOINT_LIMITS)
+
     @unittest.skipIf(HAS_TORCH, "PyTorch is installed")
     def test_missing_torch_gives_a_clear_message(self):
         with self.assertRaisesRegex(ImportError, "needs PyTorch"):

@@ -46,6 +46,14 @@ class TestLeg(unittest.TestCase):
         np.testing.assert_array_equal(other.nominal, leg.NOMINAL_LENGTHS)
         np.testing.assert_array_equal(other.limits, leg.JOINT_LIMITS)
 
+    def test_explicit_none_means_the_placeholder(self):
+        # scripts/learning/train.py builds LegConfig(nominal, None, tolerance); None must still mean the default.
+        config = leg.LegConfig(np.array([0.05, 0.13, 0.11]), None, 0.2)
+        np.testing.assert_array_equal(config.limits, leg.JOINT_LIMITS)
+        np.testing.assert_array_equal(leg.LegConfig(None, None).nominal, leg.NOMINAL_LENGTHS)
+        net = IKNet(config, hidden=(8,))
+        np.testing.assert_allclose(net.joint_mid, leg.JOINT_LIMITS.mean(axis=1))
+
     def test_placeholders_feed_the_generated_manifests(self):
         from mojito.geometry import placeholders, robots
         from mojito.robot import body

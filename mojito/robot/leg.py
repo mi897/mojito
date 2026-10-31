@@ -37,6 +37,14 @@ class LegConfig:
     limits: np.ndarray = field(default_factory=JOINT_LIMITS.copy)  # (3, 2) joint limits [rad]
     length_tolerance: float = 0.10  # each length varies by +/- this fraction
 
+    def __post_init__(self):
+        # default_factory covers omitted arguments; an explicit None (as scripts/learning/train.py passes for the
+        # limits) also means "the placeholder", as it always has.
+        if self.nominal is None:
+            object.__setattr__(self, "nominal", NOMINAL_LENGTHS.copy())
+        if self.limits is None:
+            object.__setattr__(self, "limits", JOINT_LIMITS.copy())
+
     @property
     def reach(self) -> float:
         """Length scale used to make positions dimensionless."""
