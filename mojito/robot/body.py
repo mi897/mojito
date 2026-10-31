@@ -12,27 +12,26 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..geometry.kinematics import rpy_rotation
+# Placeholder body, shoulder spacing in metres (defined in mojito/geometry/placeholders.py, which the URDF generator also reads):
+# BODY_LENGTH front shoulders to rear shoulders, BODY_WIDTH left shoulders to right shoulders.
+from ..geometry.placeholders import BODY_LENGTH, BODY_WIDTH
 from . import leg
 
 LEG_NAMES = ("FL", "FR", "RL", "RR")
 IS_RIGHT = np.array([False, True, False, True])
-_MIRROR = np.where(IS_RIGHT[:, None], [1.0, -1.0, 1.0], 1.0)  # (4, 3)
+_MIRROR = np.where(IS_RIGHT[:, None], [1.0, -1.0, 1.0], 1.0)  # (4, 3) target flip: y of right legs
+_MIRROR_ANGLES = np.where(IS_RIGHT[:, None], [-1.0, 1.0, 1.0], 1.0)  # (4, 3) angle flip: abduction of right legs
 
-# Placeholder body: shoulder spacing in metres.
-BODY_LENGTH = 0.24  # front shoulders to rear shoulders
-BODY_WIDTH = 0.10  # left shoulders to right shoulders
 STAND_HEIGHT = 0.17  # shoulder height above the ground when standing
 
 
 def rotation(roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:
-    """Body-to-world rotation matrix, R = Rz(yaw) Ry(pitch) Rx(roll). Shape (..., 3, 3)."""
-    roll, pitch, yaw = np.broadcast_arrays(*(np.asarray(a, dtype=float) for a in (roll, pitch, yaw)))
-    cr, sr, cp, sp, cy, sy = np.cos(roll), np.sin(roll), np.cos(pitch), np.sin(pitch), np.cos(yaw), np.sin(yaw)
-    R = np.empty(roll.shape + (3, 3))
-    R[..., 0, 0], R[..., 0, 1], R[..., 0, 2] = cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr
-    R[..., 1, 0], R[..., 1, 1], R[..., 1, 2] = sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr
-    R[..., 2, 0], R[..., 2, 1], R[..., 2, 2] = -sp, cp * sr, cp * cr
-    return R
+    """Body-to-world rotation matrix, R = Rz(yaw) Ry(pitch) Rx(roll). Shape (..., 3, 3).
+
+    The same convention as URDF rpy; one implementation, `geometry.kinematics.rpy_rotation`.
+    """
+    return rpy_rotation(roll, pitch, yaw)
 
 
 class AnalyticSolver:
@@ -77,11 +76,11 @@ class Robot:
     def solve(self, feet_body) -> np.ndarray:
         """Joint angles (..., 4, 3) that the solver gives for body-frame foot targets (..., 4, 3)."""
         joint_angles = self.solver.predict(self._to_canonical(feet_body), self.lengths)
-        return joint_angles * np.where(IS_RIGHT[:, None], [-1.0, 1.0, 1.0], 1.0)
+        return joint_angles * _MIRROR_ANGLES
 
     def joint_points(self, joint_angles) -> np.ndarray:
         """Shoulder, hip, knee, foot of every leg in the body frame. Shape (..., 4, 4, 3)."""
-        joint_angles = np.asarray(joint_angles, float) * np.where(IS_RIGHT[:, None], [-1.0, 1.0, 1.0], 1.0)
+        joint_angles = np.asarray(joint_angles, float) * _MIRROR_ANGLES
         pts = leg.joint_positions(joint_angles, self.lengths)  # canonical shoulder frame
         return pts * _MIRROR[:, None, :] + self.shoulders[:, None, :]
 
@@ -103,7 +102,7 @@ class Robot:
 
     def limit_margin(self, joint_angles) -> np.ndarray:
         """Smallest distance in radians from any joint to its limit. Shape (..., 4)."""
-        joint_angles = np.asarray(joint_angles, float) * np.where(IS_RIGHT[:, None], [-1.0, 1.0, 1.0], 1.0)
+        joint_angles = np.asarray(joint_angles, float) * _MIRROR_ANGLES
         return np.minimum(joint_angles - self.limits[:, 0], self.limits[:, 1] - joint_angles).min(axis=-1)
 
 

@@ -18,54 +18,38 @@ its mirror image: flip the sign of y going in and of the abduction angle coming 
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
-# Placeholder geometry in metres: (abduction offset, upper leg, lower leg).
-NOMINAL_LENGTHS = np.array([0.04, 0.12, 0.12])
-
-# Placeholder joint limits in radians, rows = joints, columns = (low, high).
-# The knee only bends one way and stops short of straight, which keeps the
-# inverse kinematics unique and away from the full-extension singularity.
-JOINT_LIMITS = np.array(
-    [
-        [-0.6, 0.6],  # abduction
-        [0.0, 1.5],  # hip pitch
-        [-2.3, -0.3],  # knee
-    ]
-)
+from ..geometry.kinematics import _as_array, _lib
+from ..geometry.limb_model import LimbModel, Mirror
+# Placeholder geometry, defined once in mojito/geometry/placeholders.py (which also feeds the URDF generators):
+# NOMINAL_LENGTHS = (abduction offset, upper leg, lower leg) in metres, JOINT_LIMITS = (3, 2) (low, high) in radians.
+from ..geometry.placeholders import JOINT_LIMITS, NOMINAL_LENGTHS
 
 
 @dataclass(frozen=True)
 class LegConfig:
-    """Nominal leg plus how far individual legs may deviate from it."""
+    """Nominal leg plus how far individual legs may deviate from it. Satisfies `limb_model.LimbModel`."""
 
-    nominal: np.ndarray = None  # (3,) abduction offset, upper, lower [m]
-    limits: np.ndarray = None  # (3, 2) joint limits [rad]
+    nominal: np.ndarray = field(default_factory=NOMINAL_LENGTHS.copy)  # (3,) abduction offset, upper, lower [m]
+    limits: np.ndarray = field(default_factory=JOINT_LIMITS.copy)  # (3, 2) joint limits [rad]
     length_tolerance: float = 0.10  # each length varies by +/- this fraction
-
-    def __post_init__(self):
-        if self.nominal is None:
-            object.__setattr__(self, "nominal", NOMINAL_LENGTHS.copy())
-        if self.limits is None:
-            object.__setattr__(self, "limits", JOINT_LIMITS.copy())
 
     @property
     def reach(self) -> float:
         """Length scale used to make positions dimensionless."""
         return float(self.nominal[1] + self.nominal[2])
 
-    # The same interface as spec.LimbSpec, so networks and samplers take either.
+    # The same interface as spec.LimbSpec (limb_model.LimbModel), so networks and samplers take either.
     dof = 3
     n_params = 3
-    backend_agnostic = False  # forward() is NumPy only; torch code supplies its own
+    backend_agnostic = True  # forward() and jacobian() accept NumPy arrays and torch tensors
 
     @property
-    def mirror(self):
+    def mirror(self) -> Mirror:
         """Right legs are left legs with y and abduction flipped."""
-        from ..geometry.spec import Mirror
-
         return Mirror()
 
     def forward(self, joint_angles, link_lengths):
@@ -75,7 +59,32 @@ class LegConfig:
         return jacobian(joint_angles, link_lengths)
 
 
-def forward(joint_angles: np.ndarray, lengths: np.ndarray) -> np.ndarray:
+def _foot_terms(joint_angles, lengths):
+    """The intermediates `forward` and `jacobian` share, in whichever array library the inputs use.
+
+    Returns (xp, terms) with terms a dict of sin_abduction, cos_abduction,
+    sin_lower, cos_lower, lower_length, x, extension, y, z, each (...,).
+    Only sin, cos and broadcast_to are called, so NumPy arrays and torch
+    tensors (differentiably) both work.
+    """
+    xp = _lib(joint_angles)
+    joint_angles = _as_array(joint_angles)
+    lengths = xp.broadcast_to(_as_array(lengths), joint_angles.shape)
+    abduction_offset, upper_length, lower_length = lengths[..., 0], lengths[..., 1], lengths[..., 2]
+    sin_abduction, cos_abduction = xp.sin(joint_angles[..., 0]), xp.cos(joint_angles[..., 0])
+    sin_hip, cos_hip = xp.sin(joint_angles[..., 1]), xp.cos(joint_angles[..., 1])
+    hip_plus_knee = joint_angles[..., 1] + joint_angles[..., 2]  # absolute angle of the lower leg
+    sin_lower, cos_lower = xp.sin(hip_plus_knee), xp.cos(hip_plus_knee)
+
+    x = -upper_length * sin_hip - lower_length * sin_lower
+    extension = upper_length * cos_hip + lower_length * cos_lower
+    y = abduction_offset * cos_abduction + extension * sin_abduction
+    z = abduction_offset * sin_abduction - extension * cos_abduction
+    return xp, dict(sin_abduction=sin_abduction, cos_abduction=cos_abduction, sin_lower=sin_lower,
+                    cos_lower=cos_lower, lower_length=lower_length, x=x, extension=extension, y=y, z=z)
+
+
+def forward(joint_angles, lengths):
     """Foot position for the given joint angles.  joint_angles: (..., 3), lengths: (..., 3).
 
     With abduction a, hip pitch b, knee k, abduction offset l_a, upper length
@@ -90,23 +99,15 @@ def forward(joint_angles: np.ndarray, lengths: np.ndarray) -> np.ndarray:
     The hip pitch and knee swing the leg in a plane that contains the x axis;
     the abduction then rotates that whole plane about x. The knee angle is
     relative to the upper leg, so the lower leg points along b + k.
+
+    NumPy arrays give a NumPy result; torch tensors give a differentiable torch
+    result (the PyTorch backend trains through this function).
     """
-    joint_angles = np.asarray(joint_angles, dtype=float)
-    lengths = np.broadcast_to(np.asarray(lengths, dtype=float), joint_angles.shape)
-    abduction_offset, upper_length, lower_length = lengths[..., 0], lengths[..., 1], lengths[..., 2]
-    sin_abduction, cos_abduction = np.sin(joint_angles[..., 0]), np.cos(joint_angles[..., 0])
-    sin_hip, cos_hip = np.sin(joint_angles[..., 1]), np.cos(joint_angles[..., 1])
-    hip_plus_knee = joint_angles[..., 1] + joint_angles[..., 2]  # absolute angle of the lower leg
-    sin_lower, cos_lower = np.sin(hip_plus_knee), np.cos(hip_plus_knee)
-
-    x = -upper_length * sin_hip - lower_length * sin_lower
-    extension = upper_length * cos_hip + lower_length * cos_lower
-    y = abduction_offset * cos_abduction + extension * sin_abduction
-    z = abduction_offset * sin_abduction - extension * cos_abduction
-    return np.stack([x, y, z], axis=-1)
+    xp, terms = _foot_terms(joint_angles, lengths)
+    return xp.stack([terms["x"], terms["y"], terms["z"]], -1)
 
 
-def jacobian(joint_angles: np.ndarray, lengths: np.ndarray) -> np.ndarray:
+def jacobian(joint_angles, lengths):
     """d(foot position)/d(joint_angles), shape (..., 3, 3). Row = x, y, z; column = joint.
 
     Differentiating `forward` (names as there, e = extension):
@@ -117,31 +118,17 @@ def jacobian(joint_angles: np.ndarray, lengths: np.ndarray) -> np.ndarray:
 
     The abduction column is (0, -z, y): a rotation about the x axis moves the
     foot at right angles to its offset from that axis. Tests check this
-    against finite differences.
+    against finite differences. Accepts NumPy arrays or torch tensors, like `forward`.
     """
-    joint_angles = np.asarray(joint_angles, dtype=float)
-    lengths = np.broadcast_to(np.asarray(lengths, dtype=float), joint_angles.shape)
-    abduction_offset, upper_length, lower_length = lengths[..., 0], lengths[..., 1], lengths[..., 2]
-    sin_abduction, cos_abduction = np.sin(joint_angles[..., 0]), np.cos(joint_angles[..., 0])
-    sin_hip, cos_hip = np.sin(joint_angles[..., 1]), np.cos(joint_angles[..., 1])
-    hip_plus_knee = joint_angles[..., 1] + joint_angles[..., 2]
-    sin_lower, cos_lower = np.sin(hip_plus_knee), np.cos(hip_plus_knee)
-
-    x = -upper_length * sin_hip - lower_length * sin_lower
-    extension = upper_length * cos_hip + lower_length * cos_lower
-    y = abduction_offset * cos_abduction + extension * sin_abduction
-    z = abduction_offset * sin_abduction - extension * cos_abduction
-
-    jac = np.zeros(joint_angles.shape[:-1] + (3, 3))
-    jac[..., 0, 1] = -extension
-    jac[..., 0, 2] = -lower_length * cos_lower
-    jac[..., 1, 0] = -z
-    jac[..., 1, 1] = x * sin_abduction
-    jac[..., 1, 2] = -lower_length * sin_lower * sin_abduction
-    jac[..., 2, 0] = y
-    jac[..., 2, 1] = -x * cos_abduction
-    jac[..., 2, 2] = lower_length * sin_lower * cos_abduction
-    return jac
+    xp, t = _foot_terms(joint_angles, lengths)
+    sin_abduction, cos_abduction, lower_length = t["sin_abduction"], t["cos_abduction"], t["lower_length"]
+    zero = xp.zeros_like(t["x"])
+    rows = [
+        [zero, -t["extension"], -lower_length * t["cos_lower"]],
+        [-t["z"], t["x"] * sin_abduction, -lower_length * t["sin_lower"] * sin_abduction],
+        [t["y"], -t["x"] * cos_abduction, lower_length * t["sin_lower"] * cos_abduction],
+    ]
+    return xp.stack([xp.stack(row, -1) for row in rows], -2)
 
 
 def joint_positions(joint_angles: np.ndarray, lengths: np.ndarray) -> np.ndarray:
@@ -217,7 +204,7 @@ def mirror_angles(joint_angles: np.ndarray) -> np.ndarray:
 
 
 def sample_lengths(
-    rng: np.random.Generator, n_legs: int, config: LegConfig, tolerance: float | None = None
+    rng: np.random.Generator, n_legs: int, config: LimbModel, tolerance: float | None = None
 ) -> np.ndarray:
     """n_legs legs whose three lengths each deviate independently from nominal."""
     fraction = config.length_tolerance if tolerance is None else tolerance
@@ -227,7 +214,7 @@ def sample_lengths(
 def sample_joint_angles(
     rng: np.random.Generator,
     lengths: np.ndarray,
-    config: LegConfig,
+    config: LimbModel,
     workspace_uniform: bool = True,
     oversample: int = 4,
 ) -> np.ndarray:
@@ -259,7 +246,7 @@ def sample_joint_angles(
     return candidates[np.arange(n_legs), chosen]
 
 
-def sample_batch(rng: np.random.Generator, n_samples: int, config: LegConfig, **sampler_options):
+def sample_batch(rng: np.random.Generator, n_samples: int, config: LimbModel, **sampler_options):
     """(target positions, leg lengths, the joint angles that produced them)."""
     tolerance = sampler_options.pop("tolerance", None)
     lengths = sample_lengths(rng, n_samples, config, tolerance)
@@ -267,7 +254,7 @@ def sample_batch(rng: np.random.Generator, n_samples: int, config: LegConfig, **
     return config.forward(joint_angles, lengths), lengths, joint_angles
 
 
-def is_leg(config) -> bool:
+def is_leg(config: LimbModel) -> bool:
     """True if `config` (a LegConfig or a LimbSpec) has exactly this module's 3-joint leg kinematics.
 
     Lets the closed-form IK and the leg-specific plots be used on URDF-derived limbs that turn out to be this leg.

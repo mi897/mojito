@@ -18,21 +18,9 @@ import numpy as np
 import torch
 from torch import nn
 
-from ..robot import leg
-from .model import IKNet, IKNetBase
-
-
-def forward_kinematics(joint_angles: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
-    """Differentiable foot position. Mirrors leg.forward (see its docstring for the equations). Shapes (..., 3)."""
-    lengths = torch.broadcast_to(lengths, joint_angles.shape)
-    abduction_offset, upper_length, lower_length = lengths[..., 0], lengths[..., 1], lengths[..., 2]
-    abduction, hip_pitch, knee = joint_angles[..., 0], joint_angles[..., 1], joint_angles[..., 2]
-    sin_abduction, cos_abduction = torch.sin(abduction), torch.cos(abduction)
-    x = -upper_length * torch.sin(hip_pitch) - lower_length * torch.sin(hip_pitch + knee)
-    extension = upper_length * torch.cos(hip_pitch) + lower_length * torch.cos(hip_pitch + knee)
-    y = abduction_offset * cos_abduction + extension * sin_abduction
-    z = abduction_offset * sin_abduction - extension * cos_abduction
-    return torch.stack([x, y, z], dim=-1)
+from ..geometry.limb_model import LimbModel
+from .base import IKNetBase
+from .model import IKNet
 
 
 class TorchIKNet(IKNetBase):
@@ -40,7 +28,7 @@ class TorchIKNet(IKNetBase):
 
     backend = "torch"
 
-    def __init__(self, config=None, hidden=(128, 128, 128), seed=0,
+    def __init__(self, config: LimbModel | None = None, hidden=(128, 128, 128), seed=0,
                  device="cpu", dtype=torch.float32):
         super().__init__(config, hidden)
         self.device = torch.device(device)
@@ -84,10 +72,10 @@ class TorchIKNet(IKNetBase):
 
     # ---- tensors in, tensors out (differentiable) ----
     def forward_kinematics(self, joint_angles: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
-        """Differentiable tip position. URDF-derived limbs use the generic chain; the legacy leg its own formula."""
-        if getattr(self.config, "backend_agnostic", False):
-            return self.config.forward(joint_angles, lengths)
-        return forward_kinematics(joint_angles, lengths)
+        """Differentiable tip position: the limb's own `config.forward`, which accepts tensors (see LimbModel)."""
+        if not self.config.backend_agnostic:
+            raise TypeError(f"{type(self.config).__name__}.forward does not accept torch tensors")
+        return self.config.forward(joint_angles, lengths)
 
     def angles(self, target_position: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
         """Joint angles for canonical (left-leg) targets."""

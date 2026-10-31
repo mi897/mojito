@@ -17,6 +17,22 @@ class TestBody(unittest.TestCase):
         self.exact = body.Robot(body.AnalyticSolver())
         self.home = self.exact.stance()
 
+    def test_rotation_is_the_product_of_elementary_rotations_and_matches_urdf_rpy(self):
+        from mojito.geometry import spec
+
+        roll, pitch, yaw = 0.3, -0.2, 0.7
+        c, s_ = np.cos, np.sin
+        rx = np.array([[1, 0, 0], [0, c(roll), -s_(roll)], [0, s_(roll), c(roll)]])
+        ry = np.array([[c(pitch), 0, s_(pitch)], [0, 1, 0], [-s_(pitch), 0, c(pitch)]])
+        rz = np.array([[c(yaw), -s_(yaw), 0], [s_(yaw), c(yaw), 0], [0, 0, 1]])
+        np.testing.assert_allclose(body.rotation(roll, pitch, yaw), rz @ ry @ rx, atol=1e-15)
+        urdf_matrix = spec.rpy_matrix((roll, pitch, yaw))
+        self.assertIsInstance(urdf_matrix, np.ndarray)
+        self.assertEqual(urdf_matrix.shape, (3, 3))
+        np.testing.assert_array_equal(urdf_matrix, body.rotation(roll, pitch, yaw))
+        batch = body.rotation(np.array([roll, 0.0]), pitch, yaw)
+        np.testing.assert_array_equal(batch[0], body.rotation(roll, pitch, yaw))
+
     def test_rotation_is_orthonormal_and_ordered_zyx(self):
         R = body.rotation(0.3, -0.2, 0.7)
         np.testing.assert_allclose(R @ R.T, np.eye(3), atol=1e-12)

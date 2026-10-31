@@ -56,6 +56,11 @@ def _lib(x):
     return np
 
 
+def _as_array(x):
+    """`x` unchanged if it is a torch tensor, else as a float NumPy array."""
+    return x if _is_torch(x) else np.asarray(x, dtype=float)
+
+
 def _const(xp, reference, values):
     """A constant array in the same library, dtype and device as `reference`."""
     if xp is np:
@@ -87,6 +92,22 @@ def _axis_rotation(xp, reference, axis, angle):
     return cos_angle * identity + sin_angle * cross_matrix + (1.0 - cos_angle) * outer
 
 
+# ----------------------------------------------------------------- rotations (NumPy)
+def rpy_rotation(roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:
+    """Fixed-axis roll-pitch-yaw rotation R = Rz(yaw) Ry(pitch) Rx(roll). Shape (..., 3, 3).
+
+    The URDF `rpy` convention and the body-to-world rotation of `mojito.robot.body`.
+    Arguments broadcast against each other; scalars give a (3, 3) matrix.
+    """
+    roll, pitch, yaw = np.broadcast_arrays(*(np.asarray(a, dtype=float) for a in (roll, pitch, yaw)))
+    cr, sr, cp, sp, cy, sy = np.cos(roll), np.sin(roll), np.cos(pitch), np.sin(pitch), np.cos(yaw), np.sin(yaw)
+    R = np.empty(roll.shape + (3, 3))
+    R[..., 0, 0], R[..., 0, 1], R[..., 0, 2] = cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr
+    R[..., 1, 0], R[..., 1, 1], R[..., 1, 2] = sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr
+    R[..., 2, 0], R[..., 2, 1], R[..., 2, 2] = -sp, cp * sr, cp * cr
+    return R
+
+
 # ----------------------------------------------------------------- kinematics
 def _walk(chain: Chain, joint_values, link_lengths):
     """Run the chain once. Returns the tip and, per joint, its position and world axis.
@@ -97,8 +118,7 @@ def _walk(chain: Chain, joint_values, link_lengths):
     frame about its axis, a prismatic one slides the position along it.
     """
     xp = _lib(joint_values)
-    joint_values = joint_values if _is_torch(joint_values) else np.asarray(joint_values, dtype=float)
-    link_lengths = link_lengths if _is_torch(link_lengths) else np.asarray(link_lengths, dtype=float)
+    joint_values, link_lengths = _as_array(joint_values), _as_array(link_lengths)
     batch = joint_values.shape[:-1]
     rotation = xp.broadcast_to(_const(xp, joint_values, np.eye(3)), batch + (3, 3))  # frame orientation so far
     position = xp.zeros(batch + (3,), dtype=joint_values.dtype, **({"device": joint_values.device} if xp is not np else {}))
@@ -165,6 +185,16 @@ def numeric_ik(chain: Chain, limits, target_position, link_lengths, initial_join
     Each iteration solves for the joint step that moves the tip toward the target:
         step = J^T (J J^T + damping^2 I)^-1 error,    error = target - fk(joint_values)
     The damping term keeps the step finite near singular poses.
+
+    Two things to know when reading the result:
+    - Convergence is checked over the whole batch: the loop stops only when the
+      largest error of any target is below `tolerance` (or after `max_iterations`),
+      so every target gets as many iterations as the slowest one needs. Check the
+      error of each target yourself; nothing here reports which ones converged.
+    - The joint values are clipped to the limits after every step. A step that
+      leaves the range is cut back to the limit, and the next step may point out
+      of range again, so a solve whose answer lies past a limit (or whose path
+      runs along one) can stall at that limit with a residual error.
     """
     target_position = np.asarray(target_position, dtype=float)
     limits = np.asarray(limits, dtype=float)

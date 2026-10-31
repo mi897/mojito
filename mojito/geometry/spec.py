@@ -37,13 +37,13 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import math
 from dataclasses import dataclass, field, replace
 
 import numpy as np
 
 from . import kinematics, urdf as urdf_mod
 from .kinematics import Chain
+from .limb_model import Mirror
 
 _ROUND = 9
 _EPS = 1e-12
@@ -59,14 +59,9 @@ class SpecMismatch(SpecError):
 
 # ----------------------------------------------------------------- small helpers
 def rpy_matrix(rpy) -> np.ndarray:
-    """URDF fixed-axis rotation: R = Rz(yaw) Ry(pitch) Rx(roll)."""
-    r, p, y = (float(a) for a in rpy)
-    cr, sr, cp, sp, cy, sy = math.cos(r), math.sin(r), math.cos(p), math.sin(p), math.cos(y), math.sin(y)
-    return np.array([
-        [cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr],
-        [sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr],
-        [-sp, cp * sr, cp * cr],
-    ])
+    """URDF fixed-axis rotation: R = Rz(yaw) Ry(pitch) Rx(roll), as a (3, 3) NumPy array."""
+    roll, pitch, yaw = (float(a) for a in rpy)
+    return kinematics.rpy_rotation(roll, pitch, yaw)
 
 
 def _r(a):
@@ -95,25 +90,6 @@ def _diff(a, b, path="") -> list:
     return out
 
 
-@dataclass(frozen=True)
-class Mirror:
-    """How a limb relates to the canonical limb of its group.
-
-    FK_this(sign_q * joint_angles, link_lengths) == flip_p * FK_canonical(joint_angles, link_lengths)
-    """
-
-    flip_p: tuple = (1.0, -1.0, 1.0)
-    sign_q: tuple = (-1.0, 1.0, 1.0)
-
-    def target(self, target_position):
-        """Map a target for this limb into the canonical limb's frame (and back)."""
-        return np.asarray(target_position, dtype=float) * np.asarray(self.flip_p)
-
-    def angles(self, joint_angles):
-        """Map canonical joint values to this limb's convention (and back)."""
-        return np.asarray(joint_angles, dtype=float) * np.asarray(self.sign_q)
-
-
 # ----------------------------------------------------------------- one limb
 @dataclass(frozen=True, eq=False)
 class LimbSpec:
@@ -131,6 +107,7 @@ class LimbSpec:
     mount_R: np.ndarray = field(default_factory=lambda: np.eye(3))  # limb frame in the base frame
     mount_t: np.ndarray = field(default_factory=lambda: np.zeros(3))
 
+    # Satisfies limb_model.LimbModel, so networks and samplers take a LimbSpec or a leg.LegConfig.
     backend_agnostic = True  # forward/jacobian accept NumPy arrays and torch tensors
 
     @property
@@ -141,7 +118,7 @@ class LimbSpec:
     def n_params(self) -> int:
         return self.chain.n_params
 
-    mirror = None  # LegConfig compatibility; a limb's mirror is a property of its group member
+    mirror = None  # a URDF limb's mirror belongs to its group Member, not to the limb itself
 
     def forward(self, joint_angles, link_lengths):
         return kinematics.fk(self.chain, joint_angles, link_lengths)

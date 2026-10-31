@@ -79,10 +79,21 @@ class TestTorchMatchesNumpy(unittest.TestCase):
         self.p, self.lengths, self.q = leg.sample_batch(self.rng, 64, self.np_net.config)
 
     def test_forward_kinematics_agree(self):
-        from mojito.learning.torch_model import forward_kinematics
-
-        got = forward_kinematics(self.torch.tensor(self.q), self.torch.tensor(self.lengths)).numpy()
+        got = self.t_net.forward_kinematics(self.torch.tensor(self.q), self.torch.tensor(self.lengths)).numpy()
         np.testing.assert_allclose(got, leg.forward(self.q, self.lengths), atol=1e-12)
+        on_tensors = leg.forward(self.torch.tensor(self.q), self.torch.tensor(self.lengths))
+        self.assertIsInstance(on_tensors, self.torch.Tensor)
+        np.testing.assert_allclose(on_tensors.numpy(), leg.forward(self.q, self.lengths), atol=1e-12)
+
+    def test_leg_jacobian_on_tensors_matches_autograd(self):
+        # leg.jacobian is hand-derived; torch autograd through leg.forward is an independent check of it.
+        joint_angles, lengths = self.torch.tensor(self.q[:8]), self.torch.tensor(self.lengths[:8])
+        hand = leg.jacobian(joint_angles, lengths)
+        self.assertIsInstance(hand, self.torch.Tensor)
+        for i in range(8):
+            auto = self.torch.autograd.functional.jacobian(lambda a: leg.forward(a, lengths[i]), joint_angles[i])
+            np.testing.assert_allclose(hand[i].numpy(), auto.numpy(), atol=1e-12)
+        np.testing.assert_allclose(hand.numpy(), leg.jacobian(self.q[:8], self.lengths[:8]), atol=1e-12)
 
     def test_same_seed_gives_same_predictions(self):
         np.testing.assert_allclose(self.t_net.predict(self.p, self.lengths), self.np_net.predict(self.p, self.lengths), atol=1e-10)
