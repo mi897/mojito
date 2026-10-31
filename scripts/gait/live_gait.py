@@ -1,8 +1,9 @@
 """Live gait explorer: change gait and servo parameters while the physics runs, and watch the robot in a browser.
 
 The physics (MuJoCo, servo model, IK) runs in this Python process; the browser only draws the state and sends
-slider changes and drive commands (keyboard or gamepad, see the Drive card). Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine
-(the server listens on 127.0.0.1 only).
+slider changes and drive commands (keyboard or gamepad, see the Drive card). Drag with the mouse to rotate the view, wheel to zoom. Needs mujoco. Nothing leaves your machine:
+the server listens on 127.0.0.1, refuses requests whose Host is not a loopback name (a defence against DNS rebinding),
+and refuses requests from pages on other origins.
 
     uv run --extra sim python scripts/gait/live_gait.py             # then open http://127.0.0.1:8765
     uv run --extra sim python scripts/gait/live_gait.py --port 9000 --preset crawl
@@ -15,6 +16,7 @@ import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse
 
 from mojito.results import repo_path
 from mojito.sim import live_sim
@@ -22,6 +24,21 @@ from mojito.sim import live_sim
 PAGE = os.path.join(os.path.dirname(__file__), "live_gait.html")
 ASSETS = repo_path("site", "assets")  # drive.js and touchpad.js are shared with the playground
 FRAME_SECONDS = 1.0 / 60.0
+LOOPBACK = ("127.0.0.1", "localhost", "[::1]")
+
+
+def host_is_local(host_header):
+    """True if a Host header names this machine: 127.0.0.1, localhost or [::1], with or without a port."""
+    host = (host_header or "").strip().lower()
+    name = host.rsplit(":", 1)[0] if not host.endswith("]") and ":" in host else host
+    return name in LOOPBACK
+
+
+def origin_is_local(origin_header):
+    """True if there is no Origin (a non-browser client) or it is a loopback page."""
+    if not origin_header:
+        return True
+    return host_is_local(urlparse(origin_header).netloc)
 
 
 class Runner:
@@ -87,7 +104,16 @@ def make_handler(runner):
             self.end_headers()
             self.wfile.write(data)
 
+        def _local_only(self):
+            """Refuse (403) a request whose Host is not a loopback name or whose Origin is another site; True if it may go on."""
+            if not host_is_local(self.headers.get("Host")) or not origin_is_local(self.headers.get("Origin")):
+                self.send_error(403, "local requests only")
+                return False
+            return True
+
         def do_GET(self):
+            if not self._local_only():
+                return
             if self.path == "/state":
                 self._send(runner.state())
             elif self.path in ("/", "/index.html"):
@@ -105,6 +131,8 @@ def make_handler(runner):
                 self.send_error(404)
 
         def do_POST(self):
+            if not self._local_only():
+                return
             length = int(self.headers.get("Content-Length", 0))
             try:
                 payload = json.loads(self.rfile.read(length) or b"{}")

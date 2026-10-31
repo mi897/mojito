@@ -12,6 +12,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "website"))
 import serve_site  # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "gait"))
+import live_gait  # noqa: E402
 from mojito.sim import live_sim  # noqa: E402
 
 try:
@@ -111,6 +113,45 @@ class TestServer(unittest.TestCase):
         before = len(self.runner.seen)
         status, _, _ = self.get("/api/params", method="POST", body="{}", headers={"Origin": "https://evil.example", "Content-Length": "2"})
         self.assertEqual(status, 403)
+        self.assertEqual(len(self.runner.seen), before)
+
+
+class TestLiveGaitServer(unittest.TestCase):
+    """scripts/gait/live_gait.py serves the same physics API at the root, with the same local-only guards."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.runner = FakeRunner()
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), live_gait.make_handler(cls.runner))
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+
+    get = TestServer.get
+
+    def test_shares_the_guards_with_the_site_server(self):
+        self.assertIs(serve_site.host_is_local, live_gait.host_is_local)
+        self.assertIs(serve_site.origin_is_local, live_gait.origin_is_local)
+
+    def test_local_requests_are_served(self):
+        status, body, _ = self.get("/state")
+        self.assertEqual((status, json.loads(body)), (200, {"time": 0.0}))
+        status, _, _ = self.get("/reset", method="POST", body="{}", headers={"Content-Length": "2", "Origin": "http://127.0.0.1:8765"})
+        self.assertEqual(status, 200)
+        self.assertEqual(self.runner.seen[-1], "reset")
+
+    def test_refuses_foreign_host_and_foreign_origin(self):
+        self.assertEqual(self.get("/", headers={"Host": "evil.example"})[0], 403)
+        self.assertEqual(self.get("/state", headers={"Host": "evil.example:8765"})[0], 403)
+        before = len(self.runner.seen)
+        for path, body in (("/params", '{"kp": 1}'), ("/reset", "{}"), ("/preset", '{"name": "crawl"}')):
+            for headers in ({"Origin": "https://evil.example"}, {"Host": "evil.example"}):
+                status, _, _ = self.get(path, method="POST", body=body, headers=dict(headers, **{"Content-Length": str(len(body))}))
+                self.assertEqual(status, 403, (path, headers))
         self.assertEqual(len(self.runner.seen), before)
 
 

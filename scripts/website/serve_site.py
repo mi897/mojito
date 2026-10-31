@@ -4,10 +4,10 @@ The static pages are served exactly as published; in addition the playground's "
 MuJoCo simulation running in this process (mojito/sim/live_sim.py, the same model the replays use), so any robot
 dimension, gait or servo setting can be tried in real physics, not only the 144 stored runs.
 
-    pip install numpy scipy mujoco
-    python scripts/website/build_site.py             # once, and after results change
-    python scripts/website/serve_site.py             # then open http://127.0.0.1:8000/playground.html#live
-    python scripts/website/serve_site.py --port 9000 --preset crawl
+    uv sync --extra sim                                            # or ./scripts/setup.sh
+    uv run --extra sim python scripts/website/build_site.py        # once, and after results change
+    uv run --extra sim python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live
+    uv run --extra sim python scripts/website/serve_site.py --port 9000 --preset crawl
 
 Local only: the server listens on 127.0.0.1, refuses requests whose Host is not a loopback name (a defence against
 DNS rebinding), and refuses POSTs from other origins. Nothing leaves your machine. Placeholder dimensions, masses,
@@ -22,39 +22,18 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "gait"))  # live_gait
-from live_gait import Runner, make_handler  # noqa: E402
+from live_gait import Runner, host_is_local, make_handler, origin_is_local  # noqa: E402,F401  (the guards are shared)
 from mojito.results import repo_path  # noqa: E402
 from mojito.sim import live_sim  # noqa: E402
 
 SITE = repo_path("site")
-LOOPBACK = ("127.0.0.1", "localhost", "[::1]")
-
-
-def host_is_local(host_header):
-    """True if a Host header names this machine: 127.0.0.1, localhost or [::1], with or without a port."""
-    host = (host_header or "").strip().lower()
-    name = host.rsplit(":", 1)[0] if not host.endswith("]") and ":" in host else host
-    return name in LOOPBACK
-
-
-def origin_is_local(origin_header):
-    """True if there is no Origin (a non-browser client) or it is a loopback page."""
-    if not origin_header:
-        return True
-    return host_is_local(urlparse(origin_header).netloc)
 
 
 def make_site_handler(runner, site_dir=SITE):
     api = make_handler(runner)
     root = os.path.realpath(site_dir)
 
-    class Handler(api):
-        def _local_only(self):
-            if not host_is_local(self.headers.get("Host")) or not origin_is_local(self.headers.get("Origin")):
-                self.send_error(403, "local requests only")
-                return False
-            return True
-
+    class Handler(api):  # inherits live_gait's `_local_only` Host and Origin check
         def do_GET(self):
             if not self._local_only():
                 return

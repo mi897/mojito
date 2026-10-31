@@ -1,15 +1,22 @@
 """Run with:  python -m unittest discover tests   (MuJoCo tests skipped if it is not installed)"""
+import math
 import os
 import sys
 import unittest
 
 import numpy as np
-from scipy.optimize import brentq
+
+try:
+    from scipy.optimize import brentq
+except ImportError:  # pragma: no cover
+    brentq = None
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.geometry import robots
 from mojito.robot import body
 from mojito.sim import actuators as A, mjcf  # noqa: E402
+
+from .clock_helpers import fast_forward  # noqa: E402
 
 try:
     import mujoco
@@ -50,6 +57,45 @@ class TestServoMaths(unittest.TestCase):
         first = next(i for i, x in enumerate(out) if x > 0)
         self.assertEqual(first, 4)  # 0.02 s / 0.005 s
 
+    def seen_send_steps(self, latency, dt, n_steps):
+        """Per step, the index of the step whose command the servo holds (-1 before any has arrived).
+        Step k commands the angle (k + 1) * 1e-6 rad; with kp 1, no damping and the joint at 0 the torque is that angle."""
+        s = A.Servo(A.ServoParams(latency=latency, kp=1.0, kd=0.0, resolution=1e-9), n_joints=1)
+        out = np.array([s.step([(k + 1) * 1e-6], [0.0], [0.0], dt)[0] for k in range(n_steps)])
+        return np.round(out / 1e-6).astype(int) - 1
+
+    def test_command_is_seen_at_the_first_step_at_or_after_send_time_plus_latency(self):
+        # Reference in exact rational arithmetic: step j sees the latest k with j dt >= k dt + latency.
+        from fractions import Fraction
+        for latency, dt in (("0.02", "0.002"), ("0.0195", "0.002"), ("0.0181", "0.002"), ("0.022", "0.002"), ("0", "0.002"),
+                            ("0.02", "0.005")):
+            delay = math.ceil(Fraction(latency) / Fraction(dt))
+            n_steps = 2000
+            seen = self.seen_send_steps(float(latency), float(dt), n_steps)
+            expected = np.array([j - delay if j >= delay else -1 for j in range(n_steps)])
+            np.testing.assert_array_equal(seen, expected, err_msg=f"latency {latency} s, dt {dt} s")
+
+    def test_latency_is_still_whole_steps_after_8192_s(self):
+        # An accumulated float time drifts by more than 1e-12 s here: comparing it gave 5 steps instead of 4 from step 1,638,399.
+        s = A.Servo(A.ServoParams(latency=0.02, kp=1.0, kd=0.0, resolution=1e-9), n_joints=1)
+        start, dt = 1_638_380, 0.005
+        fast_forward(s, start, dt)
+        out = np.array([s.step([(k + 1) * 1e-6], [0.0], [0.0], dt)[0] for k in range(60)])
+        seen = np.round(out / 1e-6).astype(int) - 1  # index (from `start`) of the command the servo holds
+        np.testing.assert_array_equal(seen[4:], np.arange(60 - 4))
+
+    def test_latency_stays_a_whole_number_of_steps_over_a_long_run(self):
+        # 200 s at 0.002 s: the delay is still exactly 0.02 / 0.002 = 10 steps at the end
+        seen = self.seen_send_steps(0.02, 0.002, 100_000)
+        np.testing.assert_array_equal(seen[-1000:], np.arange(100_000 - 1000, 100_000) - 10)
+
+    def test_last_saturated_exists_before_the_first_step_and_reset_sizes_it(self):
+        s = A.Servo()
+        np.testing.assert_array_equal(s.last_saturated, np.zeros(12, bool))
+        s.reset(3)
+        np.testing.assert_array_equal(s.last_saturated, np.zeros(3, bool))
+        self.assertFalse(A.Servo(n_joints=1).last_saturated.any())
+
     def test_torque_falls_to_zero_at_noload_speed(self):
         p = A.ServoParams(kp=1000.0, kd=0.0, latency=0.0)
         s = A.Servo(p)
@@ -82,6 +128,7 @@ class TestServoHoldingMass(unittest.TestCase):
             mujoco.mj_step(mod, d)
         return d.qpos[0], d.ctrl[0], servo.params
 
+    @unittest.skipIf(brentq is None, "scipy not installed")
     def test_settles_at_closed_form_deflection_below_the_limit(self):
         m, L = 0.5, 0.12  # 0.59 N·m of load against 1.86 N·m
         q, tau, p = self.run_hold(m, L)
