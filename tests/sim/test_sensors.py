@@ -7,7 +7,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.sim import sensors as S  # noqa: E402
-from tests.sim.test_actuators import fast_forward  # noqa: E402
+
+from .clock_helpers import fast_forward  # noqa: E402
 
 
 class TestSensors(unittest.TestCase):
