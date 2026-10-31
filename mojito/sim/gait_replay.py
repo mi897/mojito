@@ -26,7 +26,11 @@ DEFAULT_STANCE_HEIGHT = 0.2125
 
 
 def settings_for(gait) -> dict:
-    """Keyword arguments (`height`, `servo`) for `run_gait`: the tuned ones for the trot, the original ones for any other gait."""
+    """Keyword arguments (`height`, `servo`) for `run_gait`: the tuned ones for the trot, the original ones for any other gait.
+
+    Keyed on the name, so variants made with `dataclasses.replace(gaits.TROT, ...)` that keep the name "trot" (period and
+    swing-height sweeps) get the tuned settings; `gaits.TROT_STAGE1` is named "trot_stage1" and gets the original ones.
+    """
     if gait.name == "trot":
         return {"height": TROT_STANCE_HEIGHT, "servo": actuators.ServoParams(**TROT_SERVO)}
     return {"height": DEFAULT_STANCE_HEIGHT, "servo": actuators.ServoParams()}
