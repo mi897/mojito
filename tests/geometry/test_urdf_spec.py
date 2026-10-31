@@ -197,6 +197,15 @@ class TestSpecGrouping(unittest.TestCase):
         r = specmod.from_urdf(m)
         self.assertEqual(len(r.groups), 2)
 
+    def test_limb_joins_its_named_group_when_another_group_has_the_same_signature(self):
+        # front and rear legs are identical; the manifest still asks for two groups. RR mirrors both FL (group "front") and
+        # RL (group "rear"); it must join "rear", the one it names, not be rejected for differing from "front".
+        manifest = {"limbs": [{"name": "FL", "tip": "FL_foot", "group": "front"}, {"name": "RL", "tip": "RL_foot", "group": "rear"},
+                              {"name": "FR", "tip": "FR_foot", "group": "front"}, {"name": "RR", "tip": "RR_foot", "group": "rear"}]}
+        r = specmod.from_urdf(robots.quadruped_urdf(), manifest)
+        self.assertEqual({g: [m.name for m in r.groups[g].members] for g in r.groups}, {"front": ["FL", "FR"], "rear": ["RL", "RR"]})
+        self.assertEqual([m.mirrored for m in r.groups["rear"].members], [False, True])
+
     def test_declared_group_that_differs_explains_why(self):
         m = robots.quadruped_urdf()
         m.joints["RL_knee"].lower = -2.0
