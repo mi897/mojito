@@ -19,6 +19,13 @@ def light(total):
     return {"body": total - 4 * 4e-4, "hip": 1e-4, "thigh": 1e-4, "shank": 1e-4, "foot": 1e-4}
 
 
+class TestSettingsFor(unittest.TestCase):
+    def test_stage1_trot_gets_the_original_settings_not_the_ones_tuned_for_the_1p7_s_trot(self):
+        stage1 = gait_replay.settings_for(gaits.TROT_STAGE1)
+        self.assertNotEqual(gaits.TROT_STAGE1.name, gaits.TROT.name)
+        self.assertEqual((stage1["height"], stage1["servo"].kp, stage1["servo"].kd), (0.2125, 10.0, 0.2))
+
+
 @unittest.skipIf(mujoco is None, "mujoco not installed")
 class TestGaitReplay(unittest.TestCase):
     @classmethod

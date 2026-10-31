@@ -63,7 +63,6 @@ def run_stand(lengths=(0.05, 0.15, 0.15), height=0.2125, body_length=0.30, body_
     robot, m, d, qadr, dadr, aid, pad, start_z = _open(lengths, height, body_length, body_width, masses, timestep)
     q_cmd = robot.solve(robot.stance(height))  # (4, 3)
     sv = actuators.Servo(servo or actuators.ServoParams())
-    sv.reset()
     target = q_cmd.ravel()
     steps, win = int(round(duration / timestep)), int(round(window / timestep))
     tau_log, q_log, load_log, z_log, sat_log, tilt_log = [], [], [], [], [], []
@@ -144,7 +143,6 @@ def run_sit_to_stand(sit_height=0.14, stand_height=0.2125, rise_time=2.0, settle
     if not robot.reachable(robot.stance(sit_height)).all():
         raise ValueError(f"sit height {sit_height} m is outside the joint limits")
     sv = actuators.Servo(servo or actuators.ServoParams())
-    sv.reset()
     limit = sv.params.stall_torque
     t_end = settle + rise_time + hold
     steps = int(round(t_end / timestep))

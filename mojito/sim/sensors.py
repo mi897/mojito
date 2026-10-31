@@ -6,6 +6,7 @@ Hall-effect chip and the IMU model are tabled).
 """
 from __future__ import annotations
 
+import math
 from collections import deque
 from dataclasses import dataclass
 
@@ -27,25 +28,28 @@ class JointSensor:
     def __init__(self, params: JointSensorParams | None = None, seed: int = 0):
         self.params = params or JointSensorParams()
         self.rng = np.random.default_rng(seed)
-        self._queue: deque = deque()
-        self._time = 0.0
-        self._last = None
+        self.reset()
 
     def reset(self) -> None:
-        self._queue.clear()
-        self._time = 0.0
+        self._queue: deque = deque()  # (step index at which the reading arrives, reading)
+        self._step_index = 0
         self._last = None
 
     def read(self, joint_angles, dt: float) -> np.ndarray:
+        """Measured angles for one time step of `dt` s. `dt` must stay the same between `reset` calls: the delay is
+        counted in steps of the current `dt`."""
         params = self.params
         joint_angles = np.asarray(joint_angles, float)
         # reading = joint_angles + offset + a sin(joint_angles) + noise, then rounded to the nearest multiple of the resolution
         raw = joint_angles + params.offset + params.nonlinearity * np.sin(joint_angles) + self.rng.normal(0.0, params.noise, joint_angles.shape)
         raw = np.round(raw / params.resolution) * params.resolution
-        self._queue.append((self._time + params.delay, raw))
-        while self._queue and self._queue[0][0] <= self._time + 1e-12:
+        # A reading taken at step k arrives at the first step j with j dt >= k dt + delay: j = k + ceil(delay / dt), counted in
+        # whole steps so it stays exact over long runs (the 1e-9 as in actuators.Servo.step). tests/sim/test_sensors.py checks it.
+        n_delay_steps = math.ceil(params.delay / dt - 1e-9)
+        self._queue.append((self._step_index + n_delay_steps, raw))
+        while self._queue and self._queue[0][0] <= self._step_index:
             self._last = self._queue.popleft()[1]
-        self._time += dt
+        self._step_index += 1
         if self._last is None:  # nothing has arrived yet: report the first reading rather than nothing
             self._last = raw
         return self._last
