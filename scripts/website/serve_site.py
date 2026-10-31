@@ -68,7 +68,7 @@ def main():
     parser.add_argument("--preset", choices=sorted(live_sim.PRESETS), default="trot")
     args = parser.parse_args()
     if not os.path.exists(os.path.join(SITE, "data", "results.js")):
-        print("site/data is missing: run `python scripts/website/build_site.py` first", file=sys.stderr)
+        print("site/data is missing: run `uv run --extra sim python scripts/website/build_site.py` first", file=sys.stderr)
         sys.exit(1)
     runner = Runner(live_sim.LiveSim(dict(live_sim.PRESETS[args.preset], walk=False)))
     server = ThreadingHTTPServer(("127.0.0.1", args.port), make_site_handler(runner))
