@@ -196,7 +196,9 @@ def stability_margin(feet_xy, contact, point_xy):
     distance to it. With no foot down there is no support at all and the result
     is -inf. Feet that sit on the same spot count once, so two coincident feet
     make a point and three feet with two coincident a line (no zero-length edge).
-    Feet must be given in FL, FR, RL, RR order.
+    Only feet next to each other around the body are merged; two diagonal feet
+    on one spot (not a stance a leg can reach) are kept and the polygon is not
+    convex. Feet must be given in FL, FR, RL, RR order.
     """
     walk_order = [0, 1, 3, 2]  # FL, FR, RR, RL: around the body, clockwise seen from above
     margin = np.empty(feet_xy.shape[0])
