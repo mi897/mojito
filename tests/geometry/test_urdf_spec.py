@@ -205,6 +205,12 @@ class TestSpecGrouping(unittest.TestCase):
         r = specmod.from_urdf(robots.quadruped_urdf(), manifest)
         self.assertEqual({g: [m.name for m in r.groups[g].members] for g in r.groups}, {"front": ["FL", "FR"], "rear": ["RL", "RR"]})
         self.assertEqual([m.mirrored for m in r.groups["rear"].members], [False, True])
+        # FR starts group "a"; FL starts "b"; RR has FR's signature (group "a") but names "b": it joins "b" as FL's mirror
+        manifest = {"limbs": [{"name": "FR", "tip": "FR_foot", "group": "a"}, {"name": "FL", "tip": "FL_foot", "group": "b"},
+                              {"name": "RR", "tip": "RR_foot", "group": "b"}]}
+        r = specmod.from_urdf(robots.quadruped_urdf(), manifest)
+        self.assertEqual({g: [m.name for m in r.groups[g].members] for g in r.groups}, {"a": ["FR"], "b": ["FL", "RR"]})
+        self.assertEqual([m.mirrored for m in r.groups["b"].members], [False, True])
 
     def test_declared_group_that_differs_explains_why(self):
         m = robots.quadruped_urdf()
