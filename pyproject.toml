@@ -18,9 +18,17 @@ sim = ["mujoco"]
 torch-cpu = ["torch"]
 torch-gpu = ["torch"]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Only the library is packaged; scripts/, tests/, robots/ and results/ stay in the repository.
+[tool.hatch.build.targets.wheel]
+packages = ["mojito"]
+
 [tool.uv]
-# A set of scripts around a library run from the repo root, not an installable package.
-package = false
+# `uv sync` installs the `mojito` package editable into .venv, so scripts import it from anywhere without a sys.path line.
+package = true
 
 # The two torch builds cannot be installed together.
 conflicts = [[{ extra = "torch-cpu" }, { extra = "torch-gpu" }]]

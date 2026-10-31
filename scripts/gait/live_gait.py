@@ -5,26 +5,24 @@ slider changes and drive commands (keyboard or gamepad, see the Drive card). Dra
 the server listens on 127.0.0.1, refuses requests whose Host is not a loopback name (a defence against DNS rebinding),
 and refuses requests from pages on other origins.
 
-    pip install numpy scipy mujoco
-    python scripts/gait/live_gait.py             # then open http://127.0.0.1:8765
-    python scripts/gait/live_gait.py --port 9000 --preset crawl
+    uv run --extra sim python scripts/gait/live_gait.py             # then open http://127.0.0.1:8765
+    uv run --extra sim python scripts/gait/live_gait.py --port 9000 --preset crawl
 
 Placeholder dimensions, masses, servo figures and friction (docs/STAGE2.md); the model is the one the replays use.
 """
 import argparse
 import json
 import os
-import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import live_sim  # noqa: E402
+from mojito.results import repo_path
+from mojito.sim import live_sim
 
 PAGE = os.path.join(os.path.dirname(__file__), "live_gait.html")
-ASSETS = os.path.join(os.path.dirname(__file__), "..", "..", "site", "assets")  # drive.js and touchpad.js are shared with the playground
+ASSETS = repo_path("site", "assets")  # drive.js and touchpad.js are shared with the playground
 FRAME_SECONDS = 1.0 / 60.0
 LOOPBACK = ("127.0.0.1", "localhost", "[::1]")
 

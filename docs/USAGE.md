@@ -2,6 +2,27 @@
 
 # Using Mojito
 
+## Running the scripts
+
+`./scripts/setup.sh` (or `uv sync --extra sim`) installs the `mojito` package editable into `.venv`. Run a script with
+`uv run --extra sim python scripts/<topic>/<script>.py`, or with plain `python` after `source .venv/bin/activate`;
+either works from any directory, because outputs go to paths built from the repository root.
+
+Every results JSON a script writes goes through `mojito.results.write_result`, which adds a `provenance` block:
+
+```json
+"provenance": {"git_commit": "...", "git_dirty": false, "script": "scripts/gait/gait_replay.py", "argv": [],
+               "python": "...", "numpy": "...", "mujoco": "...", "utc": "YYYY-MM-DDTHH:MM:SSZ"}
+```
+
+`git_dirty: true` means tracked files differed from that commit, so the commit alone does not reproduce the numbers.
+Files committed before this was added have no block until their script is run again.
+
+To regenerate everything in dependency order, `just results` (several hours; the steps and their times are in the
+`justfile`): the weights, then evaluate, calibrate, make_demo and the body demos, then torque, stand and gait in
+physics, the sweeps and the design sweeps, then `site_sweep.py` and `build_site.py`. `just results-fast` keeps the
+current weights and skips the slow sweeps; `just results-from-weights` re-runs only what reads `weights/ik_leg.npz`.
+
 ## One leg
 
 Link lengths are never constants inside the maths. Every function takes them
@@ -54,7 +75,7 @@ only when asked for.
 
 | Scope | How |
 |---|---|
-| One command | `python scripts/learning/train.py --backend torch` |
+| One command | `uv run --extra sim python scripts/learning/train.py --backend torch` |
 | Whole shell session | `export MOJITO_BACKEND=torch` |
 | The rest of a Python process | `mojito.set_backend("torch")` |
 | One call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
@@ -79,7 +100,7 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 ## Training for a different leg
 
 ```bash
-python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
+uv run --extra sim python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
@@ -104,9 +125,9 @@ robots/quadruped/quadruped.urdf + .json   <- the definition (any tool can read t
 ```
 
 ```bash
-python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
-python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
-python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
+uv run python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
+uv run --extra sim python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+uv run --extra sim python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
 ```
 
 ```python

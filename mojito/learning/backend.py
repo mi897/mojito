@@ -40,6 +40,12 @@ def set_backend(name: str) -> None:
     _current = _check(name)
 
 
+def add_backend_argument(parser) -> None:
+    """Add the `--backend numpy|torch` option every script takes to an argparse parser (default: `get_backend()` at load time)."""
+    parser.add_argument("--backend", choices=BACKENDS, default=None,
+                        help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+
+
 def resolve(name: str | None) -> str:
     return get_backend() if name is None else _check(name)
 
@@ -56,7 +62,7 @@ def model_class(name: str | None = None):
     except ImportError as e:  # torch itself is missing
         raise ImportError(
             "The torch backend needs PyTorch, which is not installed. "
-            "Install it (pip install torch) or use the numpy backend."
+            "Install it (./scripts/setup.sh --torch, or uv sync --extra torch-cpu) or use the numpy backend."
         ) from e
     return TorchIKNet
 

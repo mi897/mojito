@@ -4,10 +4,12 @@ The pages in site/ never hold a measured number of their own: they read `data/re
 from the JSON files under `results/`, so a regenerated result shows up on the site after a rebuild. It also copies the plots and
 animations from results/, the interactive leg demo from docs/, and the Markdown reports.
 
-    python scripts/website/build_site.py                     # writes site/data/ and site/media/
+    uv run --extra sim python scripts/website/build_site.py                     # writes site/data/ and site/media/
     python -m http.server -d site 8000               # then open http://127.0.0.1:8000
 
 Generated files (site/data, site/media) are not committed; the `site` workflow runs this before publishing.
+Each result's `provenance` block (mojito/results.py) is moved out of `data/results.js` into `data/build.js`
+(`MOJITO_BUILD.results_provenance`), so the pages see the same result shapes as before.
 """
 import argparse
 import datetime
@@ -17,7 +19,8 @@ import shutil
 import subprocess
 import sys
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+from mojito.results import ROOT, without_provenance
+from mojito.sim import live_sim  # NumPy only (MuJoCo is imported lazily): the constants the browser simulation needs
 
 # results/<name>.json -> key in window.MOJITO_RESULTS
 RESULT_FILES = ["metrics", "calibration", "body_metrics", "torque_envelope", "stand_test", "sit_to_stand", "gait_replay",
@@ -31,6 +34,12 @@ def write_js(path, name, payload):
         f.write(f"window.{name}=")
         json.dump(payload, f, separators=(",", ":"))
         f.write(";\n")
+
+
+def load_result(path):
+    """(the numbers of a results JSON file, its provenance block or None)."""
+    with open(path) as f:
+        return without_provenance(json.load(f))
 
 
 def find_result(results_dir, filename):
@@ -64,25 +73,26 @@ def build(out):
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(media_dir, exist_ok=True)
 
-    results = {}
+    results, provenance = {}, {}
     for name in RESULT_FILES:
         path = find_result(results_dir, name + ".json")
         if path:
-            with open(path) as f:
-                results[name] = json.load(f)
+            results[name], record = load_result(path)
+            if record is not None:
+                provenance[name] = record
         else:
             print(f"missing {name}.json under results/: sections that use it will show '?'", file=sys.stderr)
     write_js(os.path.join(data_dir, "results.js"), "MOJITO_RESULTS", results)
 
     sweep = find_result(results_dir, "physics_sweep.json")
     if sweep:
-        with open(sweep) as f:
-            write_js(os.path.join(data_dir, "sweep.js"), "MOJITO_SWEEP", json.load(f))
+        payload, record = load_result(sweep)
+        if record is not None:
+            provenance["physics_sweep"] = record
+        write_js(os.path.join(data_dir, "sweep.js"), "MOJITO_SWEEP", payload)
     else:
         print("missing physics_sweep.json under results/: run scripts/website/site_sweep.py (needs mujoco) for the physics playground", file=sys.stderr)
 
-    sys.path.insert(0, ROOT)
-    from mojito.sim import live_sim  # NumPy only (MuJoCo is imported lazily): the constants the browser simulation needs
     write_js(os.path.join(data_dir, "livemeta.js"), "MOJITO_LIVE", live_sim.browser_constants())
 
     docs = {}
@@ -99,7 +109,8 @@ def build(out):
 
     commit = git("rev-parse", "--short", "HEAD")
     write_js(os.path.join(data_dir, "build.js"), "MOJITO_BUILD",
-             {"commit": commit, "date": datetime.date.today().isoformat(), "branch": git("rev-parse", "--abbrev-ref", "HEAD")})
+             {"commit": commit, "date": datetime.date.today().isoformat(), "branch": git("rev-parse", "--abbrev-ref", "HEAD"),
+              "results_provenance": provenance})
     print(f"site data in {data_dir}: {len(results)} result files, {len(docs)} documents, {copied} images/animations")
 
 

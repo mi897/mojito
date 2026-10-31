@@ -32,7 +32,9 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
 ## Layout
 
 ```
-mojito/                the library, in four subpackages (each holds at most about a dozen files)
+mojito/                the library, in four subpackages (each holds at most about a dozen files), plus
+                       results.py (write_result: results JSON with a provenance block; paths from the repo root)
+                       and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
                        placeholders.py (placeholder leg and body dimensions), limb_model.py (LimbModel interface, Mirror)
@@ -53,7 +55,8 @@ scripts/               entry points, one folder per topic
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
-tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/;
+                       test_results.py for mojito/results.py (and that scripts use it and the palette)
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
@@ -75,10 +78,17 @@ docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html 
 ## Commands
 
 Setup is `./scripts/setup.sh` (installs uv and just, then `uv sync`); dependencies are in `pyproject.toml`, pinned in
-`uv.lock`. Tasks live in the `justfile` (`just` lists them). Run any script as `uv run --extra sim python <script>`.
+`uv.lock`. `uv sync` installs the `mojito` package editable (hatchling, only `mojito/` is packaged), so scripts import it
+without a `sys.path` line and work from any directory. Tasks live in the `justfile` (`just` lists them). Run any script as
+`uv run --extra sim python <script>` (plain `python` works inside the activated `.venv`; outside it `mojito` is not importable).
+`just results` regenerates every committed result in dependency order (weights, evaluate/calibrate/make_demo, body demos,
+torque, stand, gait, sweeps, design, site_sweep, build_site); it takes several hours, and `just results-fast` skips the
+slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tuned sweep).
 
 ```bash
+# Inside the activated .venv (source .venv/bin/activate); otherwise prefix each line with: uv run --extra sim
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
+just results                               # every committed result in dependency order (SLOW, hours); just results-fast skips the slow steps
 python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
 python scripts/learning/calibrate.py                # results/learning/calibration.json
@@ -165,14 +175,20 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 `README.md`, `docs/RESULTS.md`, `docs/PHYSICS.md` and `docs/PLAN.md` in the same branch. Edit
 `docs/demo_template.html`, not `docs/demo.html`.
 
+Scripts write results JSON only through `mojito.results.write_result`, which adds a `provenance` block (git commit,
+whether the tree was dirty, script and argv, Python/NumPy/MuJoCo versions, UTC time), and build output paths with
+`results_path(...)` / `repo_path(...)`. Values that describe a run (lengths, gains, timestep) are taken from the settings
+the run used (`gait_replay.settings_for`, `actuators.ServoParams`, `results.defaults_of(run_gait)`), never typed in.
+`build_site.py` moves the provenance blocks into `data/build.js`, so pages see the results unchanged.
+
 ## Environment notes
 
 - Dependencies: NumPy, SciPy, Matplotlib, Pillow. PyTorch and MuJoCo are optional (their tests skip if absent).
 - Some cloud sessions cannot install packages. If PyTorch cannot be installed,
   do not claim the PyTorch path was run locally: push the branch and read the
   result of the `tests` GitHub Actions workflow, which runs both backends.
-- Plots follow one palette (`BLUE`, `ORANGE`, `AQUA` at the top of the
-  scripts), one y-axis per chart, text in neutral ink.
+- Plots follow one palette (`BLUE`, `ORANGE`, `AQUA`, `PURPLE`, `INK`, `GREY` from `mojito/palette.py`; never redefine
+  them in a script), one y-axis per chart, text in neutral ink.
 
 ## Open questions for the owner
 

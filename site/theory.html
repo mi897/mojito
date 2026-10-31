@@ -187,16 +187,17 @@
 
       <h2 id="repro">Reproduce it</h2>
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
-pip install -r requirements.txt            # NumPy, SciPy, Matplotlib, Pillow
+./scripts/setup.sh                         # installs uv and just, then NumPy, SciPy, Matplotlib, Pillow, MuJoCo and the mojito package
+source .venv/bin/activate                  # every command below runs inside it (or prefix each with: uv run --extra sim)
 python -m unittest discover tests          # all tests (PyTorch, MuJoCo and Node ones skip if absent)
-python scripts/learning/evaluate.py                 # network against exact IK -> results/learning/metrics.json
-python scripts/body/make_body_demos.py          # posture, trot, crawl -> results/body/body_metrics.json, GIFs
-pip install mujoco
-python scripts/stand/stand_test.py               # stand test in physics
-python scripts/gait/gait_replay.py              # trot and crawl in physics
-python scripts/gait/live_gait.py                # live gait explorer at 127.0.0.1:8765
-python scripts/website/site_sweep.py               # the 144 runs behind the physics lab on this site
-python scripts/website/build_site.py &amp;&amp; python -m http.server -d site   # this website</code></pre>
+python scripts/learning/evaluate.py        # network against exact IK -> results/learning/metrics.json
+python scripts/body/make_body_demos.py     # posture, trot, crawl -> results/body/body_metrics.json, GIFs
+python scripts/stand/stand_test.py         # stand test in physics
+python scripts/gait/gait_replay.py         # trot and crawl in physics
+python scripts/gait/live_gait.py           # live gait explorer at 127.0.0.1:8765
+python scripts/website/site_sweep.py       # the 144 runs behind the physics lab on this site
+python scripts/website/build_site.py &amp;&amp; python -m http.server -d site   # this website
+just results                               # or: every result in dependency order (several hours)</code></pre>
     </div>
   </div>
 </main>

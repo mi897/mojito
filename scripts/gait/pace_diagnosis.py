@@ -10,20 +10,18 @@ Checks, each from a MuJoCo run (placeholder dimensions, masses, servo figures, f
   4. variants: period, duty, swing height;
   5. a lateral body shift toward the stance side (the crawl's lean idea), which should unload the swing feet.
 
-    python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
+    uv run --extra sim python scripts/gait/pace_diagnosis.py        # writes results/gait/pace_diagnosis.json
 """
 import dataclasses
-import json
-import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import gaits
-from mojito.sim import actuators, gait_replay  # noqa: E402
+from mojito.sim import actuators, gait_replay
 
-TIMESTEP = 0.002
+TIMESTEP = defaults_of(gait_replay.run_gait)["timestep"]  # the runs keep run_gait's timestep
+VELOCITY = 0.1  # m/s, commanded forward speed of every run
 # The pace was measured with the original 30 mm swing, 0.2125 m stance and kp 10 servo, and still is; `gaits.TROT` is now 22 mm.
 TROT = dataclasses.replace(gaits.TROT, lift=0.03)
 PACE = dataclasses.replace(TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
@@ -31,7 +29,7 @@ Servo = actuators.ServoParams
 IDEAL = Servo(kp=100.0, kd=1.0, latency=0.0, resolution=1e-4, torque_scale=10.0)
 
 
-def measure(gait, velocity=0.1, cycles=3, **kw):
+def measure(gait, velocity=VELOCITY, cycles=3, **kw):
     r = gait_replay.run_gait(gait, (velocity, 0.0), cycles=cycles, **kw)
     t = r["time_s"]
     walking = t >= r["walk_start_s"]
@@ -59,7 +57,7 @@ def measure(gait, velocity=0.1, cycles=3, **kw):
 
 
 def main():
-    out = {"what": __doc__.strip().split("\n")[0], "velocity_commanded_m_s": 0.1}
+    out = {"what": __doc__.strip().split("\n")[0], "velocity_commanded_m_s": VELOCITY}
     out["trot_vs_pace"] = {f"{g.name} {n}": measure(g, **kw)
                            for g in (TROT, PACE)
                            for n, kw in (("kp 10", {}), ("kp 100", dict(servo=Servo(kp=100.0, kd=1.0))), ("ideal servo", dict(servo=IDEAL)))}
@@ -96,8 +94,7 @@ def main():
                   f"swing-load {row['load_share_on_feet_commanded_to_swing']:.2f} roll {row['roll_range_deg']:5.1f}  "
                   f"left share (left down/right down) {row['left_load_share_while_left_commanded_down']}/{row['left_load_share_while_right_commanded_down']}"
                   + (f"  roll if foot just reaches floor {row['roll_range_if_swing_foot_just_reaches_floor_deg']}" if "roll_range_if_swing_foot_just_reaches_floor_deg" in row else ""))
-    with open(os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait", "pace_diagnosis.json"), "w") as f:
-        json.dump(out, f, indent=2)
+    write_result(results_path("gait", "pace_diagnosis.json"), out, indent=2)
 
 
 if __name__ == "__main__":

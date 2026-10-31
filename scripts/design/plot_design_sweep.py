@@ -6,7 +6,7 @@ A walk is "valid" when every commanded foot target stayed inside the joint limit
 The plot shows, for the leg designs at the placeholder body, the measured speed over the commanded speed at 0.10 m/s;
 a cross marks a walk that is not valid. A valid walk can still be slow: read the number.
 
-    python scripts/design/plot_design_sweep.py
+    uv run --extra sim python scripts/design/plot_design_sweep.py
 """
 import json
 import os
@@ -15,10 +15,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.palette import INK, ORANGE  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK, GREY = "#333333", "#9a9a9a"
-DIRECTORY = "results/design"
+DIRECTORY = results_path("design")
 PLOT_SPEED = 0.10
 LENGTHS = (0.10, 0.15, 0.20)
 
@@ -49,8 +49,7 @@ def main():
         for gait in ("trot", "crawl"):
             walks = [w for c in group for w in c["walk"] if w["gait"] == gait]
             summary["valid_walks"][f"{gait} {mass:.2f} kg"] = f"{sum(valid(w) for w in walks)} of {len(walks)}"
-    with open(os.path.join(DIRECTORY, "design_sweep_summary.json"), "w") as f:
-        json.dump(summary, f, indent=1)
+    write_result(os.path.join(DIRECTORY, "design_sweep_summary.json"), summary)
 
     fig, axes = plt.subplots(2, len(scales), figsize=(3.3 * len(scales), 6.2), squeeze=False)
     for row, gait in enumerate(("trot", "crawl")):

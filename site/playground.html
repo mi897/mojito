@@ -123,9 +123,9 @@
       It runs MuJoCo in this page (WebAssembly, downloaded once from jsDelivr, about 11 MB: that failed or is blocked, or this copy of the site was built without <code>data/livemeta.js</code>), or in Python on your computer, which this page then only draws.
       The local server listens on 127.0.0.1 only and refuses other hosts and origins; nothing is sent anywhere.
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
-pip install numpy scipy matplotlib pillow mujoco
-python scripts/website/build_site.py
-python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
+./scripts/setup.sh                                        # installs uv, then the dependencies and the mojito package
+uv run --extra sim python scripts/website/build_site.py
+uv run --extra sim python scripts/website/serve_site.py   # then open http://127.0.0.1:8000/playground.html#live</code></pre>
       Meanwhile the Kinematic and Physics labs work without either.</div>
     <div class="notice" id="live-loading" hidden><b>Loading the physics engine…</b> MuJoCo's WebAssembly build is about 11 MB; the browser keeps it afterwards.</div>
     <div id="live-ui" hidden>

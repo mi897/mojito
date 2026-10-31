@@ -3,11 +3,10 @@
     results/learning/step_demo.gif  three different-sized legs tracing the same step
     docs/demo.html         interactive page: drag the target, change the lengths
 
-    python scripts/learning/make_demo.py [--weights weights/ik_leg.npz]
+    uv run --extra sim python scripts/learning/make_demo.py [--weights weights/ik_leg.npz]
 """
 import argparse
 import os
-import sys
 
 import matplotlib
 
@@ -16,11 +15,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 import mojito  # noqa: E402
+from mojito.learning.backend import add_backend_argument  # noqa: E402
+from mojito.palette import BLUE, GRID, ORANGE, SURFACE, LABEL_INK as INK2  # noqa: E402
+from mojito.results import repo_path, results_path  # noqa: E402
 from mojito.robot import leg  # noqa: E402
-
-BLUE, ORANGE, INK2, MUTED, SURFACE, GRID = "#2a78d6", "#eb6834", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
 
 
 def step_path(n, la):
@@ -76,17 +75,17 @@ def make_html(net, template, path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default="weights/ik_leg.npz")
-    ap.add_argument("--backend", choices=mojito.learning.backend.BACKENDS, default=None,
-                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+    ap.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
+    add_backend_argument(ap)
     args = ap.parse_args()
     net = mojito.load_model(args.weights, backend=args.backend)
     if not leg.is_leg(net.config):
         raise SystemExit("make_demo.py draws the 3-joint leg; these weights are for a different limb.")
-    os.makedirs("results/learning", exist_ok=True)
-    make_gif(net, "results/learning/step_demo.gif")
-    make_html(net, "docs/demo_template.html", "docs/demo.html")
-    print("wrote results/learning/step_demo.gif and docs/demo.html", os.path.getsize("docs/demo.html") // 1024, "KB")
+    gif, page = results_path("learning", "step_demo.gif"), repo_path("docs", "demo.html")
+    os.makedirs(os.path.dirname(gif), exist_ok=True)
+    make_gif(net, gif)
+    make_html(net, repo_path("docs", "demo_template.html"), page)
+    print("wrote results/learning/step_demo.gif and docs/demo.html", os.path.getsize(page) // 1024, "KB")
 
 
 if __name__ == "__main__":

@@ -4,16 +4,13 @@ Same model as scripts/gait/gait_replay.py (placeholder dimensions, masses 1.72 k
 figures). Duty 0.5 and the diagonal offsets stay as in `gaits.TROT`; only `period` changes. One run per cell, no
 randomisation. The baseline runs 4 cycles, the longer periods 3 (so each walks 6 s or more).
 
-    python scripts/gait/sweeps/trot_period_sweep.py        # needs mujoco; a few minutes
+    uv run --extra sim python scripts/gait/sweeps/trot_period_sweep.py        # needs mujoco; a few minutes
 """
 import dataclasses
-import json
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+from mojito.results import results_path, write_result
 from mojito.robot import gaits
-from mojito.sim import gait_replay  # noqa: E402
+from mojito.sim import gait_replay
 
 PERIODS = (0.5, 1.0, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0)
 # (forward velocity m/s, yaw rate rad/s)
@@ -40,8 +37,7 @@ def main():
             out["runs"].append(s)
             print(f"T={period} v={vx} w={yaw_rate} walked={s['walked']} v={s['measured_velocity_m_s']:+.3f} yaw={s['measured_yaw_rate_rad_s']:+.2f} "
                   f"tilt={s['max_tilt_deg']} torque={s['peak_torque_fraction_of_limit']} sat={s['fraction_of_walking_saturated']}", flush=True)
-    with open("results/gait/sweeps/period/trot_period_sweep.json", "w") as f:
-        json.dump(out, f, indent=2)
+    write_result(results_path("gait", "sweeps", "period", "trot_period_sweep.json"), out, indent=2)
 
 
 if __name__ == "__main__":

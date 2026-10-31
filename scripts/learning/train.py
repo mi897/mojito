@@ -1,26 +1,25 @@
 """Train the leg IK network.
 
-    python scripts/learning/train.py                       # defaults
-    python scripts/learning/train.py --tolerance 0.2       # wider range of leg lengths
-    python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05
-    python scripts/learning/train.py --backend torch       # PyTorch instead of NumPy
+    uv run --extra sim python scripts/learning/train.py                       # defaults
+    uv run --extra sim python scripts/learning/train.py --tolerance 0.2       # wider range of leg lengths
+    uv run --extra sim python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05
+    uv run --extra sim python scripts/learning/train.py --backend torch       # PyTorch instead of NumPy
 
     # Build the network from a URDF instead of the built-in leg:
-    python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
-    python scripts/learning/train.py --urdf robots/planar/planar.urdf --out weights/ik_planar.npz
+    uv run --extra sim python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+    uv run --extra sim python scripts/learning/train.py --urdf robots/planar/planar.urdf --out weights/ik_planar.npz
 """
 import argparse
-import json
 import os
-import sys
 import time
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-import mojito  # noqa: E402
+import mojito
 from mojito.geometry import spec as specmod
-from mojito.robot import leg  # noqa: E402
+from mojito.learning.backend import add_backend_argument
+from mojito.results import portable_path, repo_path, results_path, write_result
+from mojito.robot import leg
 
 
 def main():
@@ -37,11 +36,10 @@ def main():
     ap.add_argument("--batch", type=int, default=2048)
     ap.add_argument("--lr", "--learning-rate", dest="learning_rate", type=float, default=2e-3, help="peak learning rate")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--out", default="weights/ik_leg.npz")
-    ap.add_argument("--log", default="results/learning/training_log.json")
+    ap.add_argument("--out", default=repo_path("weights", "ik_leg.npz"))
+    ap.add_argument("--log", default=results_path("learning", "training_log.json"))
     ap.add_argument("--device", default="cpu", help="torch backend only: cpu, cuda, mps")
-    ap.add_argument("--backend", choices=mojito.learning.backend.BACKENDS, default=None,
-                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+    add_backend_argument(ap)
     args = ap.parse_args()
 
     if args.urdf:
@@ -76,10 +74,9 @@ def main():
                 print("step {step:6d}  median {median_mm:8.4f} mm  p95 {p95_mm:8.4f} mm  max {max_mm:8.3f} mm  {seconds:6.0f}s".format(**row), flush=True)
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    os.makedirs(os.path.dirname(args.log) or ".", exist_ok=True)
     net.save(args.out)
-    with open(args.log, "w") as f:
-        json.dump(dict(args=dict(vars(args), backend=net.backend), log=log), f, indent=1)
+    recorded = dict({k: portable_path(v) for k, v in vars(args).items()}, backend=net.backend)  # paths without this machine's folders
+    write_result(args.log, dict(args=recorded, log=log))
     print(f"saved {args.out}")
 
 

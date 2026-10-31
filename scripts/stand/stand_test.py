@@ -3,19 +3,17 @@
 Placeholder dimensions (Stage 2 design set), placeholder masses, unverified servo
 figures. Writes results/stand/stand_test.json.
 
-    python scripts/stand/stand_test.py
+    uv run --extra sim python scripts/stand/stand_test.py
 """
-import json
-import os
-import sys
-
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import statics
-from mojito.sim import actuators, mjcf, stand  # noqa: E402
+from mojito.sim import actuators, stand
 
-LENGTHS = np.array([0.05, 0.15, 0.15])
+STAND_DEFAULTS = defaults_of(stand.run_stand)  # the runs below change masses, servo and (section 4) height only
+LENGTHS = np.array(STAND_DEFAULTS["lengths"])
+CROUCH_HEIGHT, CROUCH_DURATION = 0.14, 2.0  # m, s: the crouch used by the sit-to-stand test, held for a shorter run
 LEG_KG = 4e-4  # per leg in the "light legs" runs: essentially zero, so the static calculation applies
 
 
@@ -43,8 +41,10 @@ def summary(r):
 
 def main():
     out = {"what": "four-foot stand, IK posture commanded through the servo model in MuJoCo; "
-                   "mean over the last 0.5 s of a 3 s run. Placeholder dimensions, masses and servo figures.",
-           "lengths_m": LENGTHS.tolist(), "stance_height_m": 0.2125}
+                   f"mean over the last {STAND_DEFAULTS['window']:g} s of a {STAND_DEFAULTS['duration']:g} s run "
+                   f"({CROUCH_DURATION:g} s for the crouch_{CROUCH_HEIGHT * 1000:.0f}mm runs). "
+                   "Placeholder dimensions, masses and servo figures.",
+           "lengths_m": LENGTHS.tolist(), "stance_height_m": STAND_DEFAULTS["height"]}
 
     # 1. Check against the static calculation: negligible leg mass, 1.5 kg, 5 V.
     r = stand.run_stand(masses=light(1.5))
@@ -81,12 +81,11 @@ def main():
         out["mass_sweep_5v_light_legs"][f"kp {kp} N.m/rad, kd {kd}"] = rows
 
     # 4. Weight distribution at the crouch used by the sit-to-stand test (140 mm), light legs and default masses.
-    out["crouch_140mm"] = {"light_legs_1p5kg": summary(stand.run_stand(masses=light(1.5), height=0.14, duration=2.0)),
-                           "default_masses": summary(stand.run_stand(height=0.14, duration=2.0))}
+    crouch = dict(height=CROUCH_HEIGHT, duration=CROUCH_DURATION)
+    out[f"crouch_{CROUCH_HEIGHT * 1000:.0f}mm"] = {"light_legs_1p5kg": summary(stand.run_stand(masses=light(1.5), **crouch)),
+                                                  "default_masses": summary(stand.run_stand(**crouch))}
 
-    path = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand", "stand_test.json")
-    with open(path, "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("stand", "stand_test.json"), out)
     for name, rows in out["mass_sweep_5v_light_legs"].items():
         print(name)
         for s in rows:

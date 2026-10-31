@@ -21,12 +21,12 @@ where the robot's dimensions, posture, gait, mass and servo settings can be chan
 MuJoCo runs). It reads the numbers from the JSON files under `results/`; it holds none of its own.
 
 ```bash
-python scripts/website/build_site.py                 # site/data and site/media from results/ (not committed)
-python -m http.server -d site 8000           # open http://127.0.0.1:8000
-python scripts/website/site_sweep.py                 # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
+uv run --extra sim python scripts/website/build_site.py   # site/data and site/media from results/ (not committed)
+python -m http.server -d site 8000                        # open http://127.0.0.1:8000
+uv run --extra sim python scripts/website/site_sweep.py   # re-run the 144 MuJoCo runs behind the physics lab (needs mujoco, about 2 minutes)
 ```
 
-**Live physics, local only.** `python scripts/website/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
+**Live physics, local only.** `uv run --extra sim python scripts/website/serve_site.py` (needs `mujoco`) serves the same site on `127.0.0.1:8000` and adds a third playground tab, "Live physics", where the Python simulation runs in real time behind the page: any link length, body size, stand height, mass, gait, servo gain or supply voltage, in real physics. It refuses other hosts and origins, and nothing leaves your machine. On the published site that tab explains how to run it.
 
 The `site` workflow publishes it with GitHub Pages when `main` changes (one-time: Settings, Pages, Source: GitHub Actions). The kinematic lab uses
 the closed-form IK in JavaScript (`site/assets/mojito.js`), checked against the Python by `tests/website/test_site_js.py` (needs Node).
@@ -74,8 +74,10 @@ just                          # list every task
 
 PyTorch is optional. `./scripts/setup.sh --torch` installs the CUDA build if an NVIDIA GPU is detected and the CPU build
 otherwise; `--gpu` or `--cpu` force one and skip detection. Already have uv and just? `just setup` (same flags) does the dependency step alone. Without just, prefix any command in this README
-with `uv run --extra sim`, for example `uv run --extra sim python scripts/body/make_body_demos.py`. Dependencies live in
-`pyproject.toml`; `uv.lock` pins exact versions.
+with `uv run --extra sim`, for example `uv run --extra sim python scripts/body/make_body_demos.py` (plain `python` works
+inside the activated `.venv`, where `uv sync` installs the `mojito` package editable). Dependencies live in
+`pyproject.toml`; `uv.lock` pins exact versions. `just results` regenerates every committed result in dependency order
+(several hours; `just results-fast` skips the slow steps).
 
 The trained network is in the repository (`weights/ik_leg.npz`), so nothing
 needs training to try it. Open `docs/demo.html` in a browser to drag a foot
@@ -105,7 +107,9 @@ Every script takes `--backend numpy|torch` and `--help`.
 ## Repository layout
 
 ```
-mojito/                the library, in four subpackages (each holds at most about a dozen files)
+mojito/                the library, in four subpackages (each holds at most about a dozen files), plus
+                       results.py (write_result: results JSON with a provenance block; paths from the repo root)
+                       and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
                        placeholders.py (placeholder leg and body dimensions), limb_model.py (LimbModel interface, Mirror)
@@ -126,7 +130,8 @@ scripts/               entry points, one folder per topic
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
-tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/;
+                       test_results.py for mojito/results.py (and that scripts use it and the palette)
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
@@ -137,7 +142,9 @@ CLAUDE.md              conventions and working rules for AI coding assistants
 ```
 
 `weights/`, `results/` and `docs/demo.html` are generated by the scripts and
-committed so this page renders. Regenerate them rather than editing by hand.
+committed so this page renders. Regenerate them rather than editing by hand (`just results` runs every generator in
+order). Each results JSON written since this was added carries a `provenance` block: the commit, whether the tree was
+dirty, the script and its arguments, the library versions and the time.
 
 ## Working on this
 

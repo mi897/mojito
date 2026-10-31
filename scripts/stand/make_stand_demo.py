@@ -8,19 +8,17 @@ floor because only the foot pads collide in the model.
     results/stand/stand_demo.gif        4 kg stands, 6 kg collapses (kp 100)
     results/stand/sit_to_stand_demo.gif 3 kg rises from a crouch in 2 s, 5 kg cannot (kp 10)
 
-    python scripts/stand/make_stand_demo.py
+    uv run --extra sim python scripts/stand/make_stand_demo.py
 """
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import actuators, stand  # noqa: E402
+from mojito.sim import actuators, stand
+from mojito.palette import BLUE, INK, ORANGE
+from mojito.results import results_path
 
-BLUE, ORANGE = "#2a78d6", "#eb6834"
-INK = "#333333"
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand")
+OUT = results_path("stand")
 EVERY = 10  # simulation steps per frame (20 ms)
 
 

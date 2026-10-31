@@ -5,18 +5,15 @@ For each of the 11 designs, three masses and both gaits, runs every GaitSettings
 and latency (no draw), 10 s per run. The best by design_sweep.tuning_score (valid first, then speed ratio closest to 1, then lowest
 peak torque) is kept per design, mass and gait, with all candidates. Period, duty, offsets and stride are not tuned.
 
-    python scripts/design/design_tune.py        # needs mujoco; 11 x 3 x 2 x 45 = 2970 runs, about 35 min on 4 cores
+    uv run --extra sim python scripts/design/design_tune.py        # needs mujoco; 11 x 3 x 2 x 45 = 2970 runs, about 35 min on 4 cores
 """
 import dataclasses
-import json
 import multiprocessing
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import design_sweep  # noqa: E402
+from mojito.sim import design_sweep
+from mojito.results import results_path, write_result
 
-OUTPUT = "results/design/design_tuning.json"
+OUTPUT = results_path("design", "design_tuning.json")
 
 
 def one(cell):
@@ -51,9 +48,7 @@ def main():
            "tune_speed_m_s": design_sweep.TUNE_SPEED, "knee_grid_rad": list(design_sweep.KNEE_GRID),
            "lift_grid_m": list(design_sweep.LIFT_GRID), "gain_grid": [list(g) for g in design_sweep.GAIN_GRID],
            "run_time_s": design_sweep.RUN_TIME, "entries": entries}
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w") as f:
-        json.dump(out, f)
+    write_result(OUTPUT, out, indent=None)
     print(f"{sum(design_sweep.is_valid(e['best_walk']) for e in entries)} of {len(entries)} have a valid best")
 
 

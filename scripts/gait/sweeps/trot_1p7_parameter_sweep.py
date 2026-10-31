@@ -4,18 +4,15 @@ Period stays 1.7 s (offsets diagonal). Varied together: duty, commanded speed, s
 height. Mass stays at the placeholder 1.72 kg (`trot_period_robustness.py` covers mass). One run per cell, 3 cycles,
 no randomisation.
 
-    python scripts/gait/sweeps/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_parameter_sweep.py        # needs mujoco; 192 runs, parallel over the CPU cores
 """
 import dataclasses
 import itertools
-import json
 import multiprocessing
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from mojito.robot import gaits  # noqa: E402
-from mojito.sim import actuators, gait_replay  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.robot import gaits
+from mojito.sim import actuators, gait_replay
 
 PERIOD = 1.7
 DUTY = (0.5, 0.55, 0.6, 0.7)  # 0.5 leaves no time with four feet down; more does
@@ -48,8 +45,7 @@ def main():
                    "Placeholder dimensions, masses (1.72 kg), servo figures and friction. One run per cell, 3 cycles.",
            "period_s": PERIOD, "duty": list(DUTY), "speed_m_s": list(SPEED), "height_m": list(HEIGHT),
            "kp": list(KP), "kd": KP, "lift_m": list(LIFT), "runs": runs}
-    with open("results/gait/sweeps/parameters/trot_1p7_parameter_sweep.json", "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("gait", "sweeps", "parameters", "trot_1p7_parameter_sweep.json"), out)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 
 

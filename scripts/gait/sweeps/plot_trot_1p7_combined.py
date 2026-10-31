@@ -8,7 +8,7 @@ peak torque over the runs that stayed upright (tilt under 30 degrees), and the c
 other config's ratio for the same draw (same mass and latency draw), then take the mean and sample standard deviation over the 10 draws.
 The spread is from the random mass and latency draws only.
 
-    python scripts/gait/sweeps/plot_trot_1p7_combined.py
+    uv run --extra sim python scripts/gait/sweeps/plot_trot_1p7_combined.py
 """
 import json
 import os
@@ -18,9 +18,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.palette import AQUA, BLUE, GREY, INK, ORANGE  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK, GREY = "#333333", "#9a9a9a"
 PLOTTED = (("baseline", GREY, ""), ("best", BLUE, ""), ("best_stance_0.17", AQUA, ""),
            ("gains_only", ORANGE, "//"), ("swing_only", ORANGE, ".."), ("stance_only", ORANGE, "xx"))
 
@@ -30,7 +30,7 @@ def mean_sd(xs):
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "combined")
+    root = results_path("gait", "sweeps", "combined")
     data = json.load(open(os.path.join(root, "trot_1p7_combined.json")))
     runs, configs = data["runs"], list(data["configs"])
     speeds, scales = data["speeds_m_s"], data["mass_scale"]
@@ -64,9 +64,8 @@ def main():
                 row[f"best_minus_best_baseline_{g}"] = paired("best", f"best_baseline_{g}", m, s)
             row["sum_of_single_effects"] = sum(row[f"{g}_only_minus_baseline"][0] for g in ("gains", "swing", "stance"))
             diffs.append(row)
-    with open(os.path.join(root, "trot_1p7_combined_summary.json"), "w") as fh:
-        json.dump({"what": "mean and sample standard deviation per (config, mass, speed) cell, and paired differences, from trot_1p7_combined.json",
-                   "iterations": data["iterations"], "cells": cells, "paired_differences": diffs}, fh, indent=1)
+    write_result(os.path.join(root, "trot_1p7_combined_summary.json"), {"what": "mean and sample standard deviation per (config, mass, speed) cell, and paired differences, from trot_1p7_combined.json",
+               "iterations": data["iterations"], "cells": cells, "paired_differences": diffs})
 
     cell = {(c["config"], c["mass_scale"], c["speed_m_s"]): c for c in cells}
     fig, axes = plt.subplots(2, len(scales), figsize=(15, 7.5))

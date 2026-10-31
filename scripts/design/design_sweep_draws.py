@@ -5,17 +5,14 @@ scripts/design/design_sweep.py, but each cell is run for 10 draws. Draw k seeds 
 mass by a uniform 0.95 to 1.05 and draws the servo latency uniformly from 18 to 22 ms; the same 10 draws in every cell
 (as in scripts/gait/sweeps/trot_1p7_combined.py). The spread is from those draws only, not model error.
 
-    python scripts/design/design_sweep_draws.py        # needs mujoco; 330 design-mass-draw cells of 7 runs, about 25 min on 4 cores
+    uv run --extra sim python scripts/design/design_sweep_draws.py        # needs mujoco; 330 design-mass-draw cells of 7 runs, about 25 min on 4 cores
 """
-import json
 import multiprocessing
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import design_sweep  # noqa: E402
+from mojito.sim import design_sweep
+from mojito.results import results_path, write_result
 
-OUTPUT = "results/design/design_sweep_draws.json"
+OUTPUT = results_path("design", "design_sweep_draws.json")
 DRAWS = 10
 
 
@@ -39,9 +36,7 @@ def main():
            "draws": DRAWS, "mass_spread": design_sweep.MASS_SPREAD, "latency_s_range": list(design_sweep.LATENCY),
            "speeds_m_s": list(design_sweep.SPEEDS), "mass_scales": list(design_sweep.MASS_SCALES),
            "run_time_s": design_sweep.RUN_TIME, "cells": out_cells}
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w") as f:
-        json.dump(out, f)
+    write_result(OUTPUT, out, indent=None)
     print(f"{sum(c['stand']['stood'] for c in out_cells)} of {len(out_cells)} stood")
 
 

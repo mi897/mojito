@@ -10,21 +10,19 @@ gives a speed the commanded motion can deliver:
 body to move backward). Whatever falls short of `ask` is the servo not following the command.
 Runs variants of the servo and the gait, writes results/gait/gait_speed_diagnosis.json. Needs mujoco.
 
-    python scripts/gait/gait_speed_diagnosis.py
+    uv run --extra sim python scripts/gait/gait_speed_diagnosis.py
 """
 import dataclasses
-import json
-import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import body, gaits
-from mojito.sim import actuators, gait_replay  # noqa: E402
+from mojito.sim import actuators, gait_replay
 
-TIMESTEP = 0.002
-STAND, RAMP = 1.0, 0.5
+RUN_DEFAULTS = defaults_of(gait_replay.run_gait)  # every run here keeps run_gait's timestep, stand and blend times and height
+TIMESTEP = RUN_DEFAULTS["timestep"]
+STAND, RAMP = RUN_DEFAULTS["stand_time"], RUN_DEFAULTS["ramp_time"]
 # The diagnosis was made with the original 30 mm swing, 0.2125 m stance and kp 10 servo; `gaits.TROT` is now 22 mm (and tuned in gait_replay).
 TROT_30MM = dataclasses.replace(gaits.TROT, lift=0.03)
 Servo = actuators.ServoParams
@@ -48,7 +46,7 @@ def analyse(gait, velocity, **kw):
     r = gait_replay.run_gait(gait, (velocity, 0.0), cycles=3 if gait.name == "trot" else 2, **kw)
     t = r["time_s"]
     walking = t >= STAND + RAMP
-    home = body.Robot(body.AnalyticSolver()).stance(0.2125)
+    home = body.Robot(body.AnalyticSolver()).stance(RUN_DEFAULTS["height"])
     _, commanded_contact, _ = gaits.foot_targets(gait, np.maximum(t - STAND, 0.0), home, (velocity, 0.0), 0.0)
     loads = r["foot_load_n"][1:] * walking[1:, None]
     command_vx = np.diff(r["feet_body_command_m"][:, :, 0], axis=0) / TIMESTEP  # commanded body-frame foot velocity
@@ -76,8 +74,7 @@ def main():
             print(f"{gait:5s} {name[:48]:48s}", " | ".join(
                 f"cmd {x['commanded_m_s']:.2f}: measured {x['measured_m_s']:+.3f} ask {x['load_weighted_ask_m_s']:+.3f} "
                 f"swing-load {x['load_share_on_feet_commanded_to_swing']:.2f}" for x in rows))
-    with open(os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait", "gait_speed_diagnosis.json"), "w") as f:
-        json.dump(out, f, indent=2)
+    write_result(results_path("gait", "gait_speed_diagnosis.json"), out, indent=2)
 
 
 if __name__ == "__main__":

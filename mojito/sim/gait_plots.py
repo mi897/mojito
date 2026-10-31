@@ -8,10 +8,9 @@ from __future__ import annotations
 import numpy as np
 
 from ..robot import body
+from ..palette import AQUA, BLUE, GREY, INK, ORANGE, PURPLE
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#2aa198"
-INK, GREY = "#333333", "#999999"
-LEG_COLOURS = {"FL": BLUE, "FR": ORANGE, "RL": AQUA, "RR": "#8a5cc2"}
+LEG_COLOURS = {"FL": BLUE, "FR": ORANGE, "RL": AQUA, "RR": PURPLE}
 BODY_LENGTH, BODY_WIDTH = 0.30, 0.15  # as drawn; the model's body is these placeholders (stand.py)
 
 

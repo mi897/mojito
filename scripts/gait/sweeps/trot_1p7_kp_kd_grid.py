@@ -6,33 +6,26 @@ the speed falls away). Everything else is the baseline of trot_1p7_one_at_a_time
 0.15 m/s, stance height 0.19 m, swing height 30 mm, 1.72 kg. Each cell is run 10 times with the same random mass (+-5%) and latency
 (18 to 22 ms) draws as that script (draw i uses seed i, the same draws in every cell); the spread is from those draws only.
 
-    python scripts/gait/sweeps/trot_1p7_kp_kd_grid.py        # needs mujoco; 2380 runs, parallel over the CPU cores, about two hours
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_kp_kd_grid.py        # needs mujoco; 2380 runs, parallel over the CPU cores, about two hours
 """
 import dataclasses
-import json
 import multiprocessing
-import os
-import sys
 
-import numpy as np
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from mojito.robot import gaits  # noqa: E402
-from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.robot import gaits
+from mojito.sim import actuators, design_sweep, gait_replay
 
 PERIOD, DUTY, SPEED, LIFT, HEIGHT = 1.7, 0.5, 0.15, 0.03, 0.19
 ITERATIONS = 10
-MASS_SPREAD = 0.05
-LATENCY = (0.018, 0.022)
+MASS_SPREAD = design_sweep.MASS_SPREAD
+LATENCY = design_sweep.LATENCY
 KP = [float(k) for k in range(20, 151, 10)]
 KD = [0.0, 0.03, 0.06, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 2.0, 3.0]
 
 
 def one(cell):
     kp, kd, iteration = cell
-    rng = np.random.default_rng(iteration)
-    masses = {k: v * rng.uniform(1 - MASS_SPREAD, 1 + MASS_SPREAD) for k, v in mjcf.DEFAULT_MASSES.items()}
-    latency = rng.uniform(*LATENCY)
+    masses, latency = design_sweep.draw_masses_and_latency(1.0, iteration)  # draw i seeds the generator with i
     gait = dataclasses.replace(gaits.TROT, period=PERIOD, duty=DUTY, lift=LIFT)
     r = gait_replay.run_gait(gait, (SPEED, 0.0), 0.0, cycles=3, height=HEIGHT, masses=masses,
                              servo=actuators.ServoParams(kp=kp, kd=kd, latency=latency))
@@ -58,8 +51,7 @@ def main():
                    "Through closed-form IK and the servo model into the actuated MuJoCo model, body free. Placeholder dimensions, "
                    "masses (1.72 kg nominal), servo figures and friction.",
            "iterations": ITERATIONS, "mass_spread": MASS_SPREAD, "latency_s_range": list(LATENCY), "kp": KP, "kd": KD, "runs": runs}
-    with open("results/gait/sweeps/servo_gains/trot_1p7_kp_kd_grid.json", "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("gait", "sweeps", "servo_gains", "trot_1p7_kp_kd_grid.json"), out)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 
 

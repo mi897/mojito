@@ -10,12 +10,14 @@ markers, so any error the network makes is in the picture and in the numbers.
     results/body/crawl_forward.gif  crawl with the body leaning away from the lifted foot
     results/body/body_metrics.json  tracking error, joint-limit margin, stability
 
-    python scripts/body/make_body_demos.py [--weights weights/ik_leg.npz] [--only posture trot_forward ...]
+    uv run --extra sim python scripts/body/make_body_demos.py [--weights weights/ik_leg.npz] [--only posture trot_forward ...]
+
+With --only, the other entries of body_metrics.json are kept from the earlier run, and the provenance block describes
+this (last) run only: its `entries_written` lists the entries it recomputed.
 """
 import argparse
 import json
 import os
-import sys
 
 import matplotlib
 
@@ -25,19 +27,14 @@ import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 import mojito  # noqa: E402
+from mojito import palette  # noqa: E402
+from mojito.learning.backend import add_backend_argument  # noqa: E402
+from mojito.palette import AQUA, BLUE, GRID, ORANGE, LABEL_INK as INK2  # noqa: E402
+from mojito.results import repo_path, results_path, write_result  # noqa: E402
 from mojito.robot import body, gaits  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
-INK, INK2, MUTED, SURFACE, GRID = "#0b0b0b", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
-plt.rcParams.update({
-    "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE, "font.size": 9,
-    "axes.edgecolor": GRID, "axes.labelcolor": INK2, "text.color": INK, "xtick.color": MUTED, "ytick.color": MUTED,
-    "xtick.labelcolor": INK2, "ytick.labelcolor": INK2, "axes.spines.top": False, "axes.spines.right": False,
-    "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8, "axes.titlesize": 9.5, "axes.titleweight": "bold",
-    "axes.titlelocation": "left", "lines.linewidth": 1.8,
-})
+plt.rcParams.update(palette.panel_style(font_size=9, title_size=9.5, line_width=1.8))
 
 
 def smooth_bump(t, start, length):
@@ -209,11 +206,10 @@ def animate(robot, s, path, dpi=80):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default="weights/ik_leg.npz")
+    ap.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
     ap.add_argument("--only", nargs="*", default=None)
     ap.add_argument("--no-gif", action="store_true", help="compute the metrics only")
-    ap.add_argument("--backend", choices=mojito.learning.backend.BACKENDS, default=None,
-                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+    add_backend_argument(ap)
     args = ap.parse_args()
     robot = body.Robot(mojito.load_model(args.weights, backend=args.backend))
     reference = body.Robot(body.AnalyticSolver(), robot.lengths)
@@ -224,19 +220,19 @@ def main():
         "trot_turn": lambda: gait_script(robot, gaits.TROT, (0.0, 0.0), 1.2, 2, 20, "Trot, turning on the spot at 1.2 rad/s"),
         "crawl_forward": lambda: gait_script(robot, gaits.CRAWL, (0.04, 0.0), 0.0, 2, 20, "Crawl at 0.04 m/s, body leaning away from the lifted foot"),
     }
-    os.makedirs("results/body", exist_ok=True)
-    metrics_path = "results/body/body_metrics.json"
+    metrics_path = results_path("body", "body_metrics.json")
     metrics = json.load(open(metrics_path)) if os.path.exists(metrics_path) else {}
+    written = []
     for name, build in demos.items():
         if args.only and name not in args.only:
             continue
+        written.append(name)
         s = build()
         metrics[name] = measure(robot, reference, s)
         if not args.no_gif:
-            animate(robot, s, f"results/body/{name}.gif")
+            animate(robot, s, results_path("body", f"{name}.gif"))
         print(name, json.dumps(metrics[name]), flush=True)
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=1)
+    write_result(metrics_path, metrics, note={"entries_written": written})
 
 
 if __name__ == "__main__":
