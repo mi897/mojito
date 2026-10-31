@@ -11,16 +11,14 @@ floor because only the foot pads collide in the model.
     python scripts/stand/make_stand_demo.py
 """
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import actuators, stand  # noqa: E402
+from mojito.sim import actuators, stand
+from mojito.palette import BLUE, INK, ORANGE
+from mojito.results import results_path
 
-BLUE, ORANGE = "#2a78d6", "#eb6834"
-INK = "#333333"
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand")
+OUT = results_path("stand")
 EVERY = 10  # simulation steps per frame (20 ms)
 
 

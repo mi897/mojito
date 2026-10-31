@@ -16,10 +16,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.palette import INK, ORANGE  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK, GREY = "#333333", "#9a9a9a"
-DIRECTORY = "results/design"
+DIRECTORY = results_path("design")
 PLOT_SPEED = 0.10
 LENGTHS = (0.10, 0.15, 0.20)
 
@@ -72,8 +72,7 @@ def main():
         t["tuned_valid"] += r["tuned_valid"]
         t["untuned_valid"] += r["untuned_valid"]
         t["walks"] += draws
-    with open(os.path.join(DIRECTORY, "design_sweep_tuned_summary.json"), "w") as f:
-        json.dump({"draws": draws, "totals": totals, "rows": rows}, f, indent=1)
+    write_result(os.path.join(DIRECTORY, "design_sweep_tuned_summary.json"), {"draws": draws, "totals": totals, "rows": rows})
 
     fig, axes = plt.subplots(2, len(scales), figsize=(3.3 * len(scales), 6.2), squeeze=False)
     for row_i, gait in enumerate(("trot", "crawl")):

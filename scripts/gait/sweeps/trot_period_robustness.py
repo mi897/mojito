@@ -8,13 +8,10 @@ Only `period` changes. One run per cell, no randomisation. The 0.5 s baseline ru
 """
 import dataclasses
 import itertools
-import json
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+from mojito.results import results_path, write_result
 from mojito.robot import gaits
-from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
+from mojito.sim import actuators, gait_replay, mjcf
 
 PERIODS = (0.5, 1.0, 1.5, 1.7, 2.0, 2.5, 3.0, 4.0)
 KP = {10: 0.2, 30: 0.5, 100: 1.0}  # kp -> kd, as in scripts/website/site_sweep.py
@@ -44,8 +41,7 @@ def main():
                    "trot_period_sweep.json. Placeholder dimensions, masses, servo figures and friction. One run per cell.",
            "commanded_velocity_m_s": SPEED, "periods_s": list(PERIODS), "kp": list(KP), "kd": KP,
            "mass_scale": list(MASS_SCALE), "lift_m": list(LIFT), "runs": runs}
-    with open("results/gait/sweeps/period/trot_period_robustness.json", "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("gait", "sweeps", "period", "trot_period_robustness.json"), out)
 
 
 if __name__ == "__main__":

@@ -16,9 +16,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.palette import INK  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK = "#333333"
 
 
 def mean_sd(xs):
@@ -53,13 +53,12 @@ def summarise(data):
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "servo_gains")
+    root = results_path("gait", "sweeps", "servo_gains")
     data = json.load(open(os.path.join(root, "trot_1p7_kp_kd_grid.json")))
     cells, best = summarise(data)
     kps, kds = data["kp"], data["kd"]
-    with open(os.path.join(root, "trot_1p7_kp_kd_grid_summary.json"), "w") as fh:
-        json.dump({"what": "mean and sample standard deviation per (kp, kd) cell and the best kd per kp, from trot_1p7_kp_kd_grid.json",
-                   "iterations": data["iterations"], "cells": list(cells.values()), "best_per_kp": best}, fh, indent=1)
+    write_result(os.path.join(root, "trot_1p7_kp_kd_grid_summary.json"), {"what": "mean and sample standard deviation per (kp, kd) cell and the best kd per kp, from trot_1p7_kp_kd_grid.json",
+               "iterations": data["iterations"], "cells": list(cells.values()), "best_per_kp": best})
 
     # lines: speed ratio against kd, one line per kp, and the tilt
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.2))

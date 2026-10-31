@@ -8,15 +8,12 @@ so each leg keeps the placeholder knee bend (docs/STAGE2.md, work package 5).
 
     python scripts/design/design_sweep.py        # needs mujoco; 33 design-and-mass cells of 7 runs, parallel over the CPU cores
 """
-import json
 import multiprocessing
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import design_sweep  # noqa: E402
+from mojito.sim import design_sweep
+from mojito.results import results_path, write_result
 
-OUTPUT = "results/design/design_sweep.json"
+OUTPUT = results_path("design", "design_sweep.json")
 
 
 def one(cell):
@@ -34,9 +31,7 @@ def main():
                    "All dimensions, masses, servo figures and friction are placeholders.",
            "speeds_m_s": list(design_sweep.SPEEDS), "mass_scales": list(design_sweep.MASS_SCALES),
            "run_time_s": design_sweep.RUN_TIME, "abduction_offset_m": design_sweep.ABDUCTION_OFFSET, "cells": cells_out}
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(OUTPUT, out)
     stood = sum(c["stand"]["stood"] for c in cells_out)
     walked = sum(w["walked"] for c in cells_out for w in c["walk"])
     print(f"{stood} of {len(cells_out)} stood; {walked} of {sum(len(c['walk']) for c in cells_out)} walks")

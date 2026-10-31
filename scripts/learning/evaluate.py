@@ -5,7 +5,6 @@
 import argparse
 import json
 import os
-import sys
 import time
 
 import matplotlib
@@ -15,22 +14,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 import mojito  # noqa: E402
+from mojito import palette  # noqa: E402
+from mojito.learning.backend import add_backend_argument  # noqa: E402
+from mojito.palette import BLUE, ORANGE, LABEL_INK as INK2, TITLE_INK as INK  # noqa: E402
+from mojito.results import repo_path, results_path, write_result  # noqa: E402
 from mojito.robot import leg  # noqa: E402
 
-BLUE, ORANGE = "#2a78d6", "#eb6834"
-INK, INK2, MUTED, SURFACE, GRID = "#0b0b0b", "#52514e", "#898781", "#fcfcfb", "#e6e5e0"
-BLUES = LinearSegmentedColormap.from_list("blues", ["#cde2fb", "#86b6ef", "#2a78d6", "#0d366b"])
+BLUES = LinearSegmentedColormap.from_list("blues", ["#cde2fb", "#86b6ef", BLUE, "#0d366b"])
 
-plt.rcParams.update({
-    "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
-    "font.size": 10, "axes.edgecolor": GRID, "axes.labelcolor": INK2, "text.color": INK,
-    "xtick.color": MUTED, "ytick.color": MUTED, "xtick.labelcolor": INK2, "ytick.labelcolor": INK2,
-    "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
-    "grid.color": GRID, "grid.linewidth": 0.8, "axes.titlesize": 11, "axes.titleweight": "bold",
-    "axes.titlelocation": "left", "lines.linewidth": 2, "figure.dpi": 150,
-})
+plt.rcParams.update({**palette.panel_style(font_size=10, title_size=11, line_width=2), "figure.dpi": 150})
 
 
 def errors_mm(net, p, lengths):
@@ -51,11 +44,10 @@ def summary(e):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default="weights/ik_leg.npz")
-    ap.add_argument("--log", default="results/learning/training_log.json")
-    ap.add_argument("--out", default="results/learning")
-    ap.add_argument("--backend", choices=mojito.learning.backend.BACKENDS, default=None,
-                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+    ap.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
+    ap.add_argument("--log", default=results_path("learning", "training_log.json"))
+    ap.add_argument("--out", default=results_path("learning"))
+    add_backend_argument(ap)
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -107,8 +99,7 @@ def main():
         sweep.append((float(d), float(np.median(es)), float(np.percentile(es, 95))))
     metrics["length_scale_sweep"] = [dict(scale_deviation=d, median_mm=m, p95_mm=h) for d, m, h in sweep]
 
-    with open(os.path.join(args.out, "metrics.json"), "w") as f:
-        json.dump(metrics, f, indent=1)
+    write_result(os.path.join(args.out, "metrics.json"), metrics)
 
     # ---------------- plots ----------------
     if os.path.exists(args.log):

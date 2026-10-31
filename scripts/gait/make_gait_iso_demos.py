@@ -10,13 +10,12 @@ For other timings use scripts/gait/try_gait.py.
     python scripts/gait/make_gait_iso_demos.py
 """
 import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.robot import gaits
-from mojito.sim import gait_plots, gait_replay  # noqa: E402
+from mojito.sim import gait_plots, gait_replay
+from mojito.results import results_path
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait")
+OUT = results_path("gait")
 CASES = [
     ("trot_iso", gaits.TROT, (0.15, 0.0), 0.0, 3, "Trot (1.7 s period) at 0.15 m/s commanded"),
     ("trot_turn_iso", gaits.TROT, (0.0, 0.0), 0.6, 3, "Trot (1.7 s period) turning at 0.6 rad/s commanded"),

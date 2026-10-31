@@ -15,21 +15,16 @@ the same 10 draws in every cell, so cells are compared on the same draws. The sp
     python scripts/gait/sweeps/trot_1p7_combined.py        # needs mujoco; 1080 runs, parallel over the CPU cores, about an hour
 """
 import dataclasses
-import json
 import multiprocessing
-import os
-import sys
 
-import numpy as np
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from mojito.robot import gaits  # noqa: E402
-from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.robot import gaits
+from mojito.sim import actuators, design_sweep, gait_replay
 
 PERIOD, DUTY = 1.7, 0.5
 ITERATIONS = 10
-MASS_SPREAD = 0.05
-LATENCY = (0.018, 0.022)
+MASS_SPREAD = design_sweep.MASS_SPREAD
+LATENCY = design_sweep.LATENCY
 SPEEDS = (0.05, 0.10, 0.15, 0.20)
 MASS_SCALE = (0.6, 1.0, 1.75)
 BASELINE = {"kp": 30.0, "kd": 0.5, "lift": 0.03, "height": 0.19}
@@ -59,9 +54,7 @@ CONFIGS = {
 def one(cell):
     name, speed, scale, iteration = cell
     p = CONFIGS[name]
-    rng = np.random.default_rng(iteration)
-    masses = {k: v * scale * rng.uniform(1 - MASS_SPREAD, 1 + MASS_SPREAD) for k, v in mjcf.DEFAULT_MASSES.items()}
-    latency = rng.uniform(*LATENCY)
+    masses, latency = design_sweep.draw_masses_and_latency(scale, iteration)  # draw i seeds the generator with i
     gait = dataclasses.replace(gaits.TROT, period=PERIOD, duty=DUTY, lift=p["lift"])
     r = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=3, height=p["height"], masses=masses,
                              servo=actuators.ServoParams(kp=p["kp"], kd=p["kd"], latency=latency))
@@ -89,8 +82,7 @@ def main():
                    "masses (1.72 kg nominal times the mass scale), servo figures and friction.",
            "iterations": ITERATIONS, "mass_spread": MASS_SPREAD, "latency_s_range": list(LATENCY), "speeds_m_s": list(SPEEDS),
            "mass_scale": list(MASS_SCALE), "configs": CONFIGS, "runs": runs}
-    with open("results/gait/sweeps/combined/trot_1p7_combined.json", "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("gait", "sweeps", "combined", "trot_1p7_combined.json"), out)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 
 

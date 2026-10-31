@@ -9,26 +9,24 @@ limit stops the 150 mm legs lower than about 130 mm.
 
     python scripts/stand/sit_to_stand.py
 """
-import json
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.palette import AQUA, BLUE, INK, ORANGE
+from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import statics
-from mojito.sim import actuators, stand  # noqa: E402
+from mojito.sim import actuators, stand
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK = "#333333"
-LENGTHS = np.array([0.05, 0.15, 0.15])
+RUN_DEFAULTS = defaults_of(stand.run_sit_to_stand)  # the runs below keep its leg lengths and body size
+LENGTHS = np.array(RUN_DEFAULTS["lengths"])
 SIT, STAND = 0.14, 0.2125
 RISE_TIMES = (0.5, 1.0, 2.0, 4.0)
 MASSES = (1.5, 2.0, 3.0, 4.0, 5.0)
 # (kp, kd, command resolution in rad or None for the PCA9685 default 0.66 deg). Gains are placeholders, so several are
 # shown; the third separates the effect of command quantisation, which a stiff gain turns into torque steps.
 GAINS = ((10.0, 0.2, None), (100.0, 1.0, None), (100.0, 1.0, 1e-4))
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand")
+OUT = results_path("stand")
 
 
 def light(total):
@@ -53,8 +51,10 @@ def row(r, mass, rise):
 
 def main():
     out = {"what": "sit-to-stand in MuJoCo through the servo model, 5 V, listed stall torque (unverified); legs of "
-                   "negligible mass; minimum-jerk height profile; 1 s hold crouched, rise, 1 s hold standing. "
-                   "Fractions are of the 1.86 N.m stall torque; 'stood' means within 50 mm of the target height and "
+                   f"negligible mass; minimum-jerk height profile; {RUN_DEFAULTS['settle']:g} s hold crouched, rise, "
+                   f"{RUN_DEFAULTS['hold']:g} s hold standing. "
+                   f"Fractions are of the {actuators.ServoParams().stall_torque:.2f} N.m stall torque; "
+                   "'stood' means within 50 mm of the target height and "
                    "never tilted past 20 degrees. Not shown: anything about a real robot (masses, gains and "
                    "servo figures are placeholders), or about a lying-down start.",
            "lengths_m": LENGTHS.tolist(), "sit_height_m": SIT, "stand_height_m": STAND}
@@ -62,11 +62,12 @@ def main():
     # Static torque at the crouch against the measured hold, light robot 1.5 kg, for reference.
     r = stand.run_sit_to_stand(SIT, STAND, 2.0, masses=light(1.5))
     from mojito.robot import body
-    robot = body.Robot(body.AnalyticSolver(), lengths=LENGTHS, body_length=0.30, body_width=0.15)
+    robot = body.Robot(body.AnalyticSolver(), lengths=LENGTHS, body_length=RUN_DEFAULTS["body_length"],
+                       body_width=RUN_DEFAULTS["body_width"])
     q_sit, q_stand = robot.solve(robot.stance(SIT))[0], robot.solve(robot.stance(STAND))[0]
     out["static_knee_torque_per_kg_nm"] = {
-        "crouched": round(float(statics.joint_torques(q_sit, LENGTHS, 9.81 / 4)[2]), 4),
-        "standing": round(float(statics.joint_torques(q_stand, LENGTHS, 9.81 / 4)[2]), 4),
+        "crouched": round(float(statics.joint_torques(q_sit, LENGTHS, statics.G / 4)[2]), 4),
+        "standing": round(float(statics.joint_torques(q_stand, LENGTHS, statics.G / 4)[2]), 4),
         "note": "equal quarter of the weight per foot, per kg of robot"}
     out["sweeps"] = {}
     series = {}
@@ -79,8 +80,7 @@ def main():
                 rows.append(row(r, mass, rise))
                 series[(kp, res, mass, rise)] = r
         out["sweeps"][_name(kp, kd, res)] = rows
-    with open(os.path.join(OUT, "sit_to_stand.json"), "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(os.path.join(OUT, "sit_to_stand.json"), out)
     for name, rows in out["sweeps"].items():
         print(name)
         for s in rows:

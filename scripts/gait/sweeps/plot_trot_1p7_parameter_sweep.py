@@ -14,16 +14,16 @@ import statistics
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from mojito.palette import BLUE, INK, ORANGE  # noqa: E402
+from mojito.results import results_path  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK = "#333333"
 PARAMETERS = (("duty", "duty (fraction on ground)", "{:g}"), ("speed_m_s", "commanded speed [m/s]", "{:g}"),
               ("height_m", "stance height [m]", "{:g}"), ("kp", "servo gain kp [N·m/rad]", "{:g}"),
               ("lift_m", "swing height [m]", "{:g}"))
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "parameters")
+    root = results_path("gait", "sweeps", "parameters")
     runs = json.load(open(os.path.join(root, "trot_1p7_parameter_sweep.json")))["runs"]
     fig, axes = plt.subplots(2, len(PARAMETERS), figsize=(15, 6.2), sharey="row")
     for col, (key, label, fmt) in enumerate(PARAMETERS):

@@ -31,12 +31,24 @@ class TestBuildSite(unittest.TestCase):
             data = json.loads(text[len("window.MOJITO_RESULTS="):].rstrip().rstrip(";"))
             self.assertIn("metrics", data)
             self.assertTrue(os.path.exists(os.path.join(out, "media", "leg_demo.html")))
+            with open(os.path.join(out, "data", "build.js")) as f:
+                text = f.read()
+            self.assertIn("results_provenance", json.loads(text[len("window.MOJITO_BUILD="):].rstrip().rstrip(";")))
+
+    def test_provenance_is_kept_out_of_the_result(self):
+        # A result written by mojito.results.write_result reads back with the same shape as before, the block apart.
+        from mojito.results import write_result
+        with tempfile.TemporaryDirectory() as directory:
+            path = write_result(os.path.join(directory, "metrics.json"), {"learned_varied_legs": {"median_mm": 0.5}})
+            numbers, record = build_site.load_result(path)
+        self.assertEqual(numbers, {"learned_varied_legs": {"median_mm": 0.5}})
+        self.assertEqual(resolve(numbers, "learned_varied_legs.median_mm"), 0.5)
+        self.assertIn("git_commit", record)
 
     def test_every_bound_number_resolves_to_a_number(self):
         results = {}
         for name in build_site.RESULT_FILES:
-            with open(build_site.find_result(os.path.join(ROOT, "results"), name + ".json")) as f:
-                results[name] = json.load(f)
+            results[name], _ = build_site.load_result(build_site.find_result(os.path.join(ROOT, "results"), name + ".json"))
         bound = 0
         for page in glob.glob(os.path.join(ROOT, "site", "*.html")):
             with open(page) as f:

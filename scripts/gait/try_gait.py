@@ -16,20 +16,19 @@ offset + duty (mod 1). `--order` replaces `--offsets` for one-leg-at-a-time gait
 """
 import argparse
 import dataclasses
-import json
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.results import results_path, write_result
 from mojito.robot import body, gaits
-from mojito.sim import actuators, gait_plots, gait_replay  # noqa: E402
+from mojito.sim import gait_plots, gait_replay, live_sim
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait", "try")
+OUT = results_path("gait", "try")
 
 
 def parse_args():
+    trot, crawl = (gait_replay.settings_for(g)["servo"] for g in (gaits.TROT, gaits.CRAWL))
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--base", choices=("trot", "crawl"), default="trot", help="gait to start from")
     p.add_argument("--name", default="variant", help="output file stem in results/gait/try/")
@@ -42,9 +41,9 @@ def parse_args():
     p.add_argument("--velocity", type=float, nargs="+", default=[0.1], help="vx [vy] in m/s")
     p.add_argument("--yaw-rate", type=float, default=0.0, help="rad/s")
     p.add_argument("--cycles", type=int, default=3)
-    p.add_argument("--kp", type=float, help="servo position gain, N·m/rad (default: 50 for the trot, 10 for the crawl)")
-    p.add_argument("--kd", type=float, help="servo damping (default: 0.9 for the trot, 0.2 for the crawl)")
-    p.add_argument("--mass", type=float, help="total mass, kg, all in the body (default: placeholder masses, 1.72 kg)")
+    p.add_argument("--kp", type=float, help=f"servo position gain, N·m/rad (default: {trot.kp:g} for the trot, {crawl.kp:g} for the crawl)")
+    p.add_argument("--kd", type=float, help=f"servo damping (default: {trot.kd:g} for the trot, {crawl.kd:g} for the crawl)")
+    p.add_argument("--mass", type=float, help=f"total mass, kg, all in the body (default: placeholder masses, {live_sim.DEFAULT_TOTAL_MASS:.2f} kg)")
     p.add_argument("--no-gif", action="store_true")
     return p.parse_args()
 
@@ -105,9 +104,8 @@ def main():
         gait_plots.save_isometric(r, stem + "_iso.gif", title)
     keep = ("gait", "walked", "max_tilt_deg", "measured_velocity_m_s", "measured_yaw_rate_rad_s", "peak_torque_fraction_of_limit",
             "fraction_of_walking_saturated", "feet_down_min", "slip_max_mm_per_step", "commanded_velocity_m_s")
-    with open(stem + ".json", "w") as f:
-        json.dump({"gait": dataclasses.asdict(gait), "velocity": velocity, "yaw_rate": a.yaw_rate,
-                   "result": {k: r[k] for k in keep}}, f, indent=2)
+    write_result(stem + ".json", {"gait": dataclasses.asdict(gait), "velocity": velocity, "yaw_rate": a.yaw_rate,
+               "result": {k: r[k] for k in keep}}, indent=2)
     print("wrote", stem + "_timing.png" + ("" if a.no_gif else ", " + stem + "_iso.gif"), "and .json")
 
 

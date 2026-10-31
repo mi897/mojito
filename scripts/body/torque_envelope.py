@@ -10,20 +10,17 @@ leg mass, no motion: a first bound for comparing designs, not a prediction.
 """
 import argparse
 import json
-import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.robot import gaits, leg, statics  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.robot import gaits, leg, statics
+from mojito.sim import actuators  # NumPy only, no MuJoCo
 
-KGCM = 0.0980665  # N*m per kg*cm
-# Stall torque from retailer listings for the DS3218 (unverified, see docs/STAGE2.md):
-# 19 kg*cm at 5 V and 21.5 kg*cm at 6.8 V. Between them a straight line; the supply is
+# Stall torque from retailer listings for the DS3218 (unverified, see docs/STAGE2.md), as in the servo model
+# (`actuators.ServoParams`): 19 kg*cm at 5 V and 21.5 kg*cm at 6.8 V, a straight line between them; the supply is
 # kept within 5 to 6.0 V, so the model never needs a value outside the listed points.
-LISTED_V, LISTED_KGCM = (5.0, 6.8), (19.0, 21.5)
-SERVO_KGCM = {f"{v} V": float(np.interp(v, LISTED_V, LISTED_KGCM)) for v in (5.0, 6.0)}
+SERVO_STALL_NM = {f"{v} V": actuators.ServoParams(voltage=v).stall_torque for v in (5.0, 6.0)}
 DERATES = (1.0, 0.5)
 # Stage 2 design placeholders (docs/STAGE2.md): 1.25x the Stage 0-1 placeholders so the
 # servos (listed 40 x 20 x 40.5 mm) are not oversized against the legs. Still placeholders.
@@ -79,14 +76,14 @@ def main():
         "what": "static joint torque per unit body weight, vertical foot loads only; no leg or servo mass, no motion, no friction limit",
         "lengths_m": lengths.tolist(), "stand_height_m": args.height,
         "body_length_m": args.body_length, "body_width_m": args.body_width,
-        "servo_stall_nm_unverified": {k: round(v * KGCM, 3) for k, v in SERVO_KGCM.items()},
+        "servo_stall_nm_unverified": {k: round(v, 3) for k, v in SERVO_STALL_NM.items()},
         "derates": list(DERATES),
     }
     per, min_load = cases(lengths, args.height, args.body_length, args.body_width)
     result["crawl_min_foot_load_fraction"] = float(min_load)
     result["torque_per_weight_m"] = {c: dict(zip(NAMES, map(float, t))) for c, t in per.items()}
     result["max_total_mass_kg"] = {
-        c: {f"{v} derate {d}": round(max_mass(t, kg * KGCM * d), 2) for v, kg in SERVO_KGCM.items() for d in DERATES}
+        c: {f"{v} derate {d}": round(max_mass(t, stall * d), 2) for v, stall in SERVO_STALL_NM.items() for d in DERATES}
         for c, t in per.items()
     }
 
@@ -94,20 +91,18 @@ def main():
     scale = {}
     for s in (0.75, 1.0, 1.25, 1.5, 2.0):
         p, _ = cases(lengths * s, args.height * s, args.body_length, args.body_width)
-        scale[str(s)] = {c: round(max_mass(t, SERVO_KGCM["5.0 V"] * KGCM * 0.5), 2) for c, t in p.items()}
+        scale[str(s)] = {c: round(max_mass(t, SERVO_STALL_NM["5.0 V"] * 0.5), 2) for c, t in p.items()}
     result["max_mass_kg_by_leg_scale_5V_derate_0.5"] = scale
 
     # Body length to width ratio at fixed width, 5 V, derate 0.5.
     ratio = {}
     for r in (1.0, 1.5, 2.0, 2.4):
         p, ml = cases(lengths, args.height, args.body_width * r, args.body_width)
-        ratio[str(r)] = {"crawl_max_mass_kg": round(max_mass(p["crawl_3_feet"], SERVO_KGCM["5.0 V"] * KGCM * 0.5), 2),
+        ratio[str(r)] = {"crawl_max_mass_kg": round(max_mass(p["crawl_3_feet"], SERVO_STALL_NM["5.0 V"] * 0.5), 2),
                          "crawl_min_foot_load_fraction": round(float(ml), 3)}
     result["body_length_over_width_effect"] = ratio
 
-    os.makedirs("results/body", exist_ok=True)
-    with open("results/body/torque_envelope.json", "w") as f:
-        json.dump(result, f, indent=1)
+    write_result(results_path("body", "torque_envelope.json"), result)
     print(json.dumps(result, indent=1))
 
 

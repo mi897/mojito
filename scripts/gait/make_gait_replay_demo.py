@@ -12,17 +12,15 @@ servo figures and friction. The turning run is drawn from the side, so only its 
     python scripts/gait/make_gait_replay_demo.py
 """
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.palette import BLUE, GREY, INK, ORANGE
+from mojito.results import results_path
 from mojito.robot import gaits
-from mojito.sim import gait_replay  # noqa: E402
+from mojito.sim import gait_replay
 
-BLUE, ORANGE = "#2a78d6", "#eb6834"
-INK = "#333333"
-OUT = os.path.join(os.path.dirname(__file__), "..", "..", "results", "gait")
+OUT = results_path("gait")
 EVERY = 20  # simulation steps per frame (40 ms), played at 25 frames per second
 STAND, RAMP = 1.0, 0.5
 
@@ -61,7 +59,7 @@ def animate(cases, path):
             walking = max(0.0, t - STAND - RAMP)
             commanded_x = cs["vx"] * walking
             a.axvline(commanded_x, color=ORANGE, ls="--", lw=1)
-            a.axvline(origin[0] - cs["x0"], color="#999999", lw=1)
+            a.axvline(origin[0] - cs["x0"], color=GREY, lw=1)
             x = lambda p: p[0] - cs["x0"]  # noqa: E731
             a.plot([x(origin) - half[0], x(origin) + half[0]], [origin[2] - half[2], origin[2] + half[2]], color=INK,
                    lw=6, solid_capstyle="round")

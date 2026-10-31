@@ -19,15 +19,13 @@ Frame layout (25 Hz, from 0.5 s into the run): integers, to keep the file small
 import argparse
 import dataclasses
 import itertools
-import json
 import os
-import sys
 
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from mojito.results import defaults_of, relative_to_root, results_path, write_result
 from mojito.robot import gaits
-from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
+from mojito.sim import actuators, gait_replay, mjcf
 
 PACE = dataclasses.replace(gaits.TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # the trot with left legs, then right
 GAITS = {  # name -> (gait, forward speeds in m/s, cycles)
@@ -38,8 +36,9 @@ GAITS = {  # name -> (gait, forward speeds in m/s, cycles)
 KP = {10: 0.2, 30: 0.5, 100: 1.0}  # kp -> kd
 MASS_SCALE = (0.6, 1.0, 1.75)  # times the placeholder masses (1.72 kg)
 LIFT = (0.03, 0.06)  # m
+RUN_DEFAULTS = defaults_of(gait_replay.run_gait)  # every run keeps run_gait's legs, body, stance height and timestep
 FRAME_STEP = 20  # physics steps per recorded frame: 20 x 2 ms = FRAME_DT (25 Hz)
-FRAME_DT = 0.04
+FRAME_DT = round(FRAME_STEP * RUN_DEFAULTS["timestep"], 9)  # s; rounded so 20 x 0.002 is written as 0.04
 RECORD_FROM = 0.5  # s
 
 
@@ -81,7 +80,7 @@ def one_run(name, speed, kp, scale, lift):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("--out", default="results/gait/physics_sweep.json")
+    parser.add_argument("--out", default=results_path("gait", "physics_sweep.json"))
     args = parser.parse_args()
     runs = []
     for name, (_, speeds, _) in GAITS.items():
@@ -100,13 +99,12 @@ def main():
                          "(FL FR RL RR, x y z), 4 pad loads [0.1 N], commanded-stance bits (FL = bit 0)",
         "axes": {"gait": {k: list(v[1]) for k, v in GAITS.items()}, "kp": list(KP), "kd": KP,
                  "mass_scale": list(MASS_SCALE), "lift_m": list(LIFT)},
-        "lengths_m": [0.05, 0.15, 0.15], "body_m": [0.30, 0.15], "stance_height_m": 0.2125,
+        "lengths_m": list(RUN_DEFAULTS["lengths"]), "body_m": [RUN_DEFAULTS["body_length"], RUN_DEFAULTS["body_width"]],
+        "stance_height_m": RUN_DEFAULTS["height"],
         "runs": runs,
     }
-    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    with open(args.out, "w") as f:
-        json.dump(out, f, separators=(",", ":"))
-    print(f"{len(runs)} runs, {os.path.getsize(args.out) / 1e6:.2f} MB -> {args.out}")
+    write_result(args.out, out, compact=True)
+    print(f"{len(runs)} runs, {os.path.getsize(args.out) / 1e6:.2f} MB -> {relative_to_root(args.out)}")
 
 
 if __name__ == "__main__":

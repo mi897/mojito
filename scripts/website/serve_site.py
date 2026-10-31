@@ -20,13 +20,13 @@ import sys
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlparse
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "gait"))  # live_gait
 from live_gait import Runner, make_handler  # noqa: E402
+from mojito.results import repo_path  # noqa: E402
 from mojito.sim import live_sim  # noqa: E402
 
-SITE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "site")
+SITE = repo_path("site")
 LOOPBACK = ("127.0.0.1", "localhost", "[::1]")
 
 

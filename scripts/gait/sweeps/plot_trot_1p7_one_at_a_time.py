@@ -16,9 +16,9 @@ import statistics
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from mojito.palette import AQUA, BLUE, INK, ORANGE  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK = "#333333"
 LABELS = {"kp": "servo gain kp [N·m/rad] (kd tied)", "kd": "servo damping kd [N·m·s/rad] (kp 30)",
           "lift": "swing height [mm]", "height": "stance height [m]"}
 SCALE = {"kp": 1, "kd": 1, "lift": 1000, "height": 1}
@@ -59,13 +59,12 @@ def table(sweep, rows):
 
 
 def main():
-    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "results", "gait", "sweeps", "parameters")
+    root = results_path("gait", "sweeps", "parameters")
     data = json.load(open(os.path.join(root, "trot_1p7_one_at_a_time.json")))
     runs, sweeps = data["runs"], data["sweeps"]
     summary = summarise(runs, sweeps)
-    with open(os.path.join(root, "trot_1p7_one_at_a_time_summary.json"), "w") as fh:
-        json.dump({"what": "mean and sample standard deviation per value from trot_1p7_one_at_a_time.json", "iterations": data["iterations"],
-                   "summary": summary}, fh, indent=1)
+    write_result(os.path.join(root, "trot_1p7_one_at_a_time_summary.json"), {"what": "mean and sample standard deviation per value from trot_1p7_one_at_a_time.json", "iterations": data["iterations"],
+               "summary": summary})
     fig, axes = plt.subplots(3, len(sweeps), figsize=(15, 8.5))
     for col, (sweep, rows) in enumerate(summary.items()):
         xs = [r["value"] * SCALE[sweep] for r in rows]
