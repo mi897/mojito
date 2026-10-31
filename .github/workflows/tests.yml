@@ -28,7 +28,11 @@ jobs:
           uv run python scripts/learning/train.py --steps 1500 --out /tmp/ci.npz --log /tmp/ci.json
           uv run python scripts/learning/calibrate.py --out /tmp/cal.json
           uv run python scripts/body/make_body_demos.py --no-gif
+          # Fail if these runs changed any tracked file outside results/. results/ is left out on purpose: make_body_demos
+          # rewrites results/body/body_metrics.json with a new provenance block (commit, time) on every run, and the torch
+          # backend computes in float32, so its numbers need not match the committed NumPy ones to the last digit.
           git diff --stat
+          git diff --exit-code --stat -- . ':(exclude)results'
 
   # The in-browser simulation (site/assets/browsersim.js, MuJoCo WebAssembly) against the Python simulation: needs MuJoCo for Python,
   # node, the npm package at the same MuJoCo version, and the site data that carries the constants. Skipped in the jobs above.
