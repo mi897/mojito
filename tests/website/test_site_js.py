@@ -78,6 +78,13 @@ class TestSiteJavaScript(unittest.TestCase):
             point = rng.uniform(-0.05, 0.05, size=(1, 2))
             cases["margin"].append({"feet": feet[0].tolist(), "contact": contact.tolist(), "point": point[0].tolist()})
             py["margin"].append(gaits.stability_margin(feet, contact[None], point)[0])
+        # feet on the same spot (a zero-length polygon edge): two of three, and two of four
+        for contact in ([True, True, True, False], [True, True, True, True]):
+            feet = rng.uniform(-0.2, 0.2, size=(1, 4, 2))
+            feet[0, 1] = feet[0, 0]
+            point = rng.uniform(-0.05, 0.05, size=(1, 2))
+            cases["margin"].append({"feet": feet[0].tolist(), "contact": contact, "point": point[0].tolist()})
+            py["margin"].append(gaits.stability_margin(feet, np.array([contact]), point)[0])
         for _ in range(20):
             feet = rng.uniform(-0.2, 0.2, size=(3, 2))
             com, weight = rng.uniform(-0.05, 0.05, 2), float(rng.uniform(5, 30))

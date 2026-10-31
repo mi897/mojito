@@ -193,13 +193,22 @@ def stability_margin(feet_xy, contact, point_xy):
 
     Positive when the point is inside the polygon of grounded feet. With fewer
     than three feet down the support is a line, and the result is minus the
-    distance to it. Feet must be given in FL, FR, RL, RR order.
+    distance to it. With no foot down there is no support at all and the result
+    is -inf. Feet that sit on the same spot count once, so two coincident feet
+    make a point and three feet with two coincident a line (no zero-length edge).
+    Feet must be given in FL, FR, RL, RR order.
     """
     walk_order = [0, 1, 3, 2]  # FL, FR, RR, RL: around the body, clockwise seen from above
     margin = np.empty(feet_xy.shape[0])
     for i in range(feet_xy.shape[0]):
         grounded = np.array([feet_xy[i, k] for k in walk_order if contact[i, k]])
         point = point_xy[i]
+        if len(grounded) == 0:
+            margin[i] = -np.inf
+            continue
+        # Drop a foot that coincides with the one before it around the polygon: its edge has no length and no direction.
+        distinct = [foot for j, foot in enumerate(grounded) if np.linalg.norm(foot - grounded[j - 1]) > 1e-12]
+        grounded = np.array(distinct) if distinct else grounded[:1]
         if len(grounded) < 3:
             # Support is a point or a segment from a to b. Closest point on it is
             # start + f (end - start) with f = (point - start).(end - start) / |end - start|^2, clamped to [0, 1].

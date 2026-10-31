@@ -200,10 +200,13 @@
     return out;
   }
   // Distance from `point` to the edge of the support polygon of the grounded feet (positive inside).
+  // No foot down: -Infinity. Feet on the same spot count once (no zero-length edge), as in gaits.stability_margin.
   function stabilityMargin(feetXY, contact, point) {
-    const walk = [0, 1, 3, 2].filter(k => contact[k]).map(k => feetXY[k]);
+    const grounded = [0, 1, 3, 2].filter(k => contact[k]).map(k => feetXY[k]);
+    if (!grounded.length) return -Infinity;
+    const distinct = grounded.filter((p, j) => { const q = grounded[(j + grounded.length - 1) % grounded.length]; return Math.hypot(p[0] - q[0], p[1] - q[1]) > 1e-12; });
+    const walk = distinct.length ? distinct : grounded.slice(0, 1);
     if (walk.length < 3) {
-      if (!walk.length) return -Infinity;
       const s = walk[0], e = walk[walk.length - 1], d = sub(e, s);
       const f = clip(((point[0] - s[0]) * d[0] + (point[1] - s[1]) * d[1]) / Math.max(d[0] * d[0] + d[1] * d[1], 1e-12), 0, 1);
       return -Math.hypot(point[0] - (s[0] + f * d[0]), point[1] - (s[1] + f * d[1]));
