@@ -24,6 +24,16 @@ except ImportError:  # pragma: no cover
 G = 9.81
 
 
+def fast_forward(model, n_steps, dt):
+    """Put a fresh servo or sensor at step `n_steps` without running it (running there takes tens of seconds).
+    Sets the step counter it uses, and also `_time`, the accumulated float clock an earlier version compared against
+    send time + latency, to the value that version would have reached, so these tests fail on that version."""
+    accumulated_time = 0.0
+    for _ in range(n_steps):
+        accumulated_time += dt
+    model._step_index, model._time = n_steps, accumulated_time
+
+
 class TestServoMaths(unittest.TestCase):
     def test_voltage_range_enforced(self):
         for v in (4.9, 6.1, 6.8):
@@ -72,6 +82,15 @@ class TestServoMaths(unittest.TestCase):
             seen = self.seen_send_steps(float(latency), float(dt), n_steps)
             expected = np.array([j - delay if j >= delay else -1 for j in range(n_steps)])
             np.testing.assert_array_equal(seen, expected, err_msg=f"latency {latency} s, dt {dt} s")
+
+    def test_latency_is_still_whole_steps_after_8192_s(self):
+        # An accumulated float time drifts by more than 1e-12 s here: comparing it gave 5 steps instead of 4 from step 1,638,399.
+        s = A.Servo(A.ServoParams(latency=0.02, kp=1.0, kd=0.0, resolution=1e-9), n_joints=1)
+        start, dt = 1_638_380, 0.005
+        fast_forward(s, start, dt)
+        out = np.array([s.step([(k + 1) * 1e-6], [0.0], [0.0], dt)[0] for k in range(60)])
+        seen = np.round(out / 1e-6).astype(int) - 1  # index (from `start`) of the command the servo holds
+        np.testing.assert_array_equal(seen[4:], np.arange(60 - 4))
 
     def test_latency_stays_a_whole_number_of_steps_over_a_long_run(self):
         # 200 s at 0.002 s: the delay is still exactly 0.02 / 0.002 = 10 steps at the end

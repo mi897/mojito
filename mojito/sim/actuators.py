@@ -74,7 +74,11 @@ class Servo:
         self.reset(n_joints)
 
     def reset(self, n_joints: int = 12) -> None:
-        """Forget queued commands and the held target; `last_saturated` becomes `n_joints` False values."""
+        """Forget queued commands and the held target; `last_saturated` becomes `n_joints` False values.
+
+        `n_joints` only sizes `last_saturated` until the first `step`, which takes any number of joints and sets
+        `last_saturated` to the size of its targets.
+        """
         self._queue: deque = deque()  # (step index at which the command arrives, quantised target)
         self._step_index = 0
         self._held = None
@@ -87,13 +91,15 @@ class Servo:
         return self.params.centre + np.round((np.asarray(target_angles, float) - self.params.centre) / step) * step
 
     def step(self, target_angles, joint_angles, joint_velocities, dt: float) -> np.ndarray:
+        """Joint torques for one time step of `dt` s. `dt` must stay the same between `reset` calls: the latency is
+        counted in steps of the current `dt`, so a command already queued keeps the step count it was given."""
         params = self.params
         # A command sent at step k is seen at the first step j whose time is at least its send time plus the latency:
         # j dt >= k dt + latency, so j = k + ceil(latency / dt). Counting whole steps keeps that exact over long runs,
         # where an accumulated float time would drift. The 1e-9 lets a latency that is a multiple of dt up to rounding
         # (0.02 s at 0.002 s) count as that multiple (10 steps), not one more. tests/sim/test_actuators.py checks it.
-        delay_steps = math.ceil(params.latency / dt - 1e-9)
-        self._queue.append((self._step_index + delay_steps, self.quantise(target_angles)))
+        n_delay_steps = math.ceil(params.latency / dt - 1e-9)
+        self._queue.append((self._step_index + n_delay_steps, self.quantise(target_angles)))
         seen = None
         while self._queue and self._queue[0][0] <= self._step_index:
             seen = self._queue.popleft()[1]

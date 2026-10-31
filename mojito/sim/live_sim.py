@@ -148,7 +148,6 @@ class LiveSim:
         self.robot, self.model, self.data, self.qadr, self.dadr, self.aid, self.pad, self.start_z = stand._open(
             np.array([p["la"], p["lu"], p["ll"]]), p["height"], p["body_length"], p["body_width"], masses, self.timestep)
         self.servo = actuators.Servo(actuators.ServoParams(kp=p["kp"], kd=p["kd"], voltage=p["voltage"]))
-        self.servo.reset()
         self.home = self.robot.stance(p["height"])
         self.time = 0.0
         self.cycles = 0.0

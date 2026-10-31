@@ -72,7 +72,6 @@ def run_gait(gait, velocity=(0.0, 0.0), yaw_rate=0.0, cycles=4, stand_time=1.0, 
     robot, m, d, qadr, dadr, aid, pad, start_z = stand._open(
         lengths, height, body_length, body_width, masses, timestep)
     sv = actuators.Servo(servo or actuators.ServoParams())
-    sv.reset()
     limit = sv.params.stall_torque
     home = robot.stance(height)
     walk_time = cycles * gait.period
