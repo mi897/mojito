@@ -149,6 +149,25 @@ class TestGaits(unittest.TestCase):
         self.assertAlmostEqual(gaits.stability_margin(sq, all_down, np.array([[0.0, 0.0]]))[0], 1.0)
         self.assertAlmostEqual(gaits.stability_margin(sq, all_down, np.array([[1.5, 0.0]]))[0], -0.5)
 
+    def test_stability_margin_with_no_foot_down_is_minus_infinity(self):
+        sq = np.array([[[1, 1], [1, -1], [-1, 1], [-1, -1]]], float)
+        self.assertEqual(gaits.stability_margin(sq, np.zeros((1, 4), bool), np.array([[0.0, 0.0]]))[0], -np.inf)
+
+    def test_stability_margin_counts_coincident_feet_once(self):
+        point = np.array([[0.5, 0.2]])
+        # FL and FR on the same spot (1, 0), RL at (-1, 0): the support is the segment from (-1, 0) to (1, 0), 0.2 below the point
+        feet = np.array([[[1, 0], [1, 0], [-1, 0], [5, 5]]], float)
+        three = np.array([[True, True, True, False]])
+        self.assertAlmostEqual(gaits.stability_margin(feet, three, point)[0], -0.2)
+        # two feet on one spot: minus the distance to that spot
+        two = np.array([[True, True, False, False]])
+        self.assertAlmostEqual(gaits.stability_margin(feet, two, point)[0], -np.hypot(0.5, 0.2))
+        # four feet, RR on RL: the triangle FL (1, 1), FR (1, -1), RL (-1, -1); the point (0.8, -0.5) is nearest the edge x = 1 (0.2;
+        # 0.5 from y = -1, 1.3 / sqrt 2 from y = x)
+        feet = np.array([[[1, 1], [1, -1], [-1, -1], [-1, -1]]], float)
+        margin = gaits.stability_margin(feet, np.ones((1, 4), bool), np.array([[0.8, -0.5]]))[0]
+        self.assertAlmostEqual(margin, 0.2)
+
 
 if __name__ == "__main__":
     unittest.main()

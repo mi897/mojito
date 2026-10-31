@@ -52,18 +52,19 @@
   /* ---------- actuators.Servo ---------- */
   class Servo {
     constructor(params) { this.params = Object.assign({}, params); this.reset(); }
-    reset() { this.queue = []; this.time = 0; this.held = null; this.lastSaturated = false; }
+    reset() { this.queue = []; this.stepIndex = 0; this.held = null; this.lastSaturated = false; }
     get stallTorque() { const p = this.params; return p.torque_scale * lerp(p.voltage, 5, p.stall_5v, 6.8, p.stall_68v); }
     get noloadSpeed() { const p = this.params; return lerp(p.voltage, 5, p.noload_5v, 6.8, p.noload_68v); }
     quantise(targets) { const p = this.params; return targets.map(t => p.centre + rint((t - p.centre) / p.resolution) * p.resolution); }
     // commanded joint targets and true state -> torques; `lastSaturated` says whether any joint was at its limit
     step(targets, angles, velocities, dt) {
       const p = this.params;
-      this.queue.push([this.time + p.latency, this.quantise(targets)]);
+      // seen at the first step at or after send time + latency, counted in whole steps: ceil(latency / dt), as in actuators.py
+      this.queue.push([this.stepIndex + Math.ceil(p.latency / dt - 1e-9), this.quantise(targets)]);
       let seen = null;
-      while (this.queue.length && this.queue[0][0] <= this.time + 1e-12) seen = this.queue.shift()[1];
+      while (this.queue.length && this.queue[0][0] <= this.stepIndex) seen = this.queue.shift()[1];
       if (seen !== null) this.held = seen; else if (this.held === null) this.held = this.quantise(angles);
-      this.time += dt;
+      this.stepIndex += 1;
       const stall = this.stallTorque, noload = this.noloadSpeed;
       let saturated = false;
       const out = angles.map((angle, i) => {

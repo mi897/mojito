@@ -461,12 +461,15 @@ def from_urdf(model: urdf_mod.URDFModel, manifest: dict | None = None) -> RobotS
             target = spec.group_of(src)
             mirror = derive_mirror(target.canonical, limb, d.get("mirror_axis", "y"))
         else:
-            for g in spec.groups.values():
+            # A limb that names an existing group is checked against that group only (same signature, then mirror), so it
+            # is not matched to another group that happens to share its signature or mirror and then rejected.
+            candidates = [spec.groups[gname]] if gname in spec.groups else list(spec.groups.values())
+            for g in candidates:
                 if g.canonical.signature == limb.signature:
                     target = g
                     break
             if target is None:
-                for g in spec.groups.values():
+                for g in candidates:
                     try:
                         mirror = derive_mirror(g.canonical, limb)
                         target = g
