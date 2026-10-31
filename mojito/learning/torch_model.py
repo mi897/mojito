@@ -19,8 +19,14 @@ import torch
 from torch import nn
 
 from ..geometry.limb_model import LimbModel
+from ..robot import leg
 from .base import IKNetBase
 from .model import IKNet
+
+
+# Kept for compatibility: the leg's own forward kinematics now accepts tensors, so this is an alias of leg.forward
+# (differentiable foot position, shapes (..., 3)). New code should call config.forward or TorchIKNet.forward_kinematics.
+forward_kinematics = leg.forward
 
 
 class TorchIKNet(IKNetBase):

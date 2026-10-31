@@ -20,6 +20,11 @@ def reconcile(file_cfg: LimbModel, spec: LimbSpec, where: str = "weights") -> Li
 
     The weights stay authoritative for input scaling (nominal lengths,
     tolerance, reach); the URDF has to agree on structure.
+
+    For legacy LegConfig weights the URDF limb's forward kinematics is compared
+    with the leg model through `leg.is_leg`: 16 poses drawn over the placeholder
+    joint limits and lengths, not (as before) 32 poses over the weights' own
+    limits. The weights' limits are still compared with the URDF's separately.
     """
     if isinstance(file_cfg, LimbSpec):
         diffs = file_cfg.describe_mismatch(spec)
@@ -63,7 +68,7 @@ class IKNetBase:
     def predict_leg(self, target_position, lengths, right: bool = False, mirror=None):
         """As `predict`, for either side of the robot.
 
-        `mirror` is the spec.Mirror relating the limb to this network's canonical
+        `mirror` is the `limb_model.Mirror` relating the limb to this network's canonical
         limb; by default the left/right leg mirror.
         """
         if not right:

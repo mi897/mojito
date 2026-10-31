@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from ..geometry.kinematics import _as_array, _lib
+from ..geometry.kinematics import array_library, as_array
 from ..geometry.limb_model import LimbModel, Mirror
 # Placeholder geometry, defined once in mojito/geometry/placeholders.py (which also feeds the URDF generators):
 # NOMINAL_LENGTHS = (abduction offset, upper leg, lower leg) in metres, JOINT_LIMITS = (3, 2) (low, high) in radians.
@@ -75,9 +75,9 @@ def _foot_terms(joint_angles, lengths):
     Only sin, cos and broadcast_to are called, so NumPy arrays and torch
     tensors (differentiably) both work.
     """
-    xp = _lib(joint_angles)
-    joint_angles = _as_array(joint_angles)
-    lengths = xp.broadcast_to(_as_array(lengths), joint_angles.shape)
+    xp = array_library(joint_angles)
+    joint_angles = as_array(joint_angles)
+    lengths = xp.broadcast_to(as_array(lengths), joint_angles.shape)
     abduction_offset, upper_length, lower_length = lengths[..., 0], lengths[..., 1], lengths[..., 2]
     sin_abduction, cos_abduction = xp.sin(joint_angles[..., 0]), xp.cos(joint_angles[..., 0])
     sin_hip, cos_hip = xp.sin(joint_angles[..., 1]), xp.cos(joint_angles[..., 1])
@@ -128,13 +128,28 @@ def jacobian(joint_angles, lengths):
     foot at right angles to its offset from that axis. Tests check this
     against finite differences. Accepts NumPy arrays or torch tensors, like `forward`.
     """
-    xp, t = _foot_terms(joint_angles, lengths)
-    sin_abduction, cos_abduction, lower_length = t["sin_abduction"], t["cos_abduction"], t["lower_length"]
-    zero = xp.zeros_like(t["x"])
+    xp, terms = _foot_terms(joint_angles, lengths)
+    sin_abduction, cos_abduction, lower_length = terms["sin_abduction"], terms["cos_abduction"], terms["lower_length"]
+    x, extension, y, z = terms["x"], terms["extension"], terms["y"], terms["z"]
+    sin_lower, cos_lower = terms["sin_lower"], terms["cos_lower"]
+    if xp is np:
+        # NumPy fast path: fill one preallocated array, as before the torch path existed (stacking is slower).
+        jac = np.zeros(x.shape + (3, 3))
+        jac[..., 0, 1] = -extension
+        jac[..., 0, 2] = -lower_length * cos_lower
+        jac[..., 1, 0] = -z
+        jac[..., 1, 1] = x * sin_abduction
+        jac[..., 1, 2] = -lower_length * sin_lower * sin_abduction
+        jac[..., 2, 0] = y
+        jac[..., 2, 1] = -x * cos_abduction
+        jac[..., 2, 2] = lower_length * sin_lower * cos_abduction
+        return jac
+    # Torch: in-place writes would break autograd, so the same entries are stacked.
+    zero = xp.zeros_like(x)
     rows = [
-        [zero, -t["extension"], -lower_length * t["cos_lower"]],
-        [-t["z"], t["x"] * sin_abduction, -lower_length * t["sin_lower"] * sin_abduction],
-        [t["y"], -t["x"] * cos_abduction, lower_length * t["sin_lower"] * cos_abduction],
+        [zero, -extension, -lower_length * cos_lower],
+        [-z, x * sin_abduction, -lower_length * sin_lower * sin_abduction],
+        [y, -x * cos_abduction, lower_length * sin_lower * cos_abduction],
     ]
     return xp.stack([xp.stack(row, -1) for row in rows], -2)
 

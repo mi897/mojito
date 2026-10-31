@@ -48,7 +48,8 @@ def _is_torch(x) -> bool:
     return type(x).__module__.split(".")[0] == "torch"
 
 
-def _lib(x):
+def array_library(x):
+    """The module that holds `x`'s array type: torch for a torch tensor, else NumPy. Shared with mojito.robot.leg."""
     if _is_torch(x):
         import torch
 
@@ -56,8 +57,8 @@ def _lib(x):
     return np
 
 
-def _as_array(x):
-    """`x` unchanged if it is a torch tensor, else as a float NumPy array."""
+def as_array(x):
+    """`x` unchanged if it is a torch tensor, else as a float NumPy array. Shared with mojito.robot.leg."""
     return x if _is_torch(x) else np.asarray(x, dtype=float)
 
 
@@ -117,8 +118,8 @@ def _walk(chain: Chain, joint_values, link_lengths):
     applies its fixed rotation, then its joint: a revolute joint rotates the
     frame about its axis, a prismatic one slides the position along it.
     """
-    xp = _lib(joint_values)
-    joint_values, link_lengths = _as_array(joint_values), _as_array(link_lengths)
+    xp = array_library(joint_values)
+    joint_values, link_lengths = as_array(joint_values), as_array(link_lengths)
     batch = joint_values.shape[:-1]
     rotation = xp.broadcast_to(_const(xp, joint_values, np.eye(3)), batch + (3, 3))  # frame orientation so far
     position = xp.zeros(batch + (3,), dtype=joint_values.dtype, **({"device": joint_values.device} if xp is not np else {}))
@@ -149,7 +150,7 @@ def fk(chain: Chain, joint_values, link_lengths):
 def points(chain: Chain, joint_values, link_lengths):
     """Limb origin, each joint's position and the tip, shape (..., dof + 2, 3). For drawing."""
     tip, joint_origins, _ = _walk(chain, joint_values, link_lengths)
-    xp = _lib(joint_values)
+    xp = array_library(joint_values)
     return xp.stack([xp.zeros_like(tip)] + joint_origins + [tip], -2)
 
 
@@ -160,7 +161,7 @@ def jacobian(chain: Chain, joint_values, link_lengths):
         revolute:   a_j x (p - o_j)     (the tip moves at right angles to its lever arm)
         prismatic:  a_j                 (the tip slides along the axis)
     """
-    xp = _lib(joint_values)
+    xp = array_library(joint_values)
     tip, joint_origins, joint_world_axes = _walk(chain, joint_values, link_lengths)
     is_prismatic = [None] * chain.dof
     for element, joint in enumerate(chain.joint_index):

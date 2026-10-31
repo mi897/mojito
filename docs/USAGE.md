@@ -83,7 +83,8 @@ python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --to
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
-Joint limits live in `JOINT_LIMITS` in `mojito/robot/leg.py`. After retraining,
+Joint limits live in `JOINT_LIMITS` in `mojito/geometry/placeholders.py` (`leg.JOINT_LIMITS` re-exports
+it; edit the placeholder, not leg.py, and regenerate `robots/` so the URDFs agree). After retraining,
 re-run the other scripts so the results match the new weights.
 
 ## Robots from URDF

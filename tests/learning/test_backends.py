@@ -92,7 +92,10 @@ class TestTorchMatchesNumpy(unittest.TestCase):
     def test_forward_kinematics_agree(self):
         got = self.t_net.forward_kinematics(self.torch.tensor(self.q), self.torch.tensor(self.lengths)).numpy()
         np.testing.assert_allclose(got, leg.forward(self.q, self.lengths), atol=1e-12)
-        on_tensors = leg.forward(self.torch.tensor(self.q), self.torch.tensor(self.lengths))
+        from mojito.learning.torch_model import forward_kinematics  # the old name, kept as an alias
+
+        self.assertIs(forward_kinematics, leg.forward)
+        on_tensors = forward_kinematics(self.torch.tensor(self.q), self.torch.tensor(self.lengths))
         self.assertIsInstance(on_tensors, self.torch.Tensor)
         np.testing.assert_allclose(on_tensors.numpy(), leg.forward(self.q, self.lengths), atol=1e-12)
 
