@@ -125,7 +125,7 @@ def foot_targets(gait: Gait, times, home, velocity=(0.0, 0.0), yaw_rate=0.0):
     # Fraction of the cycle each leg has completed since its stance began, in [0, 1).
     phase = (times / gait.period - np.asarray(gait.offsets)[None]) % 1.0  # (T, 4)
     contact = phase < gait.duty
-    stance_duration = gait.duty * gait.period  # seconds
+    stance_duration = gait.stance_time  # seconds
 
     # Stance: progress runs 0 -> 1 and the foot passes `home` at progress = 0.5,
     # so the time until it reaches home is (0.5 - progress) * stance_duration.
@@ -160,7 +160,7 @@ def body_sway(gait: Gait, times, home):
     times = np.atleast_1d(np.asarray(times, float))
     out = np.zeros((times.shape[0], 3))
     swing_len = 1.0 - gait.duty
-    starts = (np.asarray(gait.offsets) + gait.duty) % 1.0  # phase at which each leg lifts
+    starts = gait.swing_starts()  # phase at which each leg lifts
     order = np.argsort(starts)
     gaps = np.diff(np.append(starts[order], starts[order][0] + 1.0)) - swing_len
     if gait.sway == 0.0 or np.any(gaps < -1e-9):
