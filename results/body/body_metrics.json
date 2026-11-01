@@ -75,5 +75,22 @@
   "feet_down_min": 3,
   "stance_foot_drift_mm_per_frame_max": 0.18599831076569065,
   "body_centre_inside_support_mm_min": 37.71282839754364
+ },
+ "provenance": {
+  "git_commit": "5a54d8605c2707913b932fdb73d1a07c983322cf",
+  "git_dirty": false,
+  "script": "scripts/body/make_body_demos.py",
+  "argv": [
+   "--no-gif"
+  ],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:11:05Z",
+  "entries_written": [
+   "posture_demo",
+   "trot_forward",
+   "trot_turn",
+   "crawl_forward"
+  ]
  }
 }

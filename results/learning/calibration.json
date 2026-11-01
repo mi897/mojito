@@ -28,5 +28,14 @@
  "error_after_mm": {
   "median": 0.5589161204170823,
   "p95": 0.7443418481204703
+ },
+ "provenance": {
+  "git_commit": "5a54d8605c2707913b932fdb73d1a07c983322cf",
+  "git_dirty": false,
+  "script": "scripts/learning/calibrate.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:11:05Z"
  }
 }
