@@ -22,7 +22,7 @@ def run_stand(design=SIM_QUADRUPED, height=None, masses=None, servo=None, durati
 
     design   a placeholders.QuadrupedDesign: leg lengths (all four legs the same), body size, masses.
     height   standing height in m (default: design.stance_height).
-    masses   kg by role, overriding the design's (mjcf.DEFAULT_MASSES for the placeholder).
+    masses   kg by role, overriding the design's role by role (roles neither gives: mjcf.DEFAULT_MASSES).
     servo    an actuators.ServoParams (default: 5 V, listed stall torque).
     "stood" means the body stayed within 20 degrees of upright and within 50 mm of the commanded height.
     Returns arrays in leg order FL, FR, RL, RR with joints (abduction, hip pitch, knee).

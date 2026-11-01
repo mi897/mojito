@@ -15,6 +15,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.geometry.placeholders import SIM_QUADRUPED  # noqa: E402
 from mojito.palette import INK, ORANGE  # noqa: E402
 from mojito.results import results_path, write_result  # noqa: E402
 
@@ -33,7 +34,7 @@ def main():
     cells = data["cells"]
     scales = data["mass_scales"]
 
-    def find(upper, lower, scale, body_length=0.30):
+    def find(upper, lower, scale, body_length=SIM_QUADRUPED.body_length):
         for c in cells:
             d = c["design"]
             if (abs(d["upper_length_m"] - upper) < 1e-9 and abs(d["lower_length_m"] - lower) < 1e-9

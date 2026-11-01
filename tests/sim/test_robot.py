@@ -25,11 +25,24 @@ class TestDesigns(unittest.TestCase):
 
     def test_sim_design_feeds_the_model_defaults(self):
         design = placeholders.SIM_QUADRUPED
-        self.assertIs(mjcf.DEFAULT_MASSES, design.masses)
+        self.assertEqual(mjcf.DEFAULT_MASSES, dict(design.masses))
+        self.assertIsNot(mjcf.DEFAULT_MASSES, design.masses)
+        with self.assertRaises(TypeError):
+            design.masses["body"] = 1.0  # read-only
+        with self.assertRaises(ValueError):
+            placeholders.STAGE1_QUADRUPED.total_mass
         self.assertEqual(gait_replay.DEFAULT_STANCE_HEIGHT, design.stance_height)
         # body plus four legs of hip, thigh, shank and foot, summed by hand
         self.assertAlmostEqual(design.total_mass, 0.8 + 4 * (0.06 + 0.10 + 0.06 + 0.01), places=12)
         self.assertEqual(mjcf.GRAVITY, -statics.G)
+
+    def test_a_design_pickles(self):
+        import pickle
+
+        copy = pickle.loads(pickle.dumps(placeholders.SIM_QUADRUPED))
+        self.assertEqual(copy, placeholders.SIM_QUADRUPED)
+        with self.assertRaises(TypeError):
+            copy.masses["body"] = 1.0
 
     def test_a_design_is_hashable_and_comparable(self):
         changed = dataclasses.replace(placeholders.SIM_QUADRUPED, upper_length=0.2)
@@ -109,6 +122,14 @@ class TestSimRobot(unittest.TestCase):
         snapshot = sim_robot.snapshot()
         np.testing.assert_array_equal(snapshot["legs"]["RL"], sim_robot.legs_world()[2])
         np.testing.assert_array_equal(snapshot["R"], rotation)
+
+    def test_a_partial_mass_override_keeps_the_design_masses(self):
+        heavy = dataclasses.replace(placeholders.SIM_QUADRUPED, masses=dict(placeholders.SIM_QUADRUPED.masses, body=2.0))
+        built = sim_robot_module.SimRobot(heavy, masses={"foot": 0.02})
+        # body 2.0 + 4 legs of hip 0.06, thigh 0.10, shank 0.06 and the overridden foot 0.02
+        self.assertAlmostEqual(built.total_mass, 2.0 + 4 * (0.06 + 0.10 + 0.06 + 0.02), places=9)
+        geometry_only = sim_robot_module.SimRobot(dataclasses.replace(placeholders.STAGE1_QUADRUPED, stance_height=0.17))
+        self.assertAlmostEqual(geometry_only.total_mass, placeholders.SIM_QUADRUPED.total_mass, places=9)  # DEFAULT_MASSES
 
     def test_a_turned_base_reads_back_its_yaw_and_tilt(self):
         fresh = sim_robot_module.SimRobot()

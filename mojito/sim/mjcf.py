@@ -24,8 +24,8 @@ from ..geometry.placeholders import SIM_QUADRUPED
 from ..geometry.urdf import URDFModel, URDFError
 from ..robot.statics import G
 
-# Placeholder masses in kg, by role: those of the simulator's placeholder quadruped (geometry/placeholders.py).
-DEFAULT_MASSES = SIM_QUADRUPED.masses
+# Placeholder masses in kg, by role: a plain-dict copy of those of the simulator's placeholder quadruped (geometry/placeholders.py).
+DEFAULT_MASSES = dict(SIM_QUADRUPED.masses)
 FOOT_RADIUS = 0.012
 BODY_THICKNESS = 0.06  # height of the box drawn for the body, m
 LINK_RADIUS = 0.01

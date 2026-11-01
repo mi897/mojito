@@ -32,7 +32,6 @@ HISTORY = 2.0              # s, window for the measured velocity
 CONTACT_FORCE = 0.5        # N, a foot carrying more is "down"
 
 
-
 def preset_for(gait, forward_speed) -> dict:
     """Live parameters for `gait` commanded at `forward_speed` (m/s): timing and swing from the Gait, servo gains and stance
     height from `gait_replay.settings_for`, which are what its results in docs/STAGE2.md were measured with."""

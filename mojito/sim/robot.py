@@ -37,7 +37,7 @@ class SimRobot:
 
     design    a placeholders.QuadrupedDesign (default: the simulator's placeholder)
     height    standing height in m (default: design.stance_height); the pads start just touching the floor
-    masses    kg by role, overriding design.masses (and, for roles neither gives, mjcf.DEFAULT_MASSES)
+    masses    kg by role, overriding design.masses role by role; a role neither gives gets mjcf.DEFAULT_MASSES
     timestep  physics step, s
 
     Attributes: `kinematics` (a body.Robot with the closed-form IK and the design's dimensions), `model`, `data`,
@@ -57,7 +57,7 @@ class SimRobot:
         initial_joint_angles = self.kinematics.solve(self.kinematics.stance(self.stance_height))
         urdf_model = robots.quadruped_urdf(design.body_length, design.body_width, lengths=design.lengths)
         self.start_height = self.stance_height + mjcf.FOOT_RADIUS  # the pad centre is the foot tip; its lowest point is one radius lower
-        masses = design.masses if masses is None else masses
+        masses = {**(design.masses or {}), **(masses or {})}  # mjcf_from_urdf puts DEFAULT_MASSES under these
         self.model = mujoco.MjModel.from_xml_string(
             mjcf.mjcf_from_urdf(urdf_model, body_size=(design.body_length, design.body_width, mjcf.BODY_THICKNESS),
                                 masses=masses, height=self.start_height, timestep=timestep, actuated=True))

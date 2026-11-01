@@ -50,7 +50,7 @@ def commanded_feet(gait, home, times, stand_time, ramp_time, velocity=(0.0, 0.0)
     """
     times = np.asarray(times, float)
     gait_times = np.maximum(times - stand_time, 0.0)
-    # The blend per step through the scalar smoothstep, as the per-step loop computed it before.
+    # A Python loop through the scalar smoothstep, not one array call, so each blend is bit-identical to the old per-step value.
     blend = np.array([float(stand.smoothstep((time - stand_time) / ramp_time)) if ramp_time > 0 else float(time >= stand_time)
                       for time in times.tolist()])
     feet, contact, _ = gaits.foot_targets(gait, gait_times, home, velocity, yaw_rate)

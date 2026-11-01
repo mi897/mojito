@@ -15,6 +15,7 @@ Units: metres, radians and kilograms.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 import numpy as np
 
@@ -51,8 +52,11 @@ class QuadrupedDesign:
     body_length, body_width                         shoulder spacing: front to rear, left to right
     stance_height                                   shoulder height above the ground when standing, feet under the hips
     masses                                          kg by role: "body", and per leg "hip", "thigh", "shank", "foot", the
-                                                    roles `mojito.sim.mjcf` builds the model with; None for a design that is
-                                                    geometry only. Do not change the dict in place: use `dataclasses.replace`.
+                                                    roles `mojito.sim.mjcf` builds the model with. Stored read-only (a
+                                                    MappingProxyType; `dict(design.masses)` for a copy); change it with
+                                                    `dataclasses.replace`. A role it leaves out, or all of them when it is
+                                                    None (a geometry-only design such as STAGE1_QUADRUPED), gets
+                                                    `mjcf.DEFAULT_MASSES` when the design is built in physics.
     """
     abduction_offset: float
     upper_length: float
@@ -62,6 +66,21 @@ class QuadrupedDesign:
     stance_height: float
     masses: dict | None = field(default=None, hash=False)
 
+    def __post_init__(self):
+        if self.masses is not None:
+            object.__setattr__(self, "masses", MappingProxyType(dict(self.masses)))
+
+    # A MappingProxyType cannot be pickled (multiprocessing sends designs to workers): pickle the masses as a plain dict.
+    def __getstate__(self):
+        state = dict(self.__dict__)
+        state["masses"] = None if self.masses is None else dict(self.masses)
+        return state
+
+    def __setstate__(self, state):
+        for name, value in state.items():
+            object.__setattr__(self, name, value)
+        self.__post_init__()
+
     @property
     def lengths(self) -> np.ndarray:
         """(3,) abduction offset, upper, lower length."""
@@ -69,7 +88,9 @@ class QuadrupedDesign:
 
     @property
     def total_mass(self) -> float:
-        """Body plus four legs, kg: masses["body"] + 4 (hip + thigh + shank + foot)."""
+        """Body plus four legs, kg: masses["body"] + 4 (hip + thigh + shank + foot). Raises ValueError without masses."""
+        if self.masses is None:
+            raise ValueError("this design has no masses (geometry only); in physics it is built with mjcf.DEFAULT_MASSES")
         return self.masses["body"] + 4 * sum(mass for role, mass in self.masses.items() if role != "body")
 
 
