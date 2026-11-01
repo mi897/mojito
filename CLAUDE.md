@@ -17,7 +17,7 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
   `docs/claude-guides`. One topic per branch. Push the branch; open a pull
   request only when asked.
 - If a branch builds on another unmerged branch, say so when reporting.
-- Run the tests before every commit: `python -m unittest discover tests`.
+- Run the tests before every commit: `python -m unittest discover tests`, and keep `just lint` (ruff) clean.
 - New maths gets a test that checks it against something independent:
   finite differences, the closed-form IK, or a conservation property (for
   example "grounded feet do not move in the world").
@@ -90,6 +90,7 @@ slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tun
 ```bash
 # Inside the activated .venv (source .venv/bin/activate); otherwise prefix each line with: uv run --extra sim
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
+uvx ruff@0.16.9 check .                    # lint (just lint; just lint --fix applies the safe fixes); rules in pyproject.toml [tool.ruff]
 just results                               # every committed result in dependency order (SLOW, hours); just results-fast skips the slow steps
 python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
@@ -189,6 +190,10 @@ the run used (`gait_replay.settings_for`, `actuators.ServoParams`, `results.defa
 ## Environment notes
 
 - Dependencies: NumPy, SciPy, Matplotlib, Pillow. PyTorch and MuJoCo are optional (their tests skip if absent).
+- Python 3.10 or newer (`requires-python`); CI runs the NumPy tests on 3.10 and 3.12, PyTorch on 3.12. Do not use
+  3.11+ features (`tomllib`, `typing.Self`, `ExceptionGroup`, `datetime.UTC`).
+- ruff runs through `uvx` at a pinned version, not as a dev dependency: changing `uv.lock` needs the PyTorch
+  indexes, which some sessions cannot reach. Bump the version in the `justfile` and `.github/workflows/tests.yml` together.
 - Some cloud sessions cannot install packages. If PyTorch cannot be installed,
   do not claim the PyTorch path was run locally: push the branch and read the
   result of the `tests` GitHub Actions workflow, which runs both backends.

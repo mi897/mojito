@@ -13,6 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..geometry.kinematics import rpy_rotation
+
 # Placeholder body, shoulder spacing in metres (defined in mojito/geometry/placeholders.py, which the URDF generator also reads):
 # BODY_LENGTH front shoulders to rear shoulders, BODY_WIDTH left shoulders to right shoulders,
 # STAND_HEIGHT the shoulder height above the ground when standing.
@@ -56,8 +57,9 @@ class Robot:
         nominal = config.nominal if config is not None else leg.NOMINAL_LENGTHS
         self.lengths = np.broadcast_to(np.asarray(nominal if lengths is None else lengths, float), (4, 3)).copy()
         self.limits = np.asarray(limits if limits is not None else (config.limits if config is not None else leg.JOINT_LIMITS))
-        hx, hy = body_length / 2, body_width / 2
-        self.shoulders = np.array([[hx, hy, 0.0], [hx, -hy, 0.0], [-hx, hy, 0.0], [-hx, -hy, 0.0]])
+        half_length, half_width = body_length / 2, body_width / 2
+        self.shoulders = np.array([[half_length, half_width, 0.0], [half_length, -half_width, 0.0],
+                                   [-half_length, half_width, 0.0], [-half_length, -half_width, 0.0]])
 
     # ---- frames ----
     def _to_canonical(self, feet_body):
@@ -80,8 +82,8 @@ class Robot:
     def joint_points(self, joint_angles) -> np.ndarray:
         """Shoulder, hip, knee, foot of every leg in the body frame. Shape (..., 4, 4, 3)."""
         joint_angles = np.asarray(joint_angles, float) * _MIRROR_ANGLES
-        pts = leg.joint_positions(joint_angles, self.lengths)  # canonical shoulder frame
-        return pts * _MIRROR[:, None, :] + self.shoulders[:, None, :]
+        points_canonical = leg.joint_positions(joint_angles, self.lengths)  # canonical shoulder frame
+        return points_canonical * _MIRROR[:, None, :] + self.shoulders[:, None, :]
 
     def feet(self, joint_angles) -> np.ndarray:
         """Where the given joint angles actually put the feet, body frame. Shape (..., 4, 3)."""
@@ -114,15 +116,16 @@ def apply_posture(feet_body, offset=(0.0, 0.0, 0.0), roll=0.0, pitch=0.0, yaw=0.
     which is what the legs have to reach.
     """
     feet = np.asarray(feet_body, float)
-    R = rotation(roll, pitch, yaw)
-    rel = feet - np.asarray(offset, float)[..., None, :]
-    return np.einsum("...ji,...kj->...ki", R, rel)  # R^T applied to each foot
+    body_to_world = rotation(roll, pitch, yaw)
+    feet_from_moved_centre = feet - np.asarray(offset, float)[..., None, :]
+    return np.einsum("...ji,...kj->...ki", body_to_world, feet_from_moved_centre)  # body_to_world^T applied to each foot
 
 
 def to_world(points_body, position=(0.0, 0.0, 0.0), roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:
     """Body-frame points (..., N, 3) expressed in the world for a body at the given pose."""
-    R = rotation(roll, pitch, yaw)
-    return np.einsum("...ij,...kj->...ki", R, np.asarray(points_body, float)) + np.asarray(position, float)[..., None, :]
+    body_to_world = rotation(roll, pitch, yaw)
+    rotated = np.einsum("...ij,...kj->...ki", body_to_world, np.asarray(points_body, float))
+    return rotated + np.asarray(position, float)[..., None, :]
 
 
 class URDFRobot:
@@ -149,58 +152,59 @@ class URDFRobot:
         self.solvers = solvers
         self.names = list(robot.limbs)
         self.params = robot.params()
-        self._group = {m.name: g for g in robot.groups.values() for m in g.members}
-        self._member = {m.name: m for g in robot.groups.values() for m in g.members}
+        self._group = {member.name: group for group in robot.groups.values() for member in group.members}
+        self._member = {member.name: member for group in robot.groups.values() for member in group.members}
 
     def limb(self, name):
         return self.spec.limbs[name]
 
-    def _to_limb_frame(self, name, p_body):
-        l = self.limb(name)
-        return (np.asarray(p_body, float) - l.mount_t) @ l.mount_R  # R^T applied row-wise
+    def _to_limb_frame(self, name, position_body):
+        limb = self.limb(name)
+        return (np.asarray(position_body, float) - limb.mount_t) @ limb.mount_R  # mount_R^T applied row-wise
 
-    def _from_limb_frame(self, name, p_limb):
-        l = self.limb(name)
-        return np.asarray(p_limb, float) @ l.mount_R.T + l.mount_t
+    def _from_limb_frame(self, name, position_limb):
+        limb = self.limb(name)
+        return np.asarray(position_limb, float) @ limb.mount_R.T + limb.mount_t
 
     def stance(self, height=STAND_HEIGHT) -> dict:
         """Feet under each limb's zero pose, at `height` below the base. name -> (3,)."""
-        out = {}
-        for n in self.names:
-            l = self.limb(n)
-            foot = self._from_limb_frame(n, l.forward(np.zeros(l.dof), self.params[n]))
+        feet = {}
+        for name in self.names:
+            limb = self.limb(name)
+            foot = self._from_limb_frame(name, limb.forward(np.zeros(limb.dof), self.params[name]))
             foot[2] = -height
-            out[n] = foot
-        return out
+            feet[name] = foot
+        return feet
 
     def solve(self, feet_body: dict) -> dict:
         """Joint values per limb for body-frame tip targets (name -> (..., 3))."""
-        out = {}
-        for n in self.names:
-            m, g = self._member[n], self._group[n]
-            target_position = self._to_limb_frame(n, feet_body[n])
-            if m.mirror is not None:
-                target_position = m.mirror.target(target_position)
-            joint_angles = self.solvers[g.name].predict(target_position, self.params[n])
-            out[n] = m.mirror.angles(joint_angles) if m.mirror is not None else joint_angles
-        return out
+        joint_values = {}
+        for name in self.names:
+            member, group = self._member[name], self._group[name]
+            target_position = self._to_limb_frame(name, feet_body[name])
+            if member.mirror is not None:
+                target_position = member.mirror.target(target_position)
+            joint_angles = self.solvers[group.name].predict(target_position, self.params[name])
+            joint_values[name] = member.mirror.angles(joint_angles) if member.mirror is not None else joint_angles
+        return joint_values
 
     def joint_points(self, joint_angles: dict) -> dict:
         """Origin, joints and tip of every limb in the body frame. name -> (..., dof + 2, 3)."""
-        return {n: self._from_limb_frame(n, self.limb(n).points(np.asarray(joint_angles[n], float), self.params[n]))
-                for n in self.names}
+        return {name: self._from_limb_frame(name, self.limb(name).points(np.asarray(joint_angles[name], float),
+                                                                         self.params[name]))
+                for name in self.names}
 
     def feet(self, joint_angles: dict) -> dict:
-        return {n: points[..., -1, :] for n, points in self.joint_points(joint_angles).items()}
+        return {name: points[..., -1, :] for name, points in self.joint_points(joint_angles).items()}
 
     def tracking_error(self, feet_body: dict, joint_angles: dict | None = None) -> dict:
         """Distance in metres between requested and achieved tips. name -> (...,)."""
         joint_angles = self.solve(feet_body) if joint_angles is None else joint_angles
-        f = self.feet(joint_angles)
-        return {n: np.linalg.norm(f[n] - np.asarray(feet_body[n], float), axis=-1) for n in self.names}
+        achieved = self.feet(joint_angles)
+        return {name: np.linalg.norm(achieved[name] - np.asarray(feet_body[name], float), axis=-1) for name in self.names}
 
     def limit_margin(self, joint_angles: dict) -> dict:
         """Smallest distance from any joint to its limit, per limb."""
-        return {n: np.minimum(np.asarray(joint_angles[n], float) - self.limb(n).limits[:, 0],
-                              self.limb(n).limits[:, 1] - np.asarray(joint_angles[n], float)).min(axis=-1)
-                for n in self.names}
+        return {name: np.minimum(np.asarray(joint_angles[name], float) - self.limb(name).limits[:, 0],
+                                 self.limb(name).limits[:, 1] - np.asarray(joint_angles[name], float)).min(axis=-1)
+                for name in self.names}

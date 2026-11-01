@@ -13,10 +13,10 @@ import numpy as np
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, ROOT)
-from mojito.geometry import kinematics, robots, spec as specmod, urdf
-from mojito.robot import body, leg
 from mojito import IKNet  # noqa: E402
+from mojito.geometry import robots, spec as specmod, urdf
 from mojito.learning.model import SpecMismatch  # noqa: E402
+from mojito.robot import body, leg
 
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 WEIGHTS = os.path.join(ROOT, "weights", "ik_leg.npz")
@@ -236,7 +236,7 @@ class TestSpecGrouping(unittest.TestCase):
         rng = np.random.default_rng(1)
         q = rng.uniform(left.limits[:, 0], left.limits[:, 1], size=(50, 3))
         np.testing.assert_allclose(right.forward(mirror.angles(q), left.nominal), mirror.target(left.forward(q, left.nominal)), atol=1e-12)
-        self.assertEqual(mirror.sign_q, (-1.0, 1.0, 1.0))  # abduction flips, as in leg.mirror_angles
+        self.assertEqual(mirror.joint_sign, (-1.0, 1.0, 1.0))  # abduction flips, as in leg.mirror_angles
 
     def test_unsupported_structure_is_refused(self):
         m = robots.planar_urdf()
@@ -326,7 +326,7 @@ class TestGeneratedNetworks(unittest.TestCase):
                     w += rng.normal(0, 0.1, w.shape)
                 p, L, _ = leg.sample_batch(rng, 64, limb)
                 loss, grads = net.loss_and_grads(p, L)
-                for k, (arr, g) in enumerate(zip(net.params, grads)):
+                for arr, g in zip(net.params, grads):
                     idx = tuple(rng.integers(0, s) for s in arr.shape)
                     old, h = arr[idx], 1e-6
                     arr[idx] = old + h
@@ -348,7 +348,7 @@ class TestGeneratedNetworks(unittest.TestCase):
         net = IKNet(limb, hidden=(32, 32), seed=0)
         rng = np.random.default_rng(0)
         first = last = None
-        for step in range(300):
+        for _ in range(300):
             p, L, _ = leg.sample_batch(rng, 256, limb)
             loss = net.train_step(p, L, 3e-3)
             first = loss if first is None else first

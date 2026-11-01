@@ -15,9 +15,9 @@ import numpy as np
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, ROOT)
 import mojito  # noqa: E402
-from mojito.robot import body, leg
-from mojito.learning import backend
 from mojito import IKNet  # noqa: E402
+from mojito.learning import backend
+from mojito.robot import body, leg
 
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 WEIGHTS = os.path.join(ROOT, "weights", "ik_leg.npz")
@@ -105,7 +105,8 @@ class TestTorchMatchesNumpy(unittest.TestCase):
         hand = leg.jacobian(joint_angles, lengths)
         self.assertIsInstance(hand, self.torch.Tensor)
         for i in range(8):
-            auto = self.torch.autograd.functional.jacobian(lambda a: leg.forward(a, lengths[i]), joint_angles[i])
+            auto = self.torch.autograd.functional.jacobian(lambda angles, leg_lengths=lengths[i]: leg.forward(angles, leg_lengths),
+                                                           joint_angles[i])
             np.testing.assert_allclose(hand[i].numpy(), auto.numpy(), atol=1e-12)
         np.testing.assert_allclose(hand.numpy(), leg.jacobian(self.q[:8], self.lengths[:8]), atol=1e-12)
 

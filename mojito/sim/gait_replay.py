@@ -20,7 +20,6 @@ from ..robot import body, gaits
 from . import actuators, mjcf, stand
 from .robot import SimRobot
 
-
 # Settings for the trot that did best in physics (docs/STAGE2.md, "Do the best values add up?"): 0.16 m stance, kp 50, kd 0.9.
 # The swing height (22 mm) is in `gaits.TROT`. Other gaits keep the placeholder's stance height and the servo defaults.
 TROT_STANCE_HEIGHT = 0.16

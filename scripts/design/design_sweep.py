@@ -10,8 +10,8 @@ so each leg keeps the placeholder knee bend (docs/STAGE2.md, work package 5).
 """
 import multiprocessing
 
-from mojito.sim import design_sweep
 from mojito.results import results_path, write_result
+from mojito.sim import design_sweep
 
 OUTPUT = results_path("design", "design_sweep.json")
 

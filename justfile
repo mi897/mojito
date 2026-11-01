@@ -16,6 +16,10 @@ setup *flags:
 test:
     {{py}} -m unittest discover tests
 
+# Lint with ruff (rules in pyproject.toml); the version is pinned here and in .github/workflows/tests.yml
+lint *args:
+    uvx ruff@0.16.9 check . {{args}}
+
 # Train the leg network (about 12 min on 2 CPU cores); extra flags pass through
 train *args:
     {{py}} scripts/learning/train.py {{args}}

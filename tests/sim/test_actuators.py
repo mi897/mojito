@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.geometry import robots
-from mojito.robot import body, statics
+from mojito.robot import statics
 from mojito.sim import actuators as A, mjcf  # noqa: E402
 
 from .clock_helpers import fast_forward  # noqa: E402

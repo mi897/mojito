@@ -65,9 +65,9 @@ def run_stand(design=SIM_QUADRUPED, height=None, masses=None, servo=None, durati
         "torque_fraction_of_limit": float(np.abs(torques).max() / limit),   # last window only
         "run_peak_fraction_of_limit": run_peak / limit,                   # whole run, includes the settling transient
         "saturated": bool(np.array(saturated_log).any()),
-        "q_command": commanded_joint_angles,
-        "q_actual": joint_angles.mean(0),
-        "gap_rad": (joint_angles.mean(0) - commanded_joint_angles),           # actual minus commanded
+        "joint_angles_command_rad": commanded_joint_angles,
+        "joint_angles_actual_rad": joint_angles.mean(0),
+        "joint_gap_rad": (joint_angles.mean(0) - commanded_joint_angles),           # actual minus commanded
         "foot_load_n": np.array(load_log).mean(0),
         "body_height_m": float(np.mean(height_log)),
         "body_height_drop_m": float(start_height - np.mean(height_log)),  # below the height the pads touch the floor at

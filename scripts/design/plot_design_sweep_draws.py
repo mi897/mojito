@@ -13,9 +13,11 @@ import os
 import statistics
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+
 from mojito.geometry.placeholders import SIM_QUADRUPED  # noqa: E402
 from mojito.palette import INK, ORANGE  # noqa: E402
 from mojito.results import results_path, write_result  # noqa: E402

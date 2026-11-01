@@ -12,8 +12,10 @@ import os
 import statistics
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+
 from mojito.palette import BLUE, INK, ORANGE  # noqa: E402
 from mojito.results import results_path  # noqa: E402
 

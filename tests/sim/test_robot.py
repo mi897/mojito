@@ -6,8 +6,7 @@ import numpy as np
 
 from mojito.geometry import placeholders
 from mojito.robot import body, gaits, leg, statics
-from mojito.sim import actuators, gait_replay, mjcf, stand
-from mojito.sim import robot as sim_robot_module
+from mojito.sim import actuators, gait_replay, mjcf, robot as sim_robot_module, stand
 
 try:
     import mujoco
@@ -30,7 +29,7 @@ class TestDesigns(unittest.TestCase):
         with self.assertRaises(TypeError):
             design.masses["body"] = 1.0  # read-only
         with self.assertRaises(ValueError):
-            placeholders.STAGE1_QUADRUPED.total_mass
+            _ = placeholders.STAGE1_QUADRUPED.total_mass
         self.assertEqual(gait_replay.DEFAULT_STANCE_HEIGHT, design.stance_height)
         # body plus four legs of hip, thigh, shank and foot, summed by hand
         self.assertAlmostEqual(design.total_mass, 0.8 + 4 * (0.06 + 0.10 + 0.06 + 0.01), places=12)

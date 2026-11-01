@@ -11,8 +11,8 @@ the nominal run, so the other two speeds and the draws are a check on it, not pa
 import json
 import multiprocessing
 
-from mojito.sim import design_sweep
 from mojito.results import results_path, write_result
+from mojito.sim import design_sweep
 
 OUTPUT = results_path("design", "design_sweep_tuned.json")
 DRAWS = 10

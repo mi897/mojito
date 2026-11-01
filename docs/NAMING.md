@@ -65,6 +65,7 @@ the code. Whenever a line implements a formula:
 | Time step | `dt` | seconds (standard, kept) |
 | Count of things | `n_<things>`: `n_legs`, `n_samples`, `n_joints` | int |
 | Jacobian (as a local) | `jac` | `(..., 3, dof)` |
+| Mirror sign flips (`limb_model.Mirror`) | `position_flip`, `joint_sign` | `(3,)` and `(dof,)` of +-1 |
 | Servo state | `params` is the dataclass; `.params` on the model | `ServoParams`, `JointSensorParams`, `ImuParams` |
 | Random generator | `rng` | `np.random.Generator` |
 | Extra keyword options passed on | `**solver_options`, `**sampler_options` | not `**kw` |
@@ -98,13 +99,22 @@ Renaming these breaks saved files or the interface between modules:
 
 ## Where this has and has not been applied
 
-Applied to the numerical core: `leg.py`, `kinematics.py`, `gaits.py`,
-`statics.py`, `base.py`, `model.py`, `torch_model.py`, `actuators.py`, `sensors.py`,
-`body.py`, and the public arguments of `spec.py`'s `LimbSpec` and `Mirror`.
+Applied to the whole library, `mojito/`: the numerical core (`leg.py`, `kinematics.py`,
+`gaits.py`, `statics.py`, `base.py`, `model.py`, `torch_model.py`, `actuators.py`,
+`sensors.py`, `body.py`), the URDF code (`spec.py` with `LimbSpec` and `Mirror`,
+`urdf.py`, `robots.py`) and the simulator (`mjcf.py`, `robot.py`, `stand.py`,
+`gait_replay.py`, `design_sweep.py`). In `scripts/`, `stand/stand_test.py`,
+`learning/evaluate.py` and `body/make_body_demos.py` have been swept. The keys that
+`run_stand`, `run_sit_to_stand` and `run_gait` return follow
+`<quantity>_<command|actual>_<unit>` (`joint_angles_command_rad`, `feet_body_actual_m`).
 
-Not yet swept, so shorthand remains there: the loaders and checks in
-`spec.py` and `urdf.py`, `mjcf.py` and `stand.py` internals, and the plotting
-and experiment code in `scripts/` and `tests/` (local variables such as `q`,
-`p`, `L` and `J`). Clean these up as you touch them, following the rules
-above, rather than renaming in bulk with search-and-replace: a blanket `p`
-rename already collided with pitch, loop variables and the Adam optimiser.
+The live simulation's parameter keys (`live_sim.DEFAULTS`, shared with the website) are
+now `abduction_offset`, `upper_length`, `lower_length`; the old `la`, `lu`, `ll` are still
+read through `live_sim.PARAMETER_ALIASES` for one release, so a page cached before the
+rename keeps working, and are then to be removed.
+
+Not yet swept, so shorthand remains there: the locals of `live_sim.py`, the rest of the
+plotting and experiment code in `scripts/`, and `tests/` (local variables such as `q`, `p`, `r` and `J`). `ruff`
+(`just lint`) catches the worst of it, the ambiguous `l`. Clean these up as you touch
+them, following the rules above, rather than renaming in bulk with search-and-replace:
+a blanket `p` rename already collided with pitch, loop variables and the Adam optimiser.
