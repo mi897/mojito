@@ -114,12 +114,12 @@ def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
 
     build(worldbody, root, None)
     if actuated:
-        actuators = ET.SubElement(mujoco_element, "actuator")
+        actuator_element = ET.SubElement(mujoco_element, "actuator")
         for name in joint_order(model):
-            ET.SubElement(actuators, "motor", name=name, joint=name, gear="1")
-        sensors = ET.SubElement(mujoco_element, "sensor")
-        ET.SubElement(sensors, "gyro", name="gyro", site="body_origin")
-        ET.SubElement(sensors, "accelerometer", name="accel", site="body_origin")
+            ET.SubElement(actuator_element, "motor", name=name, joint=name, gear="1")
+        sensor_element = ET.SubElement(mujoco_element, "sensor")
+        ET.SubElement(sensor_element, "gyro", name="gyro", site="body_origin")
+        ET.SubElement(sensor_element, "accelerometer", name="accel", site="body_origin")
     return ET.tostring(mujoco_element, encoding="unicode")
 
 

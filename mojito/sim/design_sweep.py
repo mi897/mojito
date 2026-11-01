@@ -108,17 +108,17 @@ def evaluate_design(design: QuadrupedDesign, mass_scale: float = 1.0, speeds=SPE
         masses, latency = masses_scaled_by(mass_scale), None
     else:
         masses, latency = draw_masses_and_latency(mass_scale, draw)
-    out = {"design": {"upper_length_m": design.upper_length, "lower_length_m": design.lower_length,
-                      "abduction_offset_m": ABDUCTION_OFFSET, "body_length_m": design.body_length,
-                      "body_width_m": design.body_width},
-           "mass_scale": mass_scale, "draw": draw, "latency_s": latency, "walk": []}
+    evaluation = {"design": {"upper_length_m": design.upper_length, "lower_length_m": design.lower_length,
+                             "abduction_offset_m": ABDUCTION_OFFSET, "body_length_m": design.body_length,
+                             "body_width_m": design.body_width},
+                  "mass_scale": mass_scale, "draw": draw, "latency_s": latency, "walk": []}
     height = scaled_height(design, gait_replay.DEFAULT_STANCE_HEIGHT)
     servo = actuators.ServoParams() if latency is None else actuators.ServoParams(latency=latency)
     stood = stand.run_stand(design, height, masses=masses, servo=servo, duration=run_time)
-    out["stand"] = {"stance_height_m": height, "total_mass_kg": stood["total_mass_kg"], "stood": stood["stood"],
-                    "tilt_deg": stood["tilt_deg"], "run_peak_fraction_of_limit": stood["run_peak_fraction_of_limit"],
-                    "front_load_fraction": float(stood["foot_load_n"][:2].sum() / stood["foot_load_n"].sum()),
-                    "static_bound_kg": static_mass_bound(design, height, servo.stall_torque)}
+    evaluation["stand"] = {"stance_height_m": height, "total_mass_kg": stood["total_mass_kg"], "stood": stood["stood"],
+                           "tilt_deg": stood["tilt_deg"], "run_peak_fraction_of_limit": stood["run_peak_fraction_of_limit"],
+                           "front_load_fraction": float(stood["foot_load_n"][:2].sum() / stood["foot_load_n"].sum()),
+                           "static_bound_kg": static_mass_bound(design, height, servo.stall_torque)}
     for name, gait in GAITS.items():
         settings = gait_replay.settings_for(gait)
         if latency is not None:
@@ -127,14 +127,14 @@ def evaluate_design(design: QuadrupedDesign, mass_scale: float = 1.0, speeds=SPE
         for speed in speeds:
             walk = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period,
                                         design=design, height=walk_height, masses=masses, servo=settings["servo"])
-            out["walk"].append({
+            evaluation["walk"].append({
                 "gait": name, "speed_m_s": speed, "stance_height_m": walk_height, "walked": walk["walked"],
                 "within_joint_limits": walk["targets_within_joint_limits"],
                 "velocity_ratio": walk["measured_velocity_m_s"][0] / speed,
                 "max_tilt_deg": walk["max_tilt_deg"], "peak_torque_fraction_of_limit": walk["peak_torque_fraction_of_limit"],
                 "fraction_of_walking_saturated": walk["fraction_of_walking_saturated"],
                 "feet_down_min": walk["feet_down_min"], "slip_max_mm_per_step": walk["slip_max_mm_per_step"]})
-    return out
+    return evaluation
 
 
 # Re-tuning the gait for a design (docs/STAGE2.md, work package 5, "Re-tuned per design").

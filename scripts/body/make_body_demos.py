@@ -82,72 +82,72 @@ def gait_script(robot, gait, velocity, yaw_rate, cycles, fps, title):
                 title=title, inputs=("Feet on the ground", None), gait=gait, velocity=velocity, yaw_rate=yaw_rate)
 
 
-def measure(robot, reference, s):
+def measure(robot, reference, script):
     """Run the network on every frame and record how well it did."""
-    joint_angles = robot.solve(s["targets"])  # the model's outputs: (T, 4, 3)
-    error_mm = robot.tracking_error(s["targets"], joint_angles) * 1000
-    s["q"], s["err_mm"] = joint_angles, error_mm
+    joint_angles = robot.solve(script["targets"])  # the model's outputs: (T, 4, 3)
+    error_mm = robot.tracking_error(script["targets"], joint_angles) * 1000
+    script["joint_angles"], script["err_mm"] = joint_angles, error_mm
     n_frames = len(joint_angles)
-    s["points_world"] = body.to_world(
-        robot.joint_points(joint_angles).reshape(n_frames, 16, 3), s["position"], *s["rpy"].T).reshape(n_frames, 4, 4, 3)
+    script["points_world"] = body.to_world(
+        robot.joint_points(joint_angles).reshape(n_frames, 16, 3), script["position"], *script["rpy"].T).reshape(n_frames, 4, 4, 3)
     out = dict(
         frames=int(n_frames),
-        all_targets_within_joint_limits=bool(robot.reachable(s["targets"]).all()),
+        all_targets_within_joint_limits=bool(robot.reachable(script["targets"]).all()),
         foot_error_mm=dict(median=float(np.median(error_mm)), p95=float(np.percentile(error_mm, 95)), max=float(error_mm.max())),
         joint_limit_margin_deg=float(np.degrees(robot.limit_margin(joint_angles).min())),
-        max_joint_difference_from_exact_deg=float(np.degrees(np.abs(joint_angles - reference.solve(s["targets"])).max())),
+        max_joint_difference_from_exact_deg=float(np.degrees(np.abs(joint_angles - reference.solve(script["targets"])).max())),
     )
-    if "gait" in s:
-        gait = s["gait"]
-        planted = s["contact"][1:] & s["contact"][:-1]
-        actual_world = s["points_world"][:, :, 3]
+    if "gait" in script:
+        gait = script["gait"]
+        planted = script["contact"][1:] & script["contact"][:-1]
+        actual_world = script["points_world"][:, :, 3]
         slip = np.linalg.norm(np.diff(actual_world, axis=0), axis=-1)[planted]
-        margin = gaits.stability_margin(s["feet_world"][..., :2], s["contact"], s["position"][:, :2])
+        margin = gaits.stability_margin(script["feet_world"][..., :2], script["contact"], script["position"][:, :2])
         out.update(
-            gait=gait.name, period_s=gait.period, duty=gait.duty, velocity_m_s=list(s["velocity"]), yaw_rate_rad_s=s["yaw_rate"],
-            feet_down_min=int(s["contact"].sum(1).min()),
+            gait=gait.name, period_s=gait.period, duty=gait.duty, velocity_m_s=list(script["velocity"]), yaw_rate_rad_s=script["yaw_rate"],
+            feet_down_min=int(script["contact"].sum(1).min()),
             stance_foot_drift_mm_per_frame_max=float(slip.max() * 1000),
             body_centre_inside_support_mm_min=float(margin.min() * 1000),
         )
     return out
 
 
-def animate(robot, s, path, dpi=80):
-    n_frames = len(s["t"])
+def animate(robot, script, path, dpi=80):
+    n_frames = len(script["t"])
     fig = plt.figure(figsize=(10, 5.4))
     gs = fig.add_gridspec(3, 2, width_ratios=[1.65, 1], left=0.0, right=0.97, top=0.9, bottom=0.1, hspace=0.75, wspace=0.08)
     ax = fig.add_subplot(gs[:, 0], projection="3d")
     ax_in, ax_q, ax_e = (fig.add_subplot(gs[i, 1]) for i in range(3))
-    fig.suptitle(s["title"], x=0.02, ha="left", fontsize=11, fontweight="bold")
+    fig.suptitle(script["title"], x=0.02, ha="left", fontsize=11, fontweight="bold")
 
     # --- side panels (static curves, moving cursor) ---
-    label, series = s["inputs"]
+    label, series = script["inputs"]
     ax_in.set_title(label)
     if series:
         for (name, y), c in zip(series, (BLUE, ORANGE, AQUA)):
-            ax_in.plot(s["t"], y, color=c, label=name)
+            ax_in.plot(script["t"], y, color=c, label=name)
         ax_in.legend(frameon=False, ncol=3, loc="upper right", fontsize=8, handlelength=1.2, borderaxespad=0)
         lo, hi = ax_in.get_ylim(); ax_in.set_ylim(lo, hi + 0.35 * (hi - lo))
     else:
-        dt = s["t"][1] - s["t"][0]
+        dt = script["t"][1] - script["t"][0]
         for k in range(len(body.LEG_NAMES)):
-            grounded = s["contact"][:, k]
+            grounded = script["contact"][:, k]
             edges = np.flatnonzero(np.diff(np.concatenate([[0], grounded.astype(int), [0]])))
-            ax_in.broken_barh([(s["t"][a] if a < n_frames else s["t"][-1] + dt, (b - a) * dt) for a, b in zip(edges[::2], edges[1::2])],
+            ax_in.broken_barh([(script["t"][a] if a < n_frames else script["t"][-1] + dt, (b - a) * dt) for a, b in zip(edges[::2], edges[1::2])],
                               (3 - k - 0.3, 0.6), color=BLUE, lw=0)
         ax_in.set_yticks(range(4)); ax_in.set_yticklabels(body.LEG_NAMES[::-1]); ax_in.set_ylim(-0.6, 3.6)
         ax_in.grid(False)
     ax_q.set_title("Model output: front-left joint angles (deg)")
     for j, (name, c) in enumerate(zip(("abduction", "hip", "knee"), (BLUE, ORANGE, AQUA))):
-        ax_q.plot(s["t"], np.degrees(s["q"][:, 0, j]), color=c, label=name)
+        ax_q.plot(script["t"], np.degrees(script["joint_angles"][:, 0, j]), color=c, label=name)
     ax_q.legend(frameon=False, ncol=3, loc="upper right", fontsize=8, handlelength=1.2, borderaxespad=0)
     lo, hi = ax_q.get_ylim(); ax_q.set_ylim(lo, hi + 0.4 * (hi - lo))
     ax_e.set_title("Worst foot error across the four legs (mm)")
-    ax_e.plot(s["t"], s["err_mm"].max(axis=1), color=BLUE)
-    ax_e.set_ylim(0, max(0.5, s["err_mm"].max() * 1.25)); ax_e.set_xlabel("time (s)")
+    ax_e.plot(script["t"], script["err_mm"].max(axis=1), color=BLUE)
+    ax_e.set_ylim(0, max(0.5, script["err_mm"].max() * 1.25)); ax_e.set_xlabel("time (s)")
     cursors = [a.axvline(0, color=INK2, lw=1) for a in (ax_in, ax_q, ax_e)]
     for a in (ax_in, ax_q, ax_e):
-        a.set_xlim(s["t"][0], s["t"][-1])
+        a.set_xlim(script["t"][0], script["t"][-1])
 
     # --- 3D scene ---
     ax.set_axis_off(); ax.set_proj_type("persp", focal_length=0.35)
@@ -169,11 +169,11 @@ def animate(robot, s, path, dpi=80):
     ax.text2D(0.03, 0.065, "blue: where the model's angles put the legs    orange: requested foot positions",
               transform=ax.transAxes, color=INK2, fontsize=8)
     order = [0, 1, 3, 2]  # FL, FR, RR, RL around the body
-    centre0 = s["position"][0].copy()
+    centre0 = script["position"][0].copy()
 
     def draw(i):
-        points = s["points_world"][i]  # (4 legs, 4 points, 3)
-        centre = s["position"][i] if "gait" in s else centre0
+        points = script["points_world"][i]  # (4 legs, 4 points, 3)
+        centre = script["position"][i] if "gait" in script else centre0
         ax.set_xlim(centre[0] - half, centre[0] + half); ax.set_ylim(centre[1] - half, centre[1] + half)
         ax.set_zlim(-0.17, -0.17 + 2 * half * 0.62)
         # ground grid, clipped to the view
@@ -195,16 +195,16 @@ def animate(robot, s, path, dpi=80):
         for line, leg_points in zip(legs, points):
             line.set_data_3d(leg_points[:, 0], leg_points[:, 1], leg_points[:, 2])
             line.set_zorder(3 if leg_points[0] @ view >= body_near else 1)  # shoulder nearer than the torso centre
-        targets_world = body.to_world(s["targets"][i], s["position"][i], *s["rpy"][i])
-        grounded = s["contact"][i]
+        targets_world = body.to_world(script["targets"][i], script["position"][i], *script["rpy"][i])
+        grounded = script["contact"][i]
         targets_on.set_data_3d(targets_world[grounded, 0], targets_world[grounded, 1], targets_world[grounded, 2])
         targets_off.set_data_3d(targets_world[~grounded, 0], targets_world[~grounded, 1], targets_world[~grounded, 2])
-        readout.set_text(f"t = {s['t'][i]:5.2f} s    worst foot error {s['err_mm'][i].max():.2f} mm")
+        readout.set_text(f"t = {script['t'][i]:5.2f} s    worst foot error {script['err_mm'][i].max():.2f} mm")
         for cursor in cursors:
-            cursor.set_xdata([s["t"][i]] * 2)
+            cursor.set_xdata([script["t"][i]] * 2)
         return []
 
-    FuncAnimation(fig, draw, frames=n_frames, blit=False).save(path, writer=PillowWriter(fps=s["fps"]), dpi=dpi)
+    FuncAnimation(fig, draw, frames=n_frames, blit=False).save(path, writer=PillowWriter(fps=script["fps"]), dpi=dpi)
     plt.close(fig)
 
 
@@ -231,10 +231,10 @@ def main():
         if args.only and name not in args.only:
             continue
         written.append(name)
-        s = build()
-        metrics[name] = measure(robot, reference, s)
+        script = build()
+        metrics[name] = measure(robot, reference, script)
         if not args.no_gif:
-            animate(robot, s, results_path("body", f"{name}.gif"))
+            animate(robot, script, results_path("body", f"{name}.gif"))
         print(name, json.dumps(metrics[name]), flush=True)
     write_result(metrics_path, metrics, note={"entries_written": written})
 

@@ -70,6 +70,7 @@ def _rounded_list(values):
 
 
 def _exact_list(values):
+    """`values` as nested lists of floats, unrounded: what a weight file stores."""
     return np.asarray(values, dtype=float).tolist()
 
 

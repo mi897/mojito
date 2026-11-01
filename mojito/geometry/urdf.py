@@ -74,28 +74,28 @@ class URDFModel:
         """Joints from `base` down to `tip`, in order. Raises if tip is not below base."""
         if tip not in self.links:
             raise URDFError(f"link {tip!r} does not exist")
-        out, link = [], tip
+        joints_up, link = [], tip  # collected from the tip upwards
         while link != base:
             joint = self.parent_joint(link)
             if joint is None:
                 raise URDFError(f"link {tip!r} is not a descendant of {base!r}")
-            out.append(joint)
+            joints_up.append(joint)
             link = joint.parent
-        return out[::-1]
+        return joints_up[::-1]
 
     def children(self, link: str) -> list:
         return [joint for joint in self.joints.values() if joint.parent == link]
 
     def leaves(self, below: str | None = None) -> list:
         start = below or self.root()
-        out, stack = [], [start]
+        leaf_links, stack = [], [start]
         while stack:
             link = stack.pop()
             child_joints = self.children(link)
             if not child_joints and link != start:
-                out.append(link)
+                leaf_links.append(link)
             stack.extend(joint.child for joint in reversed(child_joints))
-        return out
+        return leaf_links
 
 
 # --------------------------------------------------------------------------- parse

@@ -101,8 +101,6 @@ def main():
     metrics["length_scale_sweep"] = [dict(scale_deviation=deviation, median_mm=median, p95_mm=p95)
                                      for deviation, median, p95 in sweep]
 
-    write_result(os.path.join(args.out, "metrics.json"), metrics)
-
     # ---------------- plots ----------------
     if os.path.exists(args.log):
         log = json.load(open(args.log))["log"]
@@ -169,6 +167,8 @@ def main():
     ax.legend(frameon=False, loc="lower right")
     fig.tight_layout(); fig.savefig(os.path.join(args.out, "error_vs_length.png")); plt.close(fig)
 
+    # Written after the plots: the side-view slice adds slice_reachable_fraction to the metrics.
+    write_result(os.path.join(args.out, "metrics.json"), metrics)
     show = {key: value for key, value in metrics.items() if key != "length_scale_sweep"}
     print(json.dumps(show, indent=1))
 

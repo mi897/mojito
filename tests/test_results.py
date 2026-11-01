@@ -170,6 +170,13 @@ class TestScriptsUseTheHelpers(unittest.TestCase):
         offenders = [os.path.relpath(p, HERE_ROOT) for p in files if pattern.search(open(p).read())]
         self.assertEqual(offenders, [], "import the colours from mojito.palette")
 
+    def test_evaluate_sets_every_metric_before_writing_them(self):
+        # metrics["slice_reachable_fraction"] was once set after write_result, so it never reached metrics.json.
+        with open(os.path.join(HERE_ROOT, "scripts", "learning", "evaluate.py"), encoding="utf-8") as script:
+            source = script.read()
+        last_metric = max(match.start() for match in re.finditer(r'metrics\["\w+"\] =', source))
+        self.assertLess(last_metric, source.index("write_result(os.path.join(args.out"))
+
 
 if __name__ == "__main__":
     unittest.main()
