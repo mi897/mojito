@@ -17,7 +17,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 
 import mojito  # noqa: E402
 from mojito.learning.backend import add_backend_argument  # noqa: E402
-from mojito.palette import BLUE, GRID, ORANGE, SURFACE, LABEL_INK as INK2  # noqa: E402
+from mojito.palette import BLUE, GRID, LABEL_INK as INK2, ORANGE, SURFACE  # noqa: E402
 from mojito.results import repo_path, results_path  # noqa: E402
 from mojito.robot import leg  # noqa: E402
 

@@ -24,6 +24,7 @@ import numpy as np
 
 from ..geometry.kinematics import array_library, as_array
 from ..geometry.limb_model import LimbModel, Mirror
+
 # Placeholder geometry, defined once in mojito/geometry/placeholders.py (which also feeds the URDF generators):
 # NOMINAL_LENGTHS = (abduction offset, upper leg, lower leg) in metres, JOINT_LIMITS = (3, 2) (low, high) in radians.
 from ..geometry.placeholders import JOINT_LIMITS, NOMINAL_LENGTHS

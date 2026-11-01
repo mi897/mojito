@@ -30,7 +30,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import mojito  # noqa: E402
 from mojito import palette  # noqa: E402
 from mojito.learning.backend import add_backend_argument  # noqa: E402
-from mojito.palette import AQUA, BLUE, GRID, ORANGE, LABEL_INK as INK2  # noqa: E402
+from mojito.palette import AQUA, BLUE, GRID, LABEL_INK as INK2, ORANGE  # noqa: E402
 from mojito.results import repo_path, results_path, write_result  # noqa: E402
 from mojito.robot import body, gaits  # noqa: E402
 

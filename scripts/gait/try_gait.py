@@ -20,9 +20,9 @@ import os
 
 import numpy as np
 
+from mojito.geometry.placeholders import SIM_QUADRUPED
 from mojito.results import results_path, write_result
 from mojito.robot import body, gaits
-from mojito.geometry.placeholders import SIM_QUADRUPED
 from mojito.sim import gait_plots, gait_replay
 
 OUT = results_path("gait", "try")

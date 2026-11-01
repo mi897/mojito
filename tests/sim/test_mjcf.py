@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.geometry import robots
-from mojito.robot import body, leg
+from mojito.robot import body
 from mojito.sim import mjcf  # noqa: E402
 
 try:

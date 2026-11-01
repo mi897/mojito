@@ -11,9 +11,9 @@ For other timings use scripts/gait/try_gait.py.
 """
 import os
 
+from mojito.results import results_path
 from mojito.robot import gaits
 from mojito.sim import gait_plots, gait_replay
-from mojito.results import results_path
 
 OUT = results_path("gait")
 CASES = [

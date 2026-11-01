@@ -60,10 +60,10 @@ def animate(cases, path):
             commanded_x = cs["vx"] * walking
             a.axvline(commanded_x, color=ORANGE, ls="--", lw=1)
             a.axvline(origin[0] - cs["x0"], color=GREY, lw=1)
-            x = lambda p: p[0] - cs["x0"]  # noqa: E731
-            a.plot([x(origin) - half[0], x(origin) + half[0]], [origin[2] - half[2], origin[2] + half[2]], color=INK,
+            origin_x = origin[0] - cs["x0"]  # body origin, measured from where the run started
+            a.plot([origin_x - half[0], origin_x + half[0]], [origin[2] - half[2], origin[2] + half[2]], color=INK,
                    lw=6, solid_capstyle="round")
-            for leg, (name, colour) in enumerate((("FL", BLUE), ("RL", ORANGE))):
+            for name, colour in (("FL", BLUE), ("RL", ORANGE)):
                 pts = fr["legs"][name]
                 a.plot(pts[:, 0] - cs["x0"], pts[:, 2], "-", color=colour, lw=3)
                 down = fr["loads"][0 if name == "FL" else 2] > 0.5

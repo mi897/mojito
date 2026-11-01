@@ -12,8 +12,10 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "website"))
 import serve_site  # noqa: E402
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "gait"))
 import live_gait  # noqa: E402
+
 from mojito.sim import live_sim  # noqa: E402
 
 try:

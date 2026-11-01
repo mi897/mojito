@@ -5,17 +5,36 @@ on:
   pull_request:
 
 jobs:
+  # ruff, with the rules in pyproject.toml. Run through uvx at a pinned version, so it needs no entry in uv.lock (`just lint`).
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: ruff
+        run: uvx ruff@0.16.9 check . --output-format github
+
   tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        backend: [numpy, torch]
+        # numpy on the oldest Python pyproject.toml allows (requires-python >= 3.10) and on 3.12; torch on 3.12 only.
+        include:
+          - backend: numpy
+            python: "3.10"
+          - backend: numpy
+            python: "3.12"
+          - backend: torch
+            python: "3.12"
+    name: tests (${{ matrix.backend }}, Python ${{ matrix.python }})
+    env:
+      UV_PYTHON: ${{ matrix.python }}  # every uv sync and uv run below uses this interpreter
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
         run: uv sync --locked --extra sim ${{ matrix.backend == 'torch' && '--extra torch-cpu' || '' }}

@@ -21,7 +21,7 @@ class TestDesignGrid(unittest.TestCase):
         grid = design_sweep.design_grid()
         self.assertEqual(len(grid), 11)
         self.assertEqual({(d.upper_length, d.lower_length) for d in grid[:9]},
-                         {(u, l) for u in (0.10, 0.15, 0.20) for l in (0.10, 0.15, 0.20)})
+                         {(upper, lower) for upper in (0.10, 0.15, 0.20) for lower in (0.10, 0.15, 0.20)})
         self.assertTrue(all(d.body_length == 0.30 for d in grid[:9]))
         self.assertTrue(all((d.upper_length, d.lower_length) == (0.15, 0.15) for d in grid[9:]))
 

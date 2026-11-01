@@ -36,8 +36,8 @@ class TestSensors(unittest.TestCase):
 
     def test_reading_arrives_at_the_first_step_at_or_after_read_time_plus_delay(self):
         # Reference in exact rational arithmetic: read j reports the latest k with j dt >= k dt + delay.
-        from fractions import Fraction
         import math
+        from fractions import Fraction
         for delay, dt in (("0.002", "0.002"), ("0.003", "0.001"), ("0.0025", "0.002"), ("0", "0.001"), ("0.02", "0.005")):
             n_delay_steps = math.ceil(Fraction(delay) / Fraction(dt))
             seen = self.seen_read_steps(float(delay), float(dt), 500)

@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 from ..geometry.placeholders import SIM_QUADRUPED
-from ..geometry.urdf import URDFModel, URDFError
+from ..geometry.urdf import URDFError, URDFModel
 from ..robot.statics import G
 
 # Placeholder masses in kg, by role: a plain-dict copy of those of the simulator's placeholder quadruped (geometry/placeholders.py).

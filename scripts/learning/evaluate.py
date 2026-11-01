@@ -17,7 +17,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import mojito  # noqa: E402
 from mojito import palette  # noqa: E402
 from mojito.learning.backend import add_backend_argument  # noqa: E402
-from mojito.palette import BLUE, ORANGE, LABEL_INK as INK2, TITLE_INK as INK  # noqa: E402
+from mojito.palette import BLUE, LABEL_INK as INK2, ORANGE, TITLE_INK as INK  # noqa: E402
 from mojito.results import repo_path, results_path, write_result  # noqa: E402
 from mojito.robot import leg  # noqa: E402
 

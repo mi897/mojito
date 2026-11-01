@@ -14,9 +14,9 @@ import os
 
 import numpy as np
 
-from mojito.sim import actuators, stand
 from mojito.palette import BLUE, INK, ORANGE
 from mojito.results import results_path
+from mojito.sim import actuators, stand
 
 OUT = results_path("stand")
 EVERY = 10  # simulation steps per frame (20 ms)

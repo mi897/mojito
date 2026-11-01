@@ -13,6 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..geometry.kinematics import rpy_rotation
+
 # Placeholder body, shoulder spacing in metres (defined in mojito/geometry/placeholders.py, which the URDF generator also reads):
 # BODY_LENGTH front shoulders to rear shoulders, BODY_WIDTH left shoulders to right shoulders,
 # STAND_HEIGHT the shoulder height above the ground when standing.

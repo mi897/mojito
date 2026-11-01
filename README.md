@@ -68,6 +68,7 @@ Linux or macOS, no GPU needed. You need `git` and `curl`; everything else is ins
 git clone https://github.com/mi897/mojito && cd mojito
 ./scripts/setup.sh            # installs uv and just if missing, then the dependencies
 just test                     # all tests; the PyTorch ones skip if torch is absent
+just lint                     # ruff (pinned version, through uvx)
 just body                     # re-render the animations from the trained network
 just                          # list every task
 ```

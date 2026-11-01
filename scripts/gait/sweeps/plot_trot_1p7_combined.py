@@ -15,9 +15,11 @@ import os
 import statistics
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+
 from mojito.palette import AQUA, BLUE, GREY, INK, ORANGE  # noqa: E402
 from mojito.results import results_path, write_result  # noqa: E402
 
@@ -107,7 +109,7 @@ def main():
             print(f"| {c} | " + " | ".join(f"{f(cell[(c, m, s)]['tilt_mean_deg'], 1)} / {f(cell[(c, m, s)]['torque_mean'], 2)}" for s in speeds) + " |")
     print("\npaired differences in speed ratio (mean ± sd over the 10 draws)\n| mass kg | speed | best - baseline | sum of the three single-group effects | gains only | swing only | stance only | best - best with baseline gains | best - best with baseline swing | best - best with baseline stance |\n|---|---|---|---|---|---|---|---|---|---|")
     for d in diffs:
-        g = lambda k: f"{f(d[k][0], 3)} ± {f(d[k][1], 3)}"
+        g = lambda k, d=d: f"{f(d[k][0], 3)} ± {f(d[k][1], 3)}"  # binds this row's d (bugbear B023)
         print(f"| {cell[('baseline', d['mass_scale'], d['speed_m_s'])]['total_mass_kg']:.2f} | {d['speed_m_s']:g} | {g('best_minus_baseline')} | {f(d['sum_of_single_effects'], 3)} | "
               f"{g('gains_only_minus_baseline')} | {g('swing_only_minus_baseline')} | {g('stance_only_minus_baseline')} | "
               f"{g('best_minus_best_baseline_gains')} | {g('best_minus_best_baseline_swing')} | {g('best_minus_best_baseline_stance')} |")

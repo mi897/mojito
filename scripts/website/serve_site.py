@@ -23,6 +23,7 @@ from urllib.parse import urlparse
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "gait"))  # live_gait
 from live_gait import Runner, host_is_local, make_handler, origin_is_local  # noqa: E402,F401  (the guards are shared)
+
 from mojito.results import repo_path  # noqa: E402
 from mojito.sim import live_sim  # noqa: E402
 

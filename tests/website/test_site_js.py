@@ -143,7 +143,7 @@ class TestSiteJavaScript(unittest.TestCase):
         self.close(self.js["margin"], self.py["margin"])
 
     def test_three_foot_loads_equal_the_python_solution(self):
-        for js, py, case in zip(self.js["loads"], self.py["loads"], self.cases["loads"]):
+        for js, py, _case in zip(self.js["loads"], self.py["loads"], self.cases["loads"]):
             self.close(np.asarray(js)[[0, 1, 3]], py, atol=1e-8)
             self.assertEqual(js[2], 0.0)
 
