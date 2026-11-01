@@ -68,11 +68,11 @@
     // commanded stance reference
     const commanded = sel.speed;
     const wk = run.frames.map((f, i) => [i * S.frame_dt_s + S.record_from_s, f[0] / 1000]);
-    const x0 = run.frames.findIndex((f, i) => i * S.frame_dt_s + S.record_from_s >= 1.5);
+    const x0 = run.frames.findIndex((f, i) => i * S.frame_dt_s + S.record_from_s >= S.walk_from_s);
     const startX = (run.frames[Math.max(0, x0)][0]) / 1000, startT = Math.max(0, x0) * S.frame_dt_s + S.record_from_s;
     const posSeries = [{ name: 'body, measured', color: 'var(--blue)', points: run.frames.map((f, i) => [i * S.frame_dt_s + S.record_from_s, f[0] / 1000 * 1000 - startX * 1000]).filter(p => p[0] >= startT - 0.001), width: 2.4 },
       { name: 'commanded speed', color: 'var(--orange)', dashed: true, width: 2, points: [[startT, 0], [S.record_from_s + dur, commanded * (S.record_from_s + dur - startT) * 1000]] }];
-    $('pc-pos').innerHTML = ''; phys.cpos = Charts.line($('pc-pos'), { series: posSeries, x: { label: 'time in the run, s (walking starts at 1.5 s)', zero: false, fmt: v => +v.toFixed(1) }, y: { label: 'mm forward', zero: false }, aspect: 1.7 });
+    $('pc-pos').innerHTML = ''; phys.cpos = Charts.line($('pc-pos'), { series: posSeries, x: { label: 'time in the run, s (walking starts at ' + S.walk_from_s + ' s)', zero: false, fmt: v => +v.toFixed(1) }, y: { label: 'mm forward', zero: false }, aspect: 1.7 });
     const tilt = i => run.frames.map((f, k) => [k * S.frame_dt_s + S.record_from_s, f[i] / 100]);
     $('pc-tilt').innerHTML = ''; phys.ctilt = Charts.line($('pc-tilt'), { series: [{ name: 'roll', color: 'var(--blue)', points: tilt(3), width: 2.2 }, { name: 'pitch', color: 'var(--orange)', points: tilt(4), width: 2.2 }],
       x: { label: 'time in the run, s', zero: false, fmt: v => +v.toFixed(1) }, y: { label: 'degrees', zero: false, domain: undefined }, aspect: 1.7 });
@@ -136,7 +136,7 @@
     const run = phys.run; if (!run) return;
     const S = window.MOJITO_SWEEP, sc = physScene(run, phys.t);
     // dashed line where the body would be at the commanded speed, on the floor (drawn as an overlay)
-    const startIdx = Math.max(0, run.frames.findIndex((f, i) => i * S.frame_dt_s + S.record_from_s >= 1.5)), f0 = run.frames[startIdx];
+    const startIdx = Math.max(0, run.frames.findIndex((f, i) => i * S.frame_dt_s + S.record_from_s >= S.walk_from_s)), f0 = run.frames[startIdx];
     const tNow = phys.t + S.record_from_s, cmdX = f0[0] / 1000 + phys.sel.speed * Math.max(0, tNow - (startIdx * S.frame_dt_s + S.record_from_s));
     sc.overlay = (ctx, d, W, H) => {
       const sc2 = Math.min(W, H * 1.5) / 0.95 * physView.zoom, a = [cmdX, f0[1] / 1000, 0], b = [cmdX, f0[1] / 1000 + 0.16, 0], c0 = [cmdX, f0[1] / 1000 - 0.16, 0];

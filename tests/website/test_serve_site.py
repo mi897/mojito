@@ -176,6 +176,11 @@ class TestRobotDesignIsLive(unittest.TestCase):
         self.assertFalse({"la", "lu", "ll"} & set(sim.params))
         sim.set_params(lu=1.0)  # clamped like the new name
         self.assertEqual(sim.params["upper_length"], live_sim.LIMITS["upper_length"][1])
+        # both names in one request: the new one wins, whichever comes first
+        sim.set_params(lu=0.1, upper_length=0.2)
+        self.assertEqual(sim.params["upper_length"], 0.2)
+        sim.set_params(upper_length=0.12, lu=0.22)
+        self.assertEqual(sim.params["upper_length"], 0.12)
 
     def test_a_stance_the_legs_cannot_reach_is_reported(self):
         sim = live_sim.LiveSim({"height": 0.32, "upper_length": 0.08, "lower_length": 0.08})

@@ -79,9 +79,9 @@ footer { color: var(--fg2); font-size: 14px; max-width: 72ch; }
 
       <fieldset>
         <legend>Leg geometry</legend>
-        <div class="ctl"><label for="lu">Upper leg</label><output id="lu_o"></output><input id="lu" type="range" step="0.5"></div>
-        <div class="ctl"><label for="ll">Lower leg</label><output id="ll_o"></output><input id="ll" type="range" step="0.5"></div>
-        <div class="ctl"><label for="la">Abduction offset</label><output id="la_o"></output><input id="la" type="range" step="0.25"></div>
+        <div class="ctl"><label for="upper_length">Upper leg</label><output id="upper_length_out"></output><input id="upper_length" type="range" step="0.5"></div>
+        <div class="ctl"><label for="lower_length">Lower leg</label><output id="lower_length_out"></output><input id="lower_length" type="range" step="0.5"></div>
+        <div class="ctl"><label for="abduction_offset">Abduction offset</label><output id="abduction_offset_out"></output><input id="abduction_offset" type="range" step="0.25"></div>
         <div class="row">
           <button id="reset" type="button">Reset lengths</button>
           <button id="trace" type="button" aria-pressed="false">Trace a step</button>
@@ -118,19 +118,19 @@ function predict(p, L) {
   return x.map((t, j) => (LIM[j][0] + LIM[j][1]) / 2 + (LIM[j][1] - LIM[j][0]) / 2 * t);
 }
 function points(q, L) {
-  const [la, lu, ll] = L, s1 = Math.sin(q[0]), c1 = Math.cos(q[0]);
-  const hk = lu * Math.cos(q[1]), h = hk + ll * Math.cos(q[1] + q[2]);
-  return [[0, 0, 0], [0, la * c1, la * s1],
-          [-lu * Math.sin(q[1]), la * c1 + hk * s1, la * s1 - hk * c1],
-          [-lu * Math.sin(q[1]) - ll * Math.sin(q[1] + q[2]), la * c1 + h * s1, la * s1 - h * c1]];
+  const [abduction_offset, upper_length, lower_length] = L, s1 = Math.sin(q[0]), c1 = Math.cos(q[0]);
+  const hk = upper_length * Math.cos(q[1]), h = hk + lower_length * Math.cos(q[1] + q[2]);
+  return [[0, 0, 0], [0, abduction_offset * c1, abduction_offset * s1],
+          [-upper_length * Math.sin(q[1]), abduction_offset * c1 + hk * s1, abduction_offset * s1 - hk * c1],
+          [-upper_length * Math.sin(q[1]) - lower_length * Math.sin(q[1] + q[2]), abduction_offset * c1 + h * s1, abduction_offset * s1 - h * c1]];
 }
 function exact(p, L) {
-  const [la, lu, ll] = L, [x, y, z] = p;
-  const h = Math.sqrt(Math.max(y * y + z * z - la * la, 0));
-  const q1 = Math.atan2(z, y) + Math.atan2(h, la);
-  const c = (x * x + h * h - lu * lu - ll * ll) / (2 * lu * ll);
+  const [abduction_offset, upper_length, lower_length] = L, [x, y, z] = p;
+  const h = Math.sqrt(Math.max(y * y + z * z - abduction_offset * abduction_offset, 0));
+  const q1 = Math.atan2(z, y) + Math.atan2(h, abduction_offset);
+  const c = (x * x + h * h - upper_length * upper_length - lower_length * lower_length) / (2 * upper_length * lower_length);
   const q3 = -Math.acos(Math.min(1, Math.max(-1, c)));
-  const q2 = Math.atan2(-x, h) - Math.atan2(ll * Math.sin(q3), lu + ll * Math.cos(q3));
+  const q2 = Math.atan2(-x, h) - Math.atan2(lower_length * Math.sin(q3), upper_length + lower_length * Math.cos(q3));
   return [q1, q2, q3];
 }
 
@@ -195,18 +195,18 @@ function render() {
 }
 
 function setLengths() {
-  state.L = [+$("la").value / 1000, +$("lu").value / 1000, +$("ll").value / 1000];
-  $("la_o").textContent = (+$("la").value).toFixed(1) + " mm";
-  $("lu_o").textContent = (+$("lu").value).toFixed(1) + " mm";
-  $("ll_o").textContent = (+$("ll").value).toFixed(1) + " mm";
+  state.L = [+$("abduction_offset").value / 1000, +$("upper_length").value / 1000, +$("lower_length").value / 1000];
+  $("abduction_offset_out").textContent = (+$("abduction_offset").value).toFixed(1) + " mm";
+  $("upper_length_out").textContent = (+$("upper_length").value).toFixed(1) + " mm";
+  $("lower_length_out").textContent = (+$("lower_length").value).toFixed(1) + " mm";
   render();
 }
-[["la", 0], ["lu", 1], ["ll", 2]].forEach(([id, j]) => {
+[["abduction_offset", 0], ["upper_length", 1], ["lower_length", 2]].forEach(([id, j]) => {
   const el = $(id), mm = NOM[j] * 1000;
   el.min = (mm * (1 - 2 * TOL)).toFixed(2); el.max = (mm * (1 + 2 * TOL)).toFixed(2); el.value = mm;
   el.addEventListener("input", setLengths);
 });
-$("reset").addEventListener("click", () => { ["la", "lu", "ll"].forEach((id, j) => $(id).value = NOM[j] * 1000); setLengths(); });
+$("reset").addEventListener("click", () => { ["abduction_offset", "upper_length", "lower_length"].forEach((id, j) => $(id).value = NOM[j] * 1000); setLengths(); });
 $("tol").textContent = Math.round(TOL * 100);
 
 for (const view of Object.values(VIEWS)) {

@@ -59,9 +59,8 @@ class TestBuildSite(unittest.TestCase):
         self.assertIn("git_commit", record)
 
     def test_every_bound_number_resolves_to_a_number(self):
-        results = {}
-        for name in build_site.RESULT_FILES:
-            results[name], _ = build_site.load_result(build_site.find_result(os.path.join(ROOT, "results"), name + ".json"))
+        results, _, _ = build_site.collect_results(os.path.join(ROOT, "results"))
+        self.assertTrue(set(build_site.RESULT_FILES) <= set(results))
         bound = 0
         for page in glob.glob(os.path.join(ROOT, "site", "*.html")):
             with open(page) as f:

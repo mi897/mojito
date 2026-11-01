@@ -70,7 +70,8 @@ LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0
               height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
 REBUILD = ("mass", "abduction_offset", "upper_length", "lower_length", "body_length", "body_width")  # changing any of these needs a new model (the stance height does not: see `height`)
 # Old names of parameters, still accepted by `set_params` (and so by the /params API of live_gait.py and serve_site.py) so that
-# a page cached before the rename keeps working. Kept for one release; remove after it.
+# a page cached before the rename keeps working. When a request has both the old and the new name, the new one wins.
+# Kept for one release; remove after it.
 PARAMETER_ALIASES = {"la": "abduction_offset", "lu": "upper_length", "ll": "lower_length"}
 # `height` is the stance height (m): the feet are placed that far below the hips. It is eased like a command, so it can be changed while walking
 # and the body rises or sinks over the planted feet; the model is only built at that height when it is reset.
@@ -130,10 +131,14 @@ class LiveSim:
     # ----- parameters -----
     def set_params(self, **changes) -> bool:
         """Apply changes (clamped). Returns True if the model must be rebuilt (the mass or a design dimension changed).
-        Unknown keys are ignored; the old names in PARAMETER_ALIASES (la, lu, ll) are read as the new ones."""
+        Unknown keys are ignored; the old names in PARAMETER_ALIASES (la, lu, ll) are read as the new ones, unless the new
+        name is in `changes` too, which then wins."""
         rebuild = False
         for key, value in changes.items():
-            key = PARAMETER_ALIASES.get(key, key)
+            if key in PARAMETER_ALIASES:
+                if PARAMETER_ALIASES[key] in changes:
+                    continue
+                key = PARAMETER_ALIASES[key]
             if key not in self.params:
                 continue
             if key == "offsets":

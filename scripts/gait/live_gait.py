@@ -12,7 +12,8 @@ Placeholder dimensions, masses, servo figures and friction (docs/STAGE2.md); the
 
 API (also under /api on scripts/website/serve_site.py): GET /state, /meta; POST /params with any of the keys of
 live_sim.DEFAULTS, /preset {"name"}, /reset. The leg lengths are `abduction_offset`, `upper_length`, `lower_length`; their old
-names `la`, `lu`, `ll` are still accepted for one release (live_sim.PARAMETER_ALIASES), so a cached page keeps working.
+names `la`, `lu`, `ll` are still accepted for one release (live_sim.PARAMETER_ALIASES), so a cached page keeps working;
+when a request has both names, the new one wins.
 """
 import argparse
 import json

@@ -1,6 +1,7 @@
 /* Playground, kinematic lab: the project's own maths (assets/mojito.js) live, geometry and statics only. Needs common.js first. */
 (function () {
   'use strict';
+  if (!window.Mojito) return;   // data/constants.js missing, so mojito.js did not load: common.js says so on the page
   const M = window.Mojito, P = window.Playground, { D2R, $, fmt, slider, heading, buttons, kpi } = P;
   const matMul = (A, B) => A.map(r => [0, 1, 2].map(j => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
 
@@ -8,22 +9,22 @@
    * Kinematic lab
    * ============================================================= */
   // gait sliders of a gait preset (mojito.js, from gaits.py) commanded at `vx` m/s
-  const gaitSet = (gait, vx, wz = 0) => ({ period: gait.period, duty: gait.duty, lift: gait.lift, sway: gait.sway,
-    o0: gait.offsets[0], o1: gait.offsets[1], o2: gait.offsets[2], o3: gait.offsets[3], vx, vy: 0, wz });
+  const gaitSet = (gait, vx, yaw_rate = 0) => ({ period: gait.period, duty: gait.duty, lift: gait.lift, sway: gait.sway,
+    o0: gait.offsets[0], o1: gait.offsets[1], o2: gait.offsets[2], o3: gait.offsets[3], vx, vy: 0, yaw_rate });
   // the Stage 2 design placeholders, trot, servo supply and total mass: all from data/constants.js, through mojito.js
   const DESIGN = M.DESIGN, DEFAULTS = Object.assign({
-    abduction_offset: DESIGN.abduction_offset, upper_length: DESIGN.upper_length, lower_length: DESIGN.lower_length, bl: DESIGN.body_length, bw: DESIGN.body_width,
-    h: DESIGN.stance_height, sFL: 1,
+    abduction_offset: DESIGN.abduction_offset, upper_length: DESIGN.upper_length, lower_length: DESIGN.lower_length, body_length: DESIGN.body_length, body_width: DESIGN.body_width,
+    stance_height: DESIGN.stance_height, front_left_scale: 1,
     px: 0, py: 0, pz: 0, roll: 0, pitch: 0, yaw: 0,
   }, gaitSet(M.TROT, M.GAIT_SPEEDS.trot), { mass: DESIGN.total_mass, volts: M.SERVO.voltage });
   const kin = { st: Object.assign({}, DEFAULTS), mode: 'gait', gaitName: 'trot', t: 0, playing: true, speed: 1, ctl: {},
-    eff: { vx: DEFAULTS.vx, vy: DEFAULTS.vy, wz: DEFAULTS.wz }, pose: { x: 0, y: 0, yaw: 0 }, drive: null };
+    eff: { vx: DEFAULTS.vx, vy: DEFAULTS.vy, yaw_rate: DEFAULTS.yaw_rate }, pose: { x: 0, y: 0, yaw: 0 }, drive: null };
   // time constant of the easing of the commanded velocity (s): the live simulation's, so a steered robot does not jump (livemeta.js)
   const commandTau = () => (window.MOJITO_LIVE ? window.MOJITO_LIVE.constants.smoothing_time : 0);
 
   function robotOf(st) {
-    const r = new M.Robot({ lengths: [st.abduction_offset, st.upper_length, st.lower_length], bodyLength: st.bl, bodyWidth: st.bw });
-    r.lengths[0] = r.lengths[0].map((v, i) => (i ? v * st.sFL : v));
+    const r = new M.Robot({ lengths: [st.abduction_offset, st.upper_length, st.lower_length], bodyLength: st.body_length, bodyWidth: st.body_width });
+    r.lengths[0] = r.lengths[0].map((v, i) => (i ? v * st.front_left_scale : v));
     return r;
   }
   function gaitOf(st) {
@@ -33,7 +34,7 @@
   function evalAt(t, v = kin.st) {
     const st = kin.st, robot = robotOf(st), standing = kin.mode === 'stand';
     return M.evaluate({
-      robot, gait: standing ? null : gaitOf(st), t, velocity: [v.vx, v.vy], yawRate: v.wz, height: st.h,
+      robot, gait: standing ? null : gaitOf(st), t, velocity: [v.vx, v.vy], yawRate: v.yaw_rate, height: st.stance_height,
       posture: { x: st.px, y: st.py, z: st.pz, roll: st.roll * D2R, pitch: st.pitch * D2R, yaw: st.yaw * D2R }, mass: st.mass, volts: st.volts,
     });
   }
@@ -42,8 +43,8 @@
     const c = Math.cos(p.yaw), s = Math.sin(p.yaw), Rz = [[c, -s, 0], [s, c, 0], [0, 0, 1]];
     const off = res.offset;
     return {
-      origin: [p.x + c * off[0] - s * off[1], p.y + s * off[0] + c * off[1], st.h + off[2]],
-      R: matMul(Rz, res.R), bodySize: [st.bl, st.bw], points: res.points,
+      origin: [p.x + c * off[0] - s * off[1], p.y + s * off[0] + c * off[1], st.stance_height + off[2]],
+      R: matMul(Rz, res.R), bodySize: [st.body_length, st.body_width], points: res.points,
       down: res.loadsN.map(l => l > 1e-6), bad: res.reachable.map(r => !r),
     };
   }
@@ -51,14 +52,14 @@
   function kinSpecs() {
     return [
       ['Robot design (placeholders)', [['abduction_offset', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['upper_length', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000],
-        ['lower_length', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000], ['bl', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['bw', 'body width', 0.08, 0.3, 0.01, ' mm', 1000],
-        ['h', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000], ['sFL', 'FL leg scale', 0.8, 1.25, 0.01, '×', 1]]],
+        ['lower_length', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000], ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000],
+        ['stance_height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000], ['front_left_scale', 'FL leg scale', 0.8, 1.25, 0.01, '×', 1]]],
       ['Body posture (feet stay put)', [['px', 'shift forward', -0.06, 0.06, 0.0025, ' mm', 1000], ['py', 'shift left', -0.06, 0.06, 0.0025, ' mm', 1000],
         ['pz', 'raise', -0.06, 0.06, 0.0025, ' mm', 1000], ['roll', 'roll', -30, 30, 0.5, '°', 1], ['pitch', 'pitch', -30, 30, 0.5, '°', 1], ['yaw', 'yaw', -30, 30, 0.5, '°', 1]]],
       ['Gait timing', [['period', 'period', 0.2, 3, 0.05, ' s', 1], ['duty', 'duty (on ground)', 0.2, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000],
         ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000], ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1],
         ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
-      ['Command', [['vx', 'forward', -0.4, 0.4, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['wz', 'turn rate', -2.5, 2.5, 0.1, ' rad/s', 1]]],
+      ['Command', [['vx', 'forward', -0.4, 0.4, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['yaw_rate', 'turn rate', -2.5, 2.5, 0.1, ' rad/s', 1]]],
       ['Load', [['mass', 'total mass', 0.5, 6, 0.01, ' kg', 1], ['volts', 'servo supply', 5, 6, 0.1, ' V', 1]]],
     ];
   }
@@ -76,7 +77,7 @@
     kin.mode = p.mode; kin.gaitName = p.gait;
     base.forEach(k => kin.ctl[k].set(0));
     Object.entries(p.set).forEach(([k, v]) => kin.ctl[k].set(v));
-    kin.engaged = false; kin.t = 0; kin.pose = { x: 0, y: 0, yaw: 0 }; kin.eff = { vx: kin.st.vx, vy: kin.st.vy, wz: kin.st.wz }; kinDirty('preset');
+    kin.engaged = false; kin.t = 0; kin.pose = { x: 0, y: 0, yaw: 0 }; kin.eff = { vx: kin.st.vx, vy: kin.st.vy, yaw_rate: kin.st.yaw_rate }; kinDirty('preset');
     if (kinView) kinView.recentre();
   }
 
@@ -218,12 +219,12 @@
       if (!asked && !kin.engaged) return;
       kin.engaged = true;
       if (pose) {
-        kin.mode = 'stand'; set('vx', 0); set('vy', 0); set('wz', 0);
+        kin.mode = 'stand'; set('vx', 0); set('vy', 0); set('yaw_rate', 0);
         set('roll', out.body_roll / D2R); set('pitch', out.body_pitch / D2R); set('yaw', out.body_yaw / D2R); set('pz', out.body_height);
       } else {
         kin.mode = out.walk ? 'gait' : 'stand';
-        set('vx', out.vx); set('vy', out.vy); set('wz', out.yaw_rate);
-        if (out.height !== undefined) set('h', out.height);   // a held raise or lower input: the lab's own stand-height slider
+        set('vx', out.vx); set('vy', out.vy); set('yaw_rate', out.yaw_rate);
+        if (out.height !== undefined) set('stance_height', out.height);   // a held raise or lower input: the lab's own stand-height slider
         if (out.walk && !kin.playing) { kin.playing = true; $('kin-play').textContent = 'Pause'; }
       }
       kin.redraw = true; chartsSoon();
@@ -234,13 +235,14 @@
       if (mode === 'walk') ['roll', 'pitch', 'yaw', 'pz'].forEach(k => set(k, 0));   // back to level, as the live simulation does
       else { kin.engaged = true; }
     }
-    kin.drive = MojitoDrive.create({ touch, meta: { drive: live.meta.drive, pose: live.meta.pose, limits: { height: live.meta.limits.height }, presets: {} }, send: apply, getHeight: () => kin.st.h,
+    kin.drive = MojitoDrive.create({ touch, meta: { drive: live.meta.drive, pose: live.meta.pose, limits: { height: live.meta.limits.height }, presets: {} }, send: apply, getHeight: () => kin.st.stance_height,
       canvasActive: () => !$('kin').hidden, reset: () => kinPreset('stand'), setPreset: kinPreset, toggleChase: () => {}, onMode });
     $('kin-keys').textContent = KEYS_WALK;
   }
 
   function initKin() {
     const box = $('kin-controls');
+    $('kin-stall-5v').textContent = fmt(M.SERVO.stall_5v, 2); $('kin-stall-68v').textContent = fmt(M.SERVO.stall_68v, 2);
     buttons(box, [['Trot', () => applyPreset('trot')], ['Crawl', () => applyPreset('crawl')], ['Pace', () => applyPreset('pace'), 'left legs together, then right: goes backward in physics'],
       ['Spin', () => applyPreset('spin')], ['Stand', () => applyPreset('stand')], ['Twist', () => applyPreset('twist'), 'posture with the feet planted']]);
     kinSpecs().forEach(([title, rows]) => {
@@ -260,9 +262,9 @@
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
       if (!$('kin').hidden) {
         const tau = commandTau(), st = kin.st, e = kin.eff;
-        e.vx = M.easeTo(e.vx, st.vx, dt, tau); e.vy = M.easeTo(e.vy, st.vy, dt, tau); e.wz = M.easeTo(e.wz, st.wz, dt, tau);
+        e.vx = M.easeTo(e.vx, st.vx, dt, tau); e.vy = M.easeTo(e.vy, st.vy, dt, tau); e.yaw_rate = M.easeTo(e.yaw_rate, st.yaw_rate, dt, tau);
         const moving = kin.playing && kin.mode === 'gait';
-        if (moving) { kin.t += dt * kin.speed; kin.pose = M.advancePose(kin.pose, [e.vx, e.vy], e.wz, dt * kin.speed); }
+        if (moving) { kin.t += dt * kin.speed; kin.pose = M.advancePose(kin.pose, [e.vx, e.vy], e.yaw_rate, dt * kin.speed); }
         // a stopped lab is redrawn only while the eased command is still settling or the drive has just changed something
         if (moving || kin.redraw) { kin.redraw = false; kinFrame(); }
       }

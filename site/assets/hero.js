@@ -6,6 +6,10 @@
   document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('hero-view');
     if (!canvas) return;
+    if (!M) {   // data/constants.js missing, so mojito.js did not load
+      const note = document.createElement('p'); note.className = 'w small'; note.textContent = 'site data missing: run scripts/website/build_site.py';
+      canvas.replaceWith(note); return;
+    }
     const view = new RobotView(canvas, { az: -40, el: 22, zoom: 1.15 }), robot = new M.Robot(), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let t = 0, last = performance.now(), mode = 'trot';
     const gaits = { trot: [M.TROT, [M.GAIT_SPEEDS.trot, 0]], crawl: [M.CRAWL, [M.GAIT_SPEEDS.crawl, 0]] }, height = M.DESIGN.stance_height;

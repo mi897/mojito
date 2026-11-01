@@ -22,6 +22,8 @@ HERE = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(HERE, "..", "..", "scripts", "website"))
 import build_site  # noqa: E402
 
+# data/constants.js as build_site.py writes it, in a folder removed when the process exits
+_PRELOAD_DIR = tempfile.TemporaryDirectory(prefix="mojito-constants-")
 _PRELOAD = None
 
 
@@ -30,9 +32,9 @@ def node(*args, **options):
     without a site build. Returns the CompletedProcess."""
     global _PRELOAD
     if _PRELOAD is None:
-        with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False) as f:
+        _PRELOAD = os.path.join(_PRELOAD_DIR.name, "constants.js")
+        with open(_PRELOAD, "w") as f:
             f.write(build_site.constants_js())
-        _PRELOAD = f.name
     return subprocess.run([NODE, "-r", _PRELOAD, *args], capture_output=True, text=True, check=True, **options)
 GAIT_BY_NAME = {"trot": gaits.TROT, "crawl": gaits.CRAWL}
 
@@ -221,10 +223,6 @@ class TestSteering(unittest.TestCase):
         self.assertEqual(out["jump"], 2)   # tau = 0 jumps
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 @unittest.skipIf(NODE is None, "node is not installed")
 class TestSiteConstants(unittest.TestCase):
     """mojito.js takes its constants from data/constants.js: they must be the Python ones, not a copy."""
@@ -262,3 +260,7 @@ class TestSiteConstants(unittest.TestCase):
                              check=False)
         self.assertNotEqual(run.returncode, 0)
         self.assertIn("build_site.py", run.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -20,7 +20,7 @@
   // design: {abduction_offset, upper_length, lower_length, body_length, body_width, start_z, masses, timestep}; c = live.constants
   function mjcfQuadruped(c, design) {
     const m = c.model, M = design.masses, lim = c.joint_limits;
-    const x = design.body_length / 2, y = design.body_width / 2, la = design.abduction_offset, lu = design.upper_length, ll = design.lower_length;   // as in mjcf.py
+    const x = design.body_length / 2, y = design.body_width / 2;
     const body = [design.body_length, design.body_width, m.body_thickness].map(v => v / 2);
     const friction = `${m.foot_friction} ${m.friction_torsion} ${m.friction_rolling}`;
     const capsule = (end, mass) => `<geom type="capsule" fromto="${fmt([0, 0, 0, ...end])}" size="${m.link_radius}" mass="${mass}" rgba="0.8 0.8 0.85 1" />`;
@@ -30,12 +30,12 @@
       const [mx, my] = mounts[name], right = my < 0, side = right ? -1 : 1;
       const [a, h, k] = lim, abd = right ? [-a[1], -a[0]] : a;   // only the abduction range is mirrored
       legs += `<body name="${name}_hip" pos="${fmt([mx, my, 0])}"><joint name="${name}_abduction" type="hinge" axis="1 0 0" range="${fmt(abd)}" />`
-        + capsule([0, side * la, 0], M.hip)
-        + `<body name="${name}_thigh" pos="${fmt([0, side * la, 0])}"><joint name="${name}_hip_pitch" type="hinge" axis="0 1 0" range="${fmt(h)}" />`
-        + capsule([0, 0, -lu], M.thigh)
-        + `<body name="${name}_shank" pos="${fmt([0, 0, -lu])}"><joint name="${name}_knee" type="hinge" axis="0 1 0" range="${fmt(k)}" />`
-        + capsule([0, 0, -ll], M.shank)
-        + `<body name="${name}_foot" pos="${fmt([0, 0, -ll])}"><site name="${name}_foot" size="0.004" rgba="0 0.6 1 1" />`
+        + capsule([0, side * design.abduction_offset, 0], M.hip)
+        + `<body name="${name}_thigh" pos="${fmt([0, side * design.abduction_offset, 0])}"><joint name="${name}_hip_pitch" type="hinge" axis="0 1 0" range="${fmt(h)}" />`
+        + capsule([0, 0, -design.upper_length], M.thigh)
+        + `<body name="${name}_shank" pos="${fmt([0, 0, -design.upper_length])}"><joint name="${name}_knee" type="hinge" axis="0 1 0" range="${fmt(k)}" />`
+        + capsule([0, 0, -design.lower_length], M.shank)
+        + `<body name="${name}_foot" pos="${fmt([0, 0, -design.lower_length])}"><site name="${name}_foot" size="0.004" rgba="0 0.6 1 1" />`
         + `<geom name="${name}_foot_pad" type="sphere" size="${m.foot_radius}" mass="${M.foot}" contype="1" conaffinity="1" friction="${friction}" rgba="0.1 0.1 0.1 1" />`
         + '</body></body></body></body>';
       for (const j of JOINTS) motors += `<motor name="${name}_${j}" joint="${name}_${j}" gear="1" />`;
@@ -95,7 +95,10 @@
     setParams(changes) {
       let rebuild = false;
       for (const [name, raw] of Object.entries(changes)) {
-        const key = this.c.parameter_aliases[name] || name;   // old names (la, lu, ll) of live_sim.PARAMETER_ALIASES, for one release
+        // old names (la, lu, ll) of live_sim.PARAMETER_ALIASES, for one release; the new name wins when a request has both
+        const alias = this.c.parameter_aliases[name];
+        if (alias && alias in changes) continue;
+        const key = alias || name;
         if (!(key in this.params)) continue;
         let value = raw;
         if (key === 'offsets') {

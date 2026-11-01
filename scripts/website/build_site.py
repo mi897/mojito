@@ -30,6 +30,8 @@ RESULT_FILES = ["metrics", "calibration", "body_metrics", "torque_envelope", "st
                 "gait_speed_diagnosis", "pace_diagnosis", "trot_period_sweep", "trot_period_robustness", "trot_1p7_parameter_sweep", "trot_1p7_one_at_a_time", "trot_1p7_kp_kd_grid_summary", "trot_1p7_combined_summary", "training_log"]
 DOCS = {"README": "README.md", "USAGE": "docs/USAGE.md", "RESULTS": "docs/RESULTS.md", "PHYSICS": "docs/PHYSICS.md", "PLAN": "docs/PLAN.md", "STAGE2": "docs/STAGE2.md", "NAMING": "docs/NAMING.md", "CLAUDE": "CLAUDE.md"}
 MEDIA_SUFFIXES = (".gif", ".png")
+# physics_sweep.json keys copied into window.MOJITO_RESULTS.physics_sweep_summary
+SWEEP_SUMMARY_KEYS = ("n_runs", "walk_from_s", "record_from_s", "frame_dt_s", "stance_height_m")
 
 
 def _design(design):
@@ -54,7 +56,9 @@ def site_constants() -> dict:
                               "sway": gait.sway} for gait in (gaits.TROT, gaits.CRAWL, gaits.PACE)},
         "gait_speeds": {name: preset["vx"] for name, preset in live_sim.PRESETS.items()},  # m/s each preset starts at
         "gravity": statics.G,
-        "servo": {"voltage": servo.voltage, "stall_5v": servo.stall_5v, "stall_68v": servo.stall_68v},
+        # N·m stall torque and rad/s no-load speed at 5 V and at 6.8 V (listed, unverified), and the default supply voltage
+        "servo": {"voltage": servo.voltage, "stall_5v": servo.stall_5v, "stall_68v": servo.stall_68v,
+                  "noload_5v": servo.noload_5v, "noload_68v": servo.noload_68v},
     }
 
 
@@ -94,6 +98,33 @@ def media_files(results_dir):
     return sorted(found, key=os.path.basename)
 
 
+def sweep_summary(sweep):
+    """The few numbers of physics_sweep.json that pages outside the physics lab bind (the full file is 2 MB, loaded on demand)."""
+    return {key: sweep[key] for key in SWEEP_SUMMARY_KEYS if key in sweep}
+
+
+def collect_results(results_dir):
+    """(results by name for data/results.js, provenance by name, physics_sweep.json's numbers or None). The results include
+    `physics_sweep_summary` (sweep_summary) when the sweep is there."""
+    results, provenance = {}, {}
+    for name in RESULT_FILES:
+        path = find_result(results_dir, name + ".json")
+        if path:
+            results[name], record = load_result(path)
+            if record is not None:
+                provenance[name] = record
+        else:
+            print(f"missing {name}.json under results/: sections that use it will show '?'", file=sys.stderr)
+    sweep = None
+    path = find_result(results_dir, "physics_sweep.json")
+    if path:
+        sweep, record = load_result(path)
+        if record is not None:
+            provenance["physics_sweep"] = record
+        results["physics_sweep_summary"] = sweep_summary(sweep)
+    return results, provenance, sweep
+
+
 def git(*args):
     try:
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
@@ -107,23 +138,10 @@ def build(out):
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(media_dir, exist_ok=True)
 
-    results, provenance = {}, {}
-    for name in RESULT_FILES:
-        path = find_result(results_dir, name + ".json")
-        if path:
-            results[name], record = load_result(path)
-            if record is not None:
-                provenance[name] = record
-        else:
-            print(f"missing {name}.json under results/: sections that use it will show '?'", file=sys.stderr)
+    results, provenance, sweep = collect_results(results_dir)
     write_js(os.path.join(data_dir, "results.js"), "MOJITO_RESULTS", results)
-
-    sweep = find_result(results_dir, "physics_sweep.json")
-    if sweep:
-        payload, record = load_result(sweep)
-        if record is not None:
-            provenance["physics_sweep"] = record
-        write_js(os.path.join(data_dir, "sweep.js"), "MOJITO_SWEEP", payload)
+    if sweep is not None:
+        write_js(os.path.join(data_dir, "sweep.js"), "MOJITO_SWEEP", sweep)
     else:
         print("missing physics_sweep.json under results/: run scripts/website/site_sweep.py (needs mujoco) for the physics playground", file=sys.stderr)
 

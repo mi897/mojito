@@ -122,7 +122,8 @@ class TestBrowserSim(unittest.TestCase):
 
         schedule = [dict(steps=500), dict(changes=dict(walk=True, vx=0.2), steps=750), dict(changes=dict(mass=2.4, upper_length=0.13), steps=500),
                     dict(changes=dict(kp=30.0, lift=0.03), steps=500),
-                    dict(changes=dict(ll=0.16), steps=250)]  # an old parameter name (live_sim.PARAMETER_ALIASES): both must accept it
+                    dict(changes=dict(ll=0.16), steps=250),  # an old parameter name (live_sim.PARAMETER_ALIASES): both must accept it
+                    dict(changes=dict(la=0.07, abduction_offset=0.06), steps=250)]  # both names: the new one wins in both
         theirs = node({"op": "run", "params": live_sim.PRESETS["trot"], "schedule": schedule})["snapshots"][-1]
         sim = live_sim.LiveSim(live_sim.PRESETS["trot"])
         for entry in schedule:
@@ -131,6 +132,7 @@ class TestBrowserSim(unittest.TestCase):
             sim.step(entry["steps"])
         self.assert_close(theirs, sim.snapshot())
         self.assertAlmostEqual(theirs["total_mass_kg"], 2.4, places=3)
+        self.assertEqual(sim.params["abduction_offset"], 0.06)
 
     def test_changing_the_stance_height_while_walking_matches(self):
         # the stance height is eased and needs no rebuild; the same schedule for both, trot and crawl

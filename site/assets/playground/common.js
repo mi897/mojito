@@ -28,27 +28,37 @@
   }
   function kpi(label, value, cls, hint) { return `<div class="kpi ${cls || ''}" ${hint ? `title="${hint}"` : ''}><b>${value}</b><span>${label}</span></div>`; }
 
-  const P = window.Playground = { D2R: Math.PI / 180, $, css, fmt, slider, heading, buttons, kpi };
+  // a visible one-line note, for a copy of the site built without data/ (mojito.js then refuses to load and the labs cannot start)
+  function missingData(where) {
+    const note = document.createElement('p'); note.className = 'w'; note.textContent = 'site data missing: run scripts/website/build_site.py';
+    where.before(note);
+  }
+  const P = window.Playground = { D2R: Math.PI / 180, $, css, fmt, slider, heading, buttons, kpi, missingData };
+  const ready = lab => Boolean(window.Mojito && P[lab]);
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!$('kin').hidden) P.kin.charts(); else if (!$('phys').hidden && P.replay.hasRun()) P.replay.changed(); }, 200); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!$('kin').hidden && ready('kin') && P.kin.ready()) P.kin.charts(); else if (!$('phys').hidden && ready('replay') && P.replay.hasRun()) P.replay.changed(); }, 200); });
 
   /* ---------- tabs ---------- */
   function show(which) {
     $('kin').hidden = which !== 'kin'; $('phys').hidden = which !== 'phys'; $('live').hidden = which !== 'live';
     ['kin', 'phys', 'live'].forEach(k => $('tab-' + k).setAttribute('aria-selected', which === k));
-    if (which === 'live') window.LivePhysics.start(); else window.LivePhysics.stop();
+    if (window.LivePhysics) { if (which === 'live') window.LivePhysics.start(); else window.LivePhysics.stop(); }
     history.replaceState(null, '', '#' + which);
-    if (which === 'kin' && P.kin.ready()) P.kin.redraw();
-    if (which === 'phys') {
+    if (which === 'kin' && ready('kin') && P.kin.ready()) P.kin.redraw();
+    if (which === 'phys' && ready('replay')) {
       if ($('phys-controls').dataset.ready) { P.replay.changed(); return; }
-      $('phys-controls').innerHTML = '<p class="muted">Loading the 144 recorded runs…</p>';
+      $('phys-controls').innerHTML = '<p class="muted">Loading the ' + (((window.MOJITO_RESULTS || {}).physics_sweep_summary || {}).n_runs || '') + ' recorded runs…</p>';
       window.loadSweep().then(() => { $('phys-controls').dataset.ready = '1'; P.replay.init(); })
         .catch(() => { $('phys-controls').innerHTML = '<p class="w">The recorded runs (data/sweep.js) are missing. Run <code>uv run --extra sim python scripts/website/build_site.py</code>.</p>'; });
     }
   }
   document.addEventListener('DOMContentLoaded', () => {
-    P.kin.init();
+    // the tabs first, so that a lab that fails to start does not take the others with it
     $('tab-kin').onclick = () => show('kin'); $('tab-phys').onclick = () => show('phys'); $('tab-live').onclick = () => show('live');
+    if (!window.Mojito) missingData($('tab-kin').parentElement);
+    else if (ready('kin')) {
+      try { P.kin.init(); } catch (e) { console.error(e); }
+    }
     if (location.hash === '#phys') show('phys'); else if (/^#live/.test(location.hash)) show('live');
   });
 })();
