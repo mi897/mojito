@@ -37,13 +37,14 @@ mojito/                the library, in four subpackages (each holds at most abou
                        and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
-                       placeholders.py (placeholder leg and body dimensions), limb_model.py (LimbModel interface, Mirror)
+                       placeholders.py (placeholder dimensions; QuadrupedDesign, STAGE1_QUADRUPED, SIM_QUADRUPED with masses), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
   learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
                        torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
-                       stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+                       robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py,
+                       design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html), touchpad.js, browsersim.js (live_sim in the browser on MuJoCo WebAssembly; constants from the generated data/livemeta.js); data/ and media/ are generated
 scripts/               entry points, one folder per topic
@@ -134,7 +135,10 @@ else NumPy.
   in `mojito/geometry/robots.py`, which take their placeholder dimensions from
   `mojito/geometry/placeholders.py` (the one place they are written; `leg.NOMINAL_LENGTHS`,
   `leg.JOINT_LIMITS`, `body.BODY_LENGTH` and `body.BODY_WIDTH` re-export them for the
-  built-in leg model). Change the placeholder or generator and regenerate rather than
+  built-in leg model). The simulator's larger placeholder quadruped is `placeholders.SIM_QUADRUPED`
+  (a `QuadrupedDesign`: leg lengths, body size, stance height, masses); the simulation functions
+  take `design=` and default to it, so never retype its numbers. Gravity is `statics.G` (magnitude;
+  `mjcf.GRAVITY` is `-G` along z). Change the placeholder or generator and regenerate rather than
   hand-editing both. Joint-limit changes need retraining;
   link-length changes do not.
 - **Link lengths are arguments, never module constants.** For the built-in

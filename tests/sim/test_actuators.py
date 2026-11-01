@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from mojito.geometry import robots
-from mojito.robot import body
+from mojito.robot import body, statics
 from mojito.sim import actuators as A, mjcf  # noqa: E402
 
 from .clock_helpers import fast_forward  # noqa: E402
@@ -23,7 +23,7 @@ try:
 except ImportError:  # pragma: no cover
     mujoco = None
 
-G = 9.81
+G = statics.G  # m/s^2, the magnitude; the arm model below is built with the same value
 
 
 class TestServoMaths(unittest.TestCase):
@@ -107,7 +107,7 @@ class TestServoMaths(unittest.TestCase):
 
 
 ARM_XML = """
-<mujoco><compiler angle="radian"/><option timestep="0.001" gravity="0 0 -9.81"/>
+<mujoco><compiler angle="radian"/><option timestep="0.001" gravity="0 0 {gravity}"/>
 <worldbody><body name="arm"><joint name="j" type="hinge" axis="0 1 0" range="-1.5 1.5" armature="0.005" damping="0.01"/>
 <geom type="capsule" fromto="0 0 0 {L} 0 0" size="0.005" mass="0.0001" contype="0" conaffinity="0"/>
 <geom type="sphere" pos="{L} 0 0" size="0.01" mass="{m}" contype="0" conaffinity="0"/></body></worldbody>
@@ -119,7 +119,7 @@ class TestServoHoldingMass(unittest.TestCase):
     """A servo holding a mass on a horizontal arm. The arm swings about +y, so a downward load is a positive rotation."""
 
     def run_hold(self, m, L, steps=4000, **kw):
-        mod = mujoco.MjModel.from_xml_string(ARM_XML.format(m=m, L=L))
+        mod = mujoco.MjModel.from_xml_string(ARM_XML.format(m=m, L=L, gravity=-G))
         d = mujoco.MjData(mod)
         servo = A.Servo(A.ServoParams(latency=0.0, resolution=1e-9, **kw))
         servo.reset()

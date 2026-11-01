@@ -20,16 +20,18 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 
+from ..geometry.placeholders import SIM_QUADRUPED
 from ..geometry.urdf import URDFModel, URDFError
+from ..robot.statics import G
 
-# Placeholder masses in kg, by role. Servos are listed at 60 g (docs/STAGE2.md).
-DEFAULT_MASSES = {"body": 0.8, "hip": 0.06, "thigh": 0.10, "shank": 0.06, "foot": 0.01}
+# Placeholder masses in kg, by role: a plain-dict copy of those of the simulator's placeholder quadruped (geometry/placeholders.py).
+DEFAULT_MASSES = dict(SIM_QUADRUPED.masses)
 FOOT_RADIUS = 0.012
 BODY_THICKNESS = 0.06  # height of the box drawn for the body, m
 LINK_RADIUS = 0.01
 FLOOR_FRICTION = 1.0
 FOOT_FRICTION = 1.0
-GRAVITY = -9.81        # m/s^2, along z
+GRAVITY = -G           # m/s^2, along z (statics.G is the magnitude)
 JOINT_DAMPING = 0.05   # N·m·s/rad
 JOINT_ARMATURE = 0.001  # kg·m^2
 FLOOR_HALF_SIZE = 5.0  # m, the floor plane drawn out to +-this in x and y
@@ -49,17 +51,20 @@ def _role(link: str, root: str) -> str:
     return "shank"
 
 
-def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
+def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
                    height: float = 0.0, timestep: float = 0.002, actuated: bool = False) -> str:
     """MJCF text for a floating-base robot described by `model`.
 
-    body_size  (length, width, height) of the box drawn for the root link.
+    body_size  (length, width, height) of the box drawn for the root link; default the simulator's placeholder body
+               (placeholders.SIM_QUADRUPED) and BODY_THICKNESS.
     masses     overrides for DEFAULT_MASSES.
     height     starting height of the root link above the floor [m].
     actuated   add a torque motor per movable joint (ctrl = N·m, driven by `actuators.Servo`) and a
                gyro and accelerometer at body_origin (sensors "gyro", "accel").
     """
-    m = {**DEFAULT_MASSES, **(masses or {})}
+    if body_size is None:
+        body_size = (SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width, BODY_THICKNESS)
+    mass_of = {**DEFAULT_MASSES, **(masses or {})}  # kg by role
     root = model.root()
     mj = ET.Element("mujoco", model=model.name)
     ET.SubElement(mj, "compiler", angle="radian", autolimits="true")
@@ -79,7 +84,7 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
             el = ET.SubElement(parent_el, "body", name=link, pos=_v((0.0, 0.0, height)))
             ET.SubElement(el, "freejoint", name="base")
             ET.SubElement(el, "site", name="body_origin", size="0.004", rgba="1 0 0 1")
-            ET.SubElement(el, "geom", type="box", size=_v(np.array(body_size) / 2), mass=str(m["body"]),
+            ET.SubElement(el, "geom", type="box", size=_v(np.array(body_size) / 2), mass=str(mass_of["body"]),
                           rgba="0.5 0.5 0.55 1")
         else:
             el = ET.SubElement(parent_el, "body", name=link, pos=_v(joint.xyz))
@@ -91,7 +96,7 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
             if role == "foot":
                 ET.SubElement(el, "site", name=link, size="0.004", rgba="0 0.6 1 1")
                 ET.SubElement(el, "geom", name=f"{link}_pad", type="sphere", size=str(FOOT_RADIUS),
-                              mass=str(m["foot"]), contype="1", conaffinity="1",
+                              mass=str(mass_of["foot"]), contype="1", conaffinity="1",
                               friction=f"{FOOT_FRICTION} {FRICTION_TORSION} {FRICTION_ROLLING}", rgba="0.1 0.1 0.1 1")
             else:
                 # a capsule from this link's origin to the origin of its first child, or a ball if it has none
@@ -99,9 +104,9 @@ def mjcf_from_urdf(model: URDFModel, body_size=(0.30, 0.15, 0.06), masses=None,
                 end = ends[0] if ends else np.zeros(3)
                 if np.linalg.norm(end) > 1e-9:
                     ET.SubElement(el, "geom", type="capsule", fromto=_v(np.concatenate([np.zeros(3), end])),
-                                  size=str(LINK_RADIUS), mass=str(m[role]), rgba="0.8 0.8 0.85 1")
+                                  size=str(LINK_RADIUS), mass=str(mass_of[role]), rgba="0.8 0.8 0.85 1")
                 else:
-                    ET.SubElement(el, "geom", type="sphere", size=str(LINK_RADIUS * 1.5), mass=str(m[role]),
+                    ET.SubElement(el, "geom", type="sphere", size=str(LINK_RADIUS * 1.5), mass=str(mass_of[role]),
                                   rgba="0.8 0.8 0.85 1")
         for k in kids:
             build(el, k.child, k)

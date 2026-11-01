@@ -20,7 +20,7 @@ from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import body, gaits
 from mojito.sim import actuators, gait_replay
 
-RUN_DEFAULTS = defaults_of(gait_replay.run_gait)  # every run here keeps run_gait's timestep, stand and blend times and height
+RUN_DEFAULTS = defaults_of(gait_replay.run_gait)  # every run here keeps run_gait's timestep, stand and blend times and design
 TIMESTEP = RUN_DEFAULTS["timestep"]
 STAND, RAMP = RUN_DEFAULTS["stand_time"], RUN_DEFAULTS["ramp_time"]
 # The diagnosis was made with the original 30 mm swing, 0.2125 m stance and kp 10 servo; `gaits.TROT` is now 22 mm (and tuned in gait_replay).
@@ -46,7 +46,7 @@ def analyse(gait, velocity, **kw):
     r = gait_replay.run_gait(gait, (velocity, 0.0), cycles=3 if gait.name == "trot" else 2, **kw)
     t = r["time_s"]
     walking = t >= STAND + RAMP
-    home = body.Robot(body.AnalyticSolver()).stance(RUN_DEFAULTS["height"])
+    home = body.Robot(body.AnalyticSolver()).stance(RUN_DEFAULTS["design"].stance_height)  # the contact does not depend on home
     _, commanded_contact, _ = gaits.foot_targets(gait, np.maximum(t - STAND, 0.0), home, (velocity, 0.0), 0.0)
     loads = r["foot_load_n"][1:] * walking[1:, None]
     command_vx = np.diff(r["feet_body_command_m"][:, :, 0], axis=0) / TIMESTEP  # commanded body-frame foot velocity

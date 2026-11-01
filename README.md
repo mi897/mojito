@@ -112,13 +112,14 @@ mojito/                the library, in four subpackages (each holds at most abou
                        and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
-                       placeholders.py (placeholder leg and body dimensions), limb_model.py (LimbModel interface, Mirror)
+                       placeholders.py (placeholder dimensions; QuadrupedDesign, STAGE1_QUADRUPED, SIM_QUADRUPED with masses), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
   learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
                        torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
-                       stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+                       robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py,
+                       design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground; data/ and media/ are generated
 scripts/               entry points, one folder per topic

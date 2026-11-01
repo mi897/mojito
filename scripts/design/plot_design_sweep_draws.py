@@ -16,6 +16,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from mojito.geometry.placeholders import SIM_QUADRUPED  # noqa: E402
 from mojito.palette import INK, ORANGE  # noqa: E402
 from mojito.results import results_path, write_result  # noqa: E402
 
@@ -61,7 +62,7 @@ def main():
         rows.append(row)
     write_result(os.path.join(DIRECTORY, "design_sweep_draws_summary.json"), {"draws": draws, "rows": rows})
 
-    def find(upper, lower, scale, body=(0.30, 0.15)):
+    def find(upper, lower, scale, body=(SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width)):
         return next(r for r in rows if abs(r["upper_mm"] - 1000 * upper) < 1e-6 and abs(r["lower_mm"] - 1000 * lower) < 1e-6
                     and abs(r["body_mm"][0] - 1000 * body[0]) < 1e-6 and r["mass_scale"] == scale)
 

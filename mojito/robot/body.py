@@ -14,16 +14,15 @@ import numpy as np
 
 from ..geometry.kinematics import rpy_rotation
 # Placeholder body, shoulder spacing in metres (defined in mojito/geometry/placeholders.py, which the URDF generator also reads):
-# BODY_LENGTH front shoulders to rear shoulders, BODY_WIDTH left shoulders to right shoulders.
-from ..geometry.placeholders import BODY_LENGTH, BODY_WIDTH
+# BODY_LENGTH front shoulders to rear shoulders, BODY_WIDTH left shoulders to right shoulders,
+# STAND_HEIGHT the shoulder height above the ground when standing.
+from ..geometry.placeholders import BODY_LENGTH, BODY_WIDTH, STAND_HEIGHT
 from . import leg
 
 LEG_NAMES = ("FL", "FR", "RL", "RR")
 IS_RIGHT = np.array([False, True, False, True])
 _MIRROR = np.where(IS_RIGHT[:, None], [1.0, -1.0, 1.0], 1.0)  # (4, 3) target flip: y of right legs
 _MIRROR_ANGLES = np.where(IS_RIGHT[:, None], [-1.0, 1.0, 1.0], 1.0)  # (4, 3) angle flip: abduction of right legs
-
-STAND_HEIGHT = 0.17  # shoulder height above the ground when standing
 
 
 def rotation(roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:

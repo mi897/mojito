@@ -1,5 +1,5 @@
 {
- "what": "four-foot stand, IK posture commanded through the servo model in MuJoCo; mean over the last 0.5 s of a 3 s run. Placeholder dimensions, masses and servo figures.",
+ "what": "four-foot stand, IK posture commanded through the servo model in MuJoCo; mean over the last 0.5 s of a 3 s run (2 s for the crouch_140mm runs). Placeholder dimensions, masses and servo figures.",
  "lengths_m": [
   0.05,
   0.15,
@@ -855,5 +855,15 @@
    "max_knee_gap_deg": 3.856,
    "body_height_drop_mm": 9.19
   }
+ },
+ "provenance": {
+  "git_commit": "e0f151db4110ee488d04c33207cff4e4dbff9678",
+  "git_dirty": false,
+  "script": "scripts/stand/stand_test.py",
+  "argv": [],
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T02:10:43Z",
+  "mujoco": "3.16.0"
  }
 }

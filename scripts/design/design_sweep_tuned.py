@@ -29,7 +29,7 @@ def main():
         tuning = json.load(f)
     cells = []
     for e in tuning["entries"]:
-        design = design_sweep.Design(**e["design"])
+        design = design_sweep.make_design(**e["design"])
         settings = design_sweep.GaitSettings(**e["best"])
         for speed in design_sweep.SPEEDS:
             for draw in range(DRAWS):
