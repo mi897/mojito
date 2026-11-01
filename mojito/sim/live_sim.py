@@ -51,9 +51,10 @@ DEFAULTS = dict(
     body_height=0.0,
     # total mass, kg: the placeholder's 1.72 kg, rounded to 1 g so that it reads 1.72 and not the float sum 1.7200000000000002
     mass=round(SIM_QUADRUPED.total_mass, 3), speed=1.0, walk=False,
-    # robot design: these rebuild the model (like mass). Metres: abduction offset (la), upper (lu) and lower (ll) leg, body size.
+    # robot design: these rebuild the model (like mass). Metres: abduction offset, upper and lower leg length, body size.
     # The stance height, `height`, comes from the trot preset and needs no rebuild (see SMOOTHED).
-    la=SIM_QUADRUPED.abduction_offset, lu=SIM_QUADRUPED.upper_length, ll=SIM_QUADRUPED.lower_length,
+    abduction_offset=SIM_QUADRUPED.abduction_offset, upper_length=SIM_QUADRUPED.upper_length,
+    lower_length=SIM_QUADRUPED.lower_length,
     body_length=SIM_QUADRUPED.body_length, body_width=SIM_QUADRUPED.body_width,
     voltage=actuators.ServoParams().voltage,
 )
@@ -65,9 +66,13 @@ DRIVE = {"trot": dict(vx=0.25, vy=0.12, yaw_rate=0.8, height_rate=0.04), "crawl"
 # (low, high) for each numeric parameter; anything outside is clamped
 LIMITS = dict(period=(0.2, 4.0), duty=(0.1, 0.95), lift=(0.0, 0.1), sway=(0.0, 0.06), vx=(-0.5, 0.5), vy=(-0.3, 0.3),
               yaw_rate=(-3.0, 3.0), body_roll=(-0.4, 0.4), body_pitch=(-0.4, 0.4), body_yaw=(-0.5, 0.5), body_height=(-0.04, 0.04), kp=(1.0, 300.0), kd=(0.0, 5.0), mass=(0.5, 8.0), speed=(0.1, 2.0),
-              la=(0.02, 0.09), lu=(0.08, 0.24), ll=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
+              abduction_offset=(0.02, 0.09), upper_length=(0.08, 0.24), lower_length=(0.08, 0.24), body_length=(0.15, 0.5), body_width=(0.08, 0.3),
               height=(0.1, 0.32), voltage=(actuators.V_MIN, actuators.V_MAX))
-REBUILD = ("mass", "la", "lu", "ll", "body_length", "body_width")  # changing any of these needs a new model (the stance height does not: see `height`)
+REBUILD = ("mass", "abduction_offset", "upper_length", "lower_length", "body_length", "body_width")  # changing any of these needs a new model (the stance height does not: see `height`)
+# Old names of parameters, still accepted by `set_params` (and so by the /params API of live_gait.py and serve_site.py) so that
+# a page cached before the rename keeps working. When a request has both the old and the new name, the new one wins.
+# Kept for one release; remove after it.
+PARAMETER_ALIASES = {"la": "abduction_offset", "lu": "upper_length", "ll": "lower_length"}
 # `height` is the stance height (m): the feet are placed that far below the hips. It is eased like a command, so it can be changed while walking
 # and the body rises or sinks over the planted feet; the model is only built at that height when it is reset.
 SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "body_yaw", "body_height", "height")
@@ -85,14 +90,15 @@ def masses_for_total(total_mass):
 
 
 def design_of(params):
-    """The placeholders.QuadrupedDesign that live parameters describe: leg (la, lu, ll), body size, stance height, total mass."""
-    return dataclasses.replace(SIM_QUADRUPED, abduction_offset=params["la"], upper_length=params["lu"], lower_length=params["ll"],
+    """The placeholders.QuadrupedDesign that live parameters describe: leg lengths, body size, stance height, total mass."""
+    return dataclasses.replace(SIM_QUADRUPED, abduction_offset=params["abduction_offset"], upper_length=params["upper_length"],
+                               lower_length=params["lower_length"],
                                body_length=params["body_length"], body_width=params["body_width"],
                                stance_height=params["height"], masses=masses_for_total(params["mass"]))
 
 
 def browser_constants() -> dict:
-    """Everything the JavaScript port of this simulation (site/assets/browsersim.js) needs that is a number in Python: written to
+    """Everything the JavaScript port of this simulation (site/assets/playground/browsersim.js) needs that is a number in Python: written to
     site/data/livemeta.js by scripts/website/build_site.py, so no figure is copied by hand. `meta` is what the local server's /meta serves."""
     servo = {k: float(v) for k, v in dataclasses.asdict(actuators.ServoParams()).items()}
     return {
@@ -100,6 +106,7 @@ def browser_constants() -> dict:
         "constants": {
             "smoothing_time": SMOOTHING_TIME, "max_target_speed": MAX_TARGET_SPEED, "blend_time": BLEND_TIME, "history": HISTORY,
             "contact_force": CONTACT_FORCE, "timestep": 0.002, "smoothed": list(SMOOTHED), "rebuild": list(REBUILD),
+            "parameter_aliases": PARAMETER_ALIASES,
             "default_total_mass": DEFAULT_TOTAL_MASS, "masses": mjcf.DEFAULT_MASSES,
             "servo": servo, "servo_voltage_range": [actuators.V_MIN, actuators.V_MAX],
             "joint_limits": np.asarray(leg.JOINT_LIMITS, float).tolist(),
@@ -123,9 +130,15 @@ class LiveSim:
 
     # ----- parameters -----
     def set_params(self, **changes) -> bool:
-        """Apply changes (clamped). Returns True if the model must be rebuilt (the mass or a design dimension changed)."""
+        """Apply changes (clamped). Returns True if the model must be rebuilt (the mass or a design dimension changed).
+        Unknown keys are ignored; the old names in PARAMETER_ALIASES (la, lu, ll) are read as the new ones, unless the new
+        name is in `changes` too, which then wins."""
         rebuild = False
         for key, value in changes.items():
+            if key in PARAMETER_ALIASES:
+                if PARAMETER_ALIASES[key] in changes:
+                    continue
+                key = PARAMETER_ALIASES[key]
             if key not in self.params:
                 continue
             if key == "offsets":

@@ -159,7 +159,7 @@ class TestLiveGaitServer(unittest.TestCase):
 class TestRobotDesignIsLive(unittest.TestCase):
     def test_longer_legs_lower_the_stand_and_ask_for_a_rebuild(self):
         sim = live_sim.LiveSim()
-        self.assertTrue(sim.set_params(lu=0.2, ll=0.2, height=0.3))
+        self.assertTrue(sim.set_params(upper_length=0.2, lower_length=0.2, height=0.3))
         sim.reset()
         self.assertTrue(sim.snapshot()["stance_reachable"])
         np.testing.assert_allclose(sim.robot.lengths[0], [0.05, 0.2, 0.2])
@@ -168,8 +168,22 @@ class TestRobotDesignIsLive(unittest.TestCase):
         sim.reset()
         self.assertEqual(sim.snapshot()["body_size"], [0.4, 0.2])
 
+    def test_old_parameter_names_are_still_accepted(self):
+        # la, lu, ll were renamed; a page cached before the rename still posts them to /params for one release
+        sim = live_sim.LiveSim()
+        self.assertTrue(sim.set_params(la=0.06, lu=0.18, ll=0.17))
+        self.assertEqual([sim.params[k] for k in ("abduction_offset", "upper_length", "lower_length")], [0.06, 0.18, 0.17])
+        self.assertFalse({"la", "lu", "ll"} & set(sim.params))
+        sim.set_params(lu=1.0)  # clamped like the new name
+        self.assertEqual(sim.params["upper_length"], live_sim.LIMITS["upper_length"][1])
+        # both names in one request: the new one wins, whichever comes first
+        sim.set_params(lu=0.1, upper_length=0.2)
+        self.assertEqual(sim.params["upper_length"], 0.2)
+        sim.set_params(upper_length=0.12, lu=0.22)
+        self.assertEqual(sim.params["upper_length"], 0.12)
+
     def test_a_stance_the_legs_cannot_reach_is_reported(self):
-        sim = live_sim.LiveSim({"height": 0.32, "lu": 0.08, "ll": 0.08})
+        sim = live_sim.LiveSim({"height": 0.32, "upper_length": 0.08, "lower_length": 0.08})
         self.assertFalse(sim.snapshot()["stance_reachable"])
 
     def test_supply_voltage_changes_the_stall_torque_live(self):

@@ -7,7 +7,7 @@
   const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : '–');
   const LEGS = ['FL', 'FR', 'RL', 'RR'];
   const SPEC = [
-    ['Robot design (rebuilds the model on release)', true, [['la', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['lu', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000], ['ll', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000],
+    ['Robot design (rebuilds the model on release)', true, [['abduction_offset', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['upper_length', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000], ['lower_length', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000],
       ['body_length', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['body_width', 'body width', 0.08, 0.3, 0.01, ' mm', 1000], ['mass', 'total mass', 0.5, 8, 0.1, ' kg', 1]]],
     ['Body height (changes while it walks)', false, [['height', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000]]],
     ['Gait timing', false, [['period', 'period', 0.2, 4, 0.05, ' s', 1], ['duty', 'duty', 0.1, 0.95, 0.01, '', 1], ['lift', 'swing height', 0, 0.1, 0.005, ' mm', 1000], ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000],
@@ -52,7 +52,7 @@
     box.append(row);
     const pr = document.createElement('div'); pr.className = 'btnrow';
     Object.keys(meta.presets).forEach(n => pr.append(btn(n[0].toUpperCase() + n.slice(1), () => choosePreset(n))));
-    pr.append(btn('Default design', () => send('params', { la: meta.defaults.la, lu: meta.defaults.lu, ll: meta.defaults.ll, body_length: meta.defaults.body_length, body_width: meta.defaults.body_width, height: meta.defaults.height, mass: meta.defaults.mass })));
+    pr.append(btn('Default design', () => send('params', { abduction_offset: meta.defaults.abduction_offset, upper_length: meta.defaults.upper_length, lower_length: meta.defaults.lower_length, body_length: meta.defaults.body_length, body_width: meta.defaults.body_width, height: meta.defaults.height, mass: meta.defaults.mass })));
     box.append(pr);
     SPEC.forEach(([title, rebuild, rows]) => {
       const h = document.createElement('h4'); h.textContent = title; box.append(h);

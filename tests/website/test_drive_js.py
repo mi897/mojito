@@ -1,4 +1,4 @@
-"""The drive-mode input mapping (site/assets/drive.js) that the live pages share. Run with:  python -m unittest discover tests"""
+"""The drive-mode input mapping (site/assets/playground/drive.js) that the live pages share. Run with:  python -m unittest discover tests"""
 import json
 import os
 import shutil
@@ -10,7 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def run_js(expression):
-    script = "const D=require('../../site/assets/drive.js');console.log(JSON.stringify(%s));" % expression
+    script = "const D=require('../../site/assets/playground/drive.js');console.log(JSON.stringify(%s));" % expression
     return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
 
 
@@ -85,7 +85,7 @@ class TestDriveMapping(unittest.TestCase):
 
 
 FAKE_PAD = """
-const D=require('../../site/assets/drive.js');
+const D=require('../../site/assets/playground/drive.js');
 let tick=null; global.setInterval=f=>{tick=f;return 1;}; global.clearInterval=()=>{};
 global.addEventListener=()=>{}; global.removeEventListener=()=>{};
 const store={}; global.localStorage={getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=v;}};
@@ -163,7 +163,7 @@ class TestGamepadMapping(unittest.TestCase):
 
 
 def run_touchpad_js(expression):
-    script = "const T=require('../../site/assets/touchpad.js');console.log(JSON.stringify(%s));" % expression
+    script = "const T=require('../../site/assets/playground/touchpad.js');console.log(JSON.stringify(%s));" % expression
     return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
 
 

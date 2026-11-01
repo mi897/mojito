@@ -72,13 +72,14 @@
     <a class="card" href="theory.html" style="text-decoration:none;color:inherit"><h3>How it works</h3><p>The theory and its implementation: leg kinematics, the learned solver, gaits, statics, the servo model and the physics set-up, with the equations.</p></a>
     <a class="card" href="results.html" style="text-decoration:none;color:inherit"><h3>Results</h3><p>Every measurement, graphed from the committed results files, with the caveats beside each chart.</p></a>
     <a class="card" href="demos.html" style="text-decoration:none;color:inherit"><h3>Demos</h3><p>All the animations, from one leg to a trot replayed in physics, plus the interactive single-leg demo.</p></a>
-    <a class="card" href="playground.html" style="text-decoration:none;color:inherit"><h3>Playground</h3><p>Change link lengths, body size, posture, gait timing, mass and servo settings. A live kinematic lab, and a lab that replays 144 MuJoCo runs.</p></a>
+    <a class="card" href="playground.html" style="text-decoration:none;color:inherit"><h3>Playground</h3><p>Change link lengths, body size, posture, gait timing, mass and servo settings. A live kinematic lab, and a lab that replays <span data-bind="physics_sweep_summary/n_runs" data-fmt="0"></span> MuJoCo runs.</p></a>
     <a class="card" href="reports.html" style="text-decoration:none;color:inherit"><h3>Full reports</h3><p>The project's README, plan and Stage 2 report, rendered as they are in the repository.</p></a>
   </div>
 
   <h2>Why start in simulation</h2>
   <p>No robot exists yet, and the dimensions are still to be chosen. So the first job of the simulator is a design-exploration tool: given a set of dimensions, does the robot stand, does it walk, and are the servos inside their limits? Learning to walk comes after the model is trusted. The long-term loop is simulation for a first idea of the task, the real robot to refine it, and return trips to simulation to prepare for specific tasks.</p>
 </main>
+<script src="data/constants.js"></script>
 <script src="assets/mojito.js"></script>
 <script src="assets/viewer.js"></script>
 <script src="assets/hero.js"></script>
