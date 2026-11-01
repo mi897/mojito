@@ -12,6 +12,34 @@ from mojito.robot import body, gaits, leg
 WEIGHTS = os.path.join(os.path.dirname(__file__), "..", "..", "weights", "ik_leg.npz")
 
 
+def _reference_stability_margin(feet_xy, contact, point_xy):
+    """The per-time-step loop implementation that gaits.stability_margin replaced, kept as the independent reference."""
+    walk_order = [0, 1, 3, 2]  # FL, FR, RR, RL: around the body, clockwise seen from above
+    margin = np.empty(feet_xy.shape[0])
+    for i in range(feet_xy.shape[0]):
+        grounded = np.array([feet_xy[i, k] for k in walk_order if contact[i, k]])
+        point = point_xy[i]
+        if len(grounded) == 0:
+            margin[i] = -np.inf
+            continue
+        distinct = [foot for j, foot in enumerate(grounded) if np.linalg.norm(foot - grounded[j - 1]) > 1e-12]
+        grounded = np.array(distinct) if distinct else grounded[:1]
+        if len(grounded) < 3:
+            start, end = grounded[0], grounded[-1]
+            edge = end - start
+            fraction = np.clip(np.dot(point - start, edge) / max(np.dot(edge, edge), 1e-12), 0, 1)
+            margin[i] = -np.linalg.norm(point - (start + fraction * edge))
+            continue
+        signed_distances = []
+        for j in range(len(grounded)):
+            start, end = grounded[j], grounded[(j + 1) % len(grounded)]
+            edge = end - start
+            cross = edge[0] * (point[1] - start[1]) - edge[1] * (point[0] - start[0])
+            signed_distances.append(cross / np.linalg.norm(edge))
+        margin[i] = (-np.array(signed_distances)).min()
+    return margin
+
+
 class TestBody(unittest.TestCase):
     def setUp(self):
         self.exact = body.Robot(body.AnalyticSolver())
@@ -167,6 +195,85 @@ class TestGaits(unittest.TestCase):
         feet = np.array([[[1, 1], [1, -1], [-1, -1], [-1, -1]]], float)
         margin = gaits.stability_margin(feet, np.ones((1, 4), bool), np.array([[0.8, -0.5]]))[0]
         self.assertAlmostEqual(margin, 0.2)
+
+    def assert_matches_reference(self, feet, contact, point):
+        # Same operations except np.linalg.norm vs sqrt of a sum of squares, so equal to rounding: tolerance 1e-12.
+        new = gaits.stability_margin(feet, contact, point)
+        old = _reference_stability_margin(feet, contact, point)
+        self.assertEqual(new.shape, (feet.shape[0],))
+        np.testing.assert_array_equal(np.isinf(new), np.isinf(old))
+        np.testing.assert_array_equal(np.isnan(new), np.isnan(old))
+        finite = np.isfinite(old)
+        np.testing.assert_array_equal(new[~finite & ~np.isnan(old)], old[~finite & ~np.isnan(old)])
+        np.testing.assert_allclose(new[finite], old[finite], rtol=0, atol=1e-12)
+
+    def test_stability_margin_matches_loop_reference_on_every_contact_pattern(self):
+        rng = np.random.default_rng(0)
+        patterns = np.array([[(code >> k) & 1 for k in range(4)] for code in range(16)], bool)
+        for _ in range(50):
+            feet = rng.uniform(-1, 1, (16, 4, 2))
+            self.assert_matches_reference(feet, patterns, rng.uniform(-1.5, 1.5, (16, 2)))
+
+    def test_stability_margin_matches_loop_reference_on_random_batches(self):
+        rng = np.random.default_rng(1)
+        n = 5000
+        feet = rng.uniform(-1, 1, (n, 4, 2))
+        contact = rng.random((n, 4)) < 0.6
+        self.assert_matches_reference(feet, contact, rng.uniform(-1.5, 1.5, (n, 2)))
+        # a rectangle-like stance with small jitter, as a walking robot has, mostly inside
+        base = np.array([[0.2, 0.1], [0.2, -0.1], [-0.2, 0.1], [-0.2, -0.1]])
+        feet = base + rng.normal(0, 0.02, (n, 4, 2))
+        self.assert_matches_reference(feet, rng.random((n, 4)) < 0.8, rng.normal(0, 0.05, (n, 2)))
+
+    def test_stability_margin_matches_loop_reference_on_coincident_feet(self):
+        rng = np.random.default_rng(2)
+        patterns = np.array([[(code >> k) & 1 for k in range(4)] for code in range(16)], bool)
+        # which feet share a position: neighbours, wrap-around (RL on FL), diagonals, all four, and a few more
+        groups = [(0, 1), (1, 3), (3, 2), (2, 0), (0, 3), (1, 2), (0, 1, 3), (0, 1, 3, 2), (0, 2, 3)]
+        for group in groups:
+            feet = rng.uniform(-1, 1, (16, 4, 2))
+            for k in group[1:]:
+                feet[:, k] = feet[:, group[0]]
+            self.assert_matches_reference(feet, patterns, rng.uniform(-1.5, 1.5, (16, 2)))
+        # two coincident pairs at once
+        feet = rng.uniform(-1, 1, (16, 4, 2))
+        feet[:, 1], feet[:, 3] = feet[:, 0], feet[:, 2]
+        self.assert_matches_reference(feet, patterns, rng.uniform(-1.5, 1.5, (16, 2)))
+        # all grounded feet equal, other feet elsewhere
+        feet = np.zeros((16, 4, 2)) + np.array([0.3, -0.2])
+        self.assert_matches_reference(feet, patterns, rng.uniform(-1.5, 1.5, (16, 2)))
+        # grounded feet within the 1e-12 merge threshold
+        feet = np.zeros((16, 4, 2))
+        feet[:, 1] = 5e-13
+        feet[:, 2] = (1.0, 0.0)
+        self.assert_matches_reference(feet, patterns, rng.uniform(-1.5, 1.5, (16, 2)))
+
+    def test_stability_margin_diagonal_coincident_feet_keep_non_convex_polygon(self):
+        # FL and RR on the same spot, FR and RL elsewhere: not merged (only neighbours are), so the four-edge
+        # polygon FL, FR, RR, RL is non-convex; the answer is the minimum over its four edges, as in the reference.
+        feet = np.array([[[1, 1], [1, -1], [-1, 1], [1, 1]]], float)
+        point = np.array([[0.5, 0.2]])
+        self.assert_matches_reference(feet, np.ones((1, 4), bool), point)
+
+    def test_stability_margin_no_foot_down_is_minus_infinity_in_a_batch(self):
+        rng = np.random.default_rng(3)
+        margin = gaits.stability_margin(rng.uniform(-1, 1, (7, 4, 2)), np.zeros((7, 4), bool), rng.uniform(-1, 1, (7, 2)))
+        self.assertTrue(np.all(margin == -np.inf))
+
+    def test_stability_margin_is_zero_on_an_edge(self):
+        rng = np.random.default_rng(4)
+        sq = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]], float)
+        feet = np.tile(sq, (200, 1, 1)) * rng.uniform(0.5, 2, (200, 1, 1))
+        # a point a fraction along the edge FL -> FR, and along FR -> RR
+        fraction = rng.random((200, 1))
+        on_front = feet[:, 0] + fraction * (feet[:, 1] - feet[:, 0])
+        on_right = feet[:, 1] + fraction * (feet[:, 3] - feet[:, 1])
+        for point in (on_front, on_right):
+            margin = gaits.stability_margin(feet, np.ones((200, 4), bool), point)
+            np.testing.assert_allclose(margin, 0.0, rtol=0, atol=1e-12)
+        # also on the segment between two grounded feet
+        margin = gaits.stability_margin(feet, np.tile([True, True, False, False], (200, 1)), on_front)
+        np.testing.assert_allclose(margin, 0.0, rtol=0, atol=1e-12)
 
 
 if __name__ == "__main__":
