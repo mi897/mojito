@@ -78,16 +78,16 @@ class IKNetBase:
 
     def weights(self):
         """(list of W, list of b) as NumPy arrays."""
-        d = self.state()
-        n = sum(1 for k in d if k.startswith("W"))
-        return [d[f"W{i}"] for i in range(n)], [d[f"b{i}"] for i in range(n)]
+        state = self.state()
+        n_layers = sum(1 for key in state if key.startswith("W"))
+        return [state[f"W{i}"] for i in range(n_layers)], [state[f"b{i}"] for i in range(n_layers)]
 
     def _config_state(self) -> dict:
-        d = dict(nominal=self.config.nominal, limits=self.config.limits,
-                 length_tolerance=np.array(self.config.length_tolerance))
+        state = dict(nominal=self.config.nominal, limits=self.config.limits,
+                     length_tolerance=np.array(self.config.length_tolerance))
         if isinstance(self.config, LimbSpec):
-            d["spec"] = np.array(json.dumps(self.config.to_dict()))
-        return d
+            state["spec"] = np.array(json.dumps(self.config.to_dict()))
+        return state
 
     def save(self, path):
         np.savez(path, **self.state())
@@ -98,29 +98,31 @@ class IKNetBase:
 
         Raises spec.SpecMismatch, listing every difference, if they do not.
         """
-        d = np.load(path)
-        n_layers = sum(1 for k in d.files if k.startswith("W"))
-        if "spec" in d.files:
-            config = LimbSpec.from_dict(json.loads(str(d["spec"])))
+        stored = np.load(path)
+        n_layers = sum(1 for key in stored.files if key.startswith("W"))
+        if "spec" in stored.files:
+            config = LimbSpec.from_dict(json.loads(str(stored["spec"])))
         else:  # weights from before limbs were described by URDFs
-            config = leg.LegConfig(d["nominal"], d["limits"], float(d["length_tolerance"]))
+            config = leg.LegConfig(stored["nominal"], stored["limits"], float(stored["length_tolerance"]))
         if spec is not None:
             config = reconcile(config, spec, str(path))
-        hidden = tuple(d[f"W{i}"].shape[1] for i in range(n_layers - 1))
+        hidden = tuple(stored[f"W{i}"].shape[1] for i in range(n_layers - 1))
         net = cls(config, hidden, **kwargs)
-        net._set_weights([d[f"W{i}"] for i in range(n_layers)], [d[f"b{i}"] for i in range(n_layers)])
+        net._set_weights([stored[f"W{i}"] for i in range(n_layers)], [stored[f"b{i}"] for i in range(n_layers)])
         return net
 
     def to_json(self, digits: int = 6) -> str:
         """Compact export for running the network outside Python."""
-        r = lambda a: np.round(np.asarray(a, dtype=float), digits).tolist()
+        def rounded(values):
+            return np.round(np.asarray(values, dtype=float), digits).tolist()
+
         W, b = self.weights()
         return json.dumps(
             {
-                "W": [r(w) for w in W],
-                "b": [r(x) for x in b],
-                "nominal": r(self.config.nominal),
-                "limits": r(self.config.limits),
+                "W": [rounded(weight) for weight in W],
+                "b": [rounded(bias) for bias in b],
+                "nominal": rounded(self.config.nominal),
+                "limits": rounded(self.config.limits),
                 "tolerance": self.config.length_tolerance,
                 "reach": self.config.reach,
                 **({"spec": self.config.to_dict()} if isinstance(self.config, LimbSpec) else {}),

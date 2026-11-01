@@ -88,7 +88,7 @@ def _axis_rotation(xp, reference, axis, angle):
     axis = np.asarray(axis, dtype=float)
     cross_matrix = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
     outer = np.outer(axis, axis)
-    identity, cross_matrix, outer = (_const(xp, reference, m) for m in (np.eye(3), cross_matrix, outer))
+    identity, cross_matrix, outer = (_const(xp, reference, matrix) for matrix in (np.eye(3), cross_matrix, outer))
     cos_angle, sin_angle = xp.cos(angle)[..., None, None], xp.sin(angle)[..., None, None]
     return cos_angle * identity + sin_angle * cross_matrix + (1.0 - cos_angle) * outer
 
@@ -99,14 +99,26 @@ def rpy_rotation(roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:
 
     The URDF `rpy` convention and the body-to-world rotation of `mojito.robot.body`.
     Arguments broadcast against each other; scalars give a (3, 3) matrix.
+    Multiplied out, with c_ and s_ the cosine and sine of roll (r), pitch (p) and yaw (y):
+        [[c_y c_p,  c_y s_p s_r - s_y c_r,  c_y s_p c_r + s_y s_r],
+         [s_y c_p,  s_y s_p s_r + c_y c_r,  s_y s_p c_r - c_y s_r],
+         [-s_p,     c_p s_r,                c_p c_r              ]]
     """
-    roll, pitch, yaw = np.broadcast_arrays(*(np.asarray(a, dtype=float) for a in (roll, pitch, yaw)))
-    cr, sr, cp, sp, cy, sy = np.cos(roll), np.sin(roll), np.cos(pitch), np.sin(pitch), np.cos(yaw), np.sin(yaw)
-    R = np.empty(roll.shape + (3, 3))
-    R[..., 0, 0], R[..., 0, 1], R[..., 0, 2] = cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr
-    R[..., 1, 0], R[..., 1, 1], R[..., 1, 2] = sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr
-    R[..., 2, 0], R[..., 2, 1], R[..., 2, 2] = -sp, cp * sr, cp * cr
-    return R
+    roll, pitch, yaw = np.broadcast_arrays(*(np.asarray(angle, dtype=float) for angle in (roll, pitch, yaw)))
+    cos_roll, sin_roll = np.cos(roll), np.sin(roll)
+    cos_pitch, sin_pitch = np.cos(pitch), np.sin(pitch)
+    cos_yaw, sin_yaw = np.cos(yaw), np.sin(yaw)
+    rotation = np.empty(roll.shape + (3, 3))
+    rotation[..., 0, 0] = cos_yaw * cos_pitch
+    rotation[..., 0, 1] = cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll
+    rotation[..., 0, 2] = cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
+    rotation[..., 1, 0] = sin_yaw * cos_pitch
+    rotation[..., 1, 1] = sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll
+    rotation[..., 1, 2] = sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
+    rotation[..., 2, 0] = -sin_pitch
+    rotation[..., 2, 1] = cos_pitch * sin_roll
+    rotation[..., 2, 2] = cos_pitch * cos_roll
+    return rotation
 
 
 # ----------------------------------------------------------------- kinematics

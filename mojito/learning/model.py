@@ -80,16 +80,17 @@ class IKNet(IKNetBase):
         batch = target_position.shape[0]
         joint_angles, activations, squashed = self._forward(self.features(target_position, lengths))
         error = (self.config.forward(joint_angles, lengths) - target_position) / self.config.reach  # foot error in units of reach
-        loss = float(np.mean(np.sum(error * error, axis=1)))  # L = mean over batch of |error|^2
+        loss = float(np.mean(np.sum(error * error, axis=1)))  # loss = mean over the batch of |error|^2
 
-        # Back through forward kinematics: dL/dq = J^T dL/dfoot, where the foot position
-        # enters the loss through error = (foot - target_position) / reach, so dL/dfoot = 2 error / (batch * reach).
+        # Back through forward kinematics: d loss/d joint_angles = jac^T d loss/d foot, where the foot position
+        # enters the loss through error = (foot - target_position) / reach, so d loss/d foot = 2 error / (batch * reach).
         jac = self.config.jacobian(joint_angles, lengths)
-        grad_q = np.einsum("nij,ni->nj", jac, error) * (2.0 / (batch * self.config.reach))
-        # Through joint_angles = joint_mid + joint_half_range tanh(z): dq/dz = joint_half_range (1 - tanh^2).
-        delta = grad_q * self.joint_half_range * (1.0 - squashed * squashed)
+        grad_joint_angles = np.einsum("nij,ni->nj", jac, error) * (2.0 / (batch * self.config.reach))
+        # Through joint_angles = joint_mid + joint_half_range tanh(z), z the output pre-activation:
+        # d joint_angles/dz = joint_half_range (1 - tanh^2).
+        delta = grad_joint_angles * self.joint_half_range * (1.0 - squashed * squashed)
 
-        # delta is dL/d(pre-activation) of the layer being processed. Weight gradient =
+        # delta is d loss/d(pre-activation) of the layer being processed. Weight gradient =
         # (layer input)^T delta; bias gradient = delta summed over the batch; and
         # propagating back through W then tanh multiplies by (1 - activation^2).
         grad_W, grad_b = [None] * len(self.W), [None] * len(self.b)
@@ -109,10 +110,10 @@ class IKNet(IKNetBase):
         return loss
 
     def state(self) -> dict:
-        d = {f"W{i}": w for i, w in enumerate(self.W)}
-        d.update({f"b{i}": b for i, b in enumerate(self.b)})
-        d.update(self._config_state())
-        return d
+        state = {f"W{i}": weight for i, weight in enumerate(self.W)}
+        state.update({f"b{i}": bias for i, bias in enumerate(self.b)})
+        state.update(self._config_state())
+        return state
 
 
 class Adam:

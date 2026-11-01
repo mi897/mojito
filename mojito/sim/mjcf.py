@@ -38,8 +38,9 @@ FLOOR_HALF_SIZE = 5.0  # m, the floor plane drawn out to +-this in x and y
 FRICTION_TORSION, FRICTION_ROLLING = 0.005, 0.0001
 
 
-def _v(a) -> str:
-    return " ".join(f"{float(x):.9g}" for x in a)
+def _numbers(values) -> str:
+    """Space-separated numbers, as MJCF attributes take them."""
+    return " ".join(f"{float(value):.9g}" for value in values)
 
 
 def _role(link: str, root: str) -> str:
@@ -66,60 +67,60 @@ def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
         body_size = (SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width, BODY_THICKNESS)
     mass_of = {**DEFAULT_MASSES, **(masses or {})}  # kg by role
     root = model.root()
-    mj = ET.Element("mujoco", model=model.name)
-    ET.SubElement(mj, "compiler", angle="radian", autolimits="true")
-    ET.SubElement(mj, "option", timestep=str(timestep), gravity=f"0 0 {GRAVITY}")
-    default = ET.SubElement(mj, "default")
+    mujoco_element = ET.Element("mujoco", model=model.name)
+    ET.SubElement(mujoco_element, "compiler", angle="radian", autolimits="true")
+    ET.SubElement(mujoco_element, "option", timestep=str(timestep), gravity=f"0 0 {GRAVITY}")
+    default = ET.SubElement(mujoco_element, "default")
     ET.SubElement(default, "joint", damping=str(JOINT_DAMPING), armature=str(JOINT_ARMATURE))
     # Only feet and the floor collide for now; the rest of the geometry is for looks and inertia.
     ET.SubElement(default, "geom", contype="0", conaffinity="0")
-    wb = ET.SubElement(mj, "worldbody")
-    ET.SubElement(wb, "geom", name="floor", type="plane", size=_v((FLOOR_HALF_SIZE, FLOOR_HALF_SIZE, 0.1)), contype="1", conaffinity="1",
+    worldbody = ET.SubElement(mujoco_element, "worldbody")
+    ET.SubElement(worldbody, "geom", name="floor", type="plane", size=_numbers((FLOOR_HALF_SIZE, FLOOR_HALF_SIZE, 0.1)), contype="1", conaffinity="1",
                   friction=f"{FLOOR_FRICTION} {FRICTION_TORSION} {FRICTION_ROLLING}")
 
-    def build(parent_el: ET.Element, link: str, joint) -> None:
-        """Add `link` below `parent_el`, hung from `joint` (None for the root)."""
-        kids = model.children(link)
+    def build(parent_element: ET.Element, link: str, joint) -> None:
+        """Add `link` below `parent_element`, hung from `joint` (None for the root)."""
+        child_joints = model.children(link)
         if joint is None:
-            el = ET.SubElement(parent_el, "body", name=link, pos=_v((0.0, 0.0, height)))
-            ET.SubElement(el, "freejoint", name="base")
-            ET.SubElement(el, "site", name="body_origin", size="0.004", rgba="1 0 0 1")
-            ET.SubElement(el, "geom", type="box", size=_v(np.array(body_size) / 2), mass=str(mass_of["body"]),
+            body_element = ET.SubElement(parent_element, "body", name=link, pos=_numbers((0.0, 0.0, height)))
+            ET.SubElement(body_element, "freejoint", name="base")
+            ET.SubElement(body_element, "site", name="body_origin", size="0.004", rgba="1 0 0 1")
+            ET.SubElement(body_element, "geom", type="box", size=_numbers(np.array(body_size) / 2), mass=str(mass_of["body"]),
                           rgba="0.5 0.5 0.55 1")
         else:
-            el = ET.SubElement(parent_el, "body", name=link, pos=_v(joint.xyz))
+            body_element = ET.SubElement(parent_element, "body", name=link, pos=_numbers(joint.xyz))
             if joint.movable:
-                lo, hi = joint.limits
-                ET.SubElement(el, "joint", name=joint.name, type="slide" if joint.type == "prismatic" else "hinge",
-                              axis=_v(joint.axis), range=_v((lo, hi)))
+                lower, upper = joint.limits
+                ET.SubElement(body_element, "joint", name=joint.name, type="slide" if joint.type == "prismatic" else "hinge",
+                              axis=_numbers(joint.axis), range=_numbers((lower, upper)))
             role = _role(link, root)
             if role == "foot":
-                ET.SubElement(el, "site", name=link, size="0.004", rgba="0 0.6 1 1")
-                ET.SubElement(el, "geom", name=f"{link}_pad", type="sphere", size=str(FOOT_RADIUS),
+                ET.SubElement(body_element, "site", name=link, size="0.004", rgba="0 0.6 1 1")
+                ET.SubElement(body_element, "geom", name=f"{link}_pad", type="sphere", size=str(FOOT_RADIUS),
                               mass=str(mass_of["foot"]), contype="1", conaffinity="1",
                               friction=f"{FOOT_FRICTION} {FRICTION_TORSION} {FRICTION_ROLLING}", rgba="0.1 0.1 0.1 1")
             else:
                 # a capsule from this link's origin to the origin of its first child, or a ball if it has none
-                ends = [np.asarray(k.xyz, float) for k in kids]
+                ends = [np.asarray(child_joint.xyz, float) for child_joint in child_joints]
                 end = ends[0] if ends else np.zeros(3)
                 if np.linalg.norm(end) > 1e-9:
-                    ET.SubElement(el, "geom", type="capsule", fromto=_v(np.concatenate([np.zeros(3), end])),
+                    ET.SubElement(body_element, "geom", type="capsule", fromto=_numbers(np.concatenate([np.zeros(3), end])),
                                   size=str(LINK_RADIUS), mass=str(mass_of[role]), rgba="0.8 0.8 0.85 1")
                 else:
-                    ET.SubElement(el, "geom", type="sphere", size=str(LINK_RADIUS * 1.5), mass=str(mass_of[role]),
+                    ET.SubElement(body_element, "geom", type="sphere", size=str(LINK_RADIUS * 1.5), mass=str(mass_of[role]),
                                   rgba="0.8 0.8 0.85 1")
-        for k in kids:
-            build(el, k.child, k)
+        for child_joint in child_joints:
+            build(body_element, child_joint.child, child_joint)
 
-    build(wb, root, None)
+    build(worldbody, root, None)
     if actuated:
-        act = ET.SubElement(mj, "actuator")
+        actuators = ET.SubElement(mujoco_element, "actuator")
         for name in joint_order(model):
-            ET.SubElement(act, "motor", name=name, joint=name, gear="1")
-        sens = ET.SubElement(mj, "sensor")
-        ET.SubElement(sens, "gyro", name="gyro", site="body_origin")
-        ET.SubElement(sens, "accelerometer", name="accel", site="body_origin")
-    return ET.tostring(mj, encoding="unicode")
+            ET.SubElement(actuators, "motor", name=name, joint=name, gear="1")
+        sensors = ET.SubElement(mujoco_element, "sensor")
+        ET.SubElement(sensors, "gyro", name="gyro", site="body_origin")
+        ET.SubElement(sensors, "accelerometer", name="accel", site="body_origin")
+    return ET.tostring(mujoco_element, encoding="unicode")
 
 
 def joint_order(model: URDFModel) -> list:
@@ -136,17 +137,15 @@ def set_pose(mj_model, data, joint_names, joint_angles, base_pos=(0.0, 0.0, 0.0)
     mujoco.mju_mat2Quat(quat, np.eye(3).ravel() if base_rotation is None else np.asarray(base_rotation, float).ravel())
     data.qpos[3:7] = quat
     for name, value in zip(joint_names, joint_angles):
-        jid = mujoco.mj_name2id(mj_model, mujoco.mjtObj.mjOBJ_JOINT, name)
-        if jid < 0:
+        joint_id = mujoco.mj_name2id(mj_model, mujoco.mjtObj.mjOBJ_JOINT, name)
+        if joint_id < 0:
             raise URDFError(f"joint {name!r} is not in the MuJoCo model")
-        data.qpos[mj_model.jnt_qposadr[jid]] = value
+        data.qpos[mj_model.jnt_qposadr[joint_id]] = value
     mujoco.mj_forward(mj_model, data)
 
 
 def foot_positions(mj_model, data, feet) -> np.ndarray:
     """Foot positions in the body frame, R_baseᵀ (foot_world - body_origin_world). Shape (len(feet), 3)."""
-    import mujoco
-
     origin = data.site("body_origin").xpos
-    R = data.site("body_origin").xmat.reshape(3, 3)
-    return np.array([R.T @ (data.site(f).xpos - origin) for f in feet])
+    body_to_world = data.site("body_origin").xmat.reshape(3, 3)
+    return np.array([body_to_world.T @ (data.site(foot).xpos - origin) for foot in feet])

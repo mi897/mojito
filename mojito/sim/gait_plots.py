@@ -17,32 +17,32 @@ BODY_LENGTH, BODY_WIDTH = SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width  #
 
 def _runs(flags, times):
     """(start, length) pairs of consecutive True values, for broken_barh."""
-    out, start = [], None
+    runs, start = [], None
     for i, flag in enumerate(flags):
         if flag and start is None:
             start = i
         if not flag and start is not None:
-            out.append((times[start], times[i] - times[start]))
+            runs.append((times[start], times[i] - times[start]))
             start = None
     if start is not None:
-        out.append((times[start], times[-1] - times[start]))
-    return out
+        runs.append((times[start], times[-1] - times[start]))
+    return runs
 
 
 def draw_timing(ax, result, contact_force=0.5, cursor=None):
     """One row per leg: the commanded stance (thin bar, from gaits.py) above the measured load (thick bar)."""
-    t = result["time_s"]
-    commanded = result["commanded_contact"] & (t >= result["walk_start_s"])[:, None]  # before that the feet are just standing
-    ax.axvspan(t[0], result["walk_start_s"], color="#eeeeee", lw=0)
+    times = result["time_s"]
+    commanded = result["commanded_contact"] & (times >= result["walk_start_s"])[:, None]  # before that the feet are just standing
+    ax.axvspan(times[0], result["walk_start_s"], color="#eeeeee", lw=0)
     loaded = result["foot_load_n"] > contact_force
     for row, name in enumerate(body.LEG_NAMES):
-        y = len(body.LEG_NAMES) - 1 - row
-        ax.broken_barh(_runs(loaded[:, row], t), (y - 0.18, 0.36), color=LEG_COLOURS[name], alpha=0.85, lw=0)
-        ax.broken_barh(_runs(commanded[:, row], t), (y + 0.24, 0.12), color=INK, lw=0)
+        row_y = len(body.LEG_NAMES) - 1 - row
+        ax.broken_barh(_runs(loaded[:, row], times), (row_y - 0.18, 0.36), color=LEG_COLOURS[name], alpha=0.85, lw=0)
+        ax.broken_barh(_runs(commanded[:, row], times), (row_y + 0.24, 0.12), color=INK, lw=0)
     ax.set_yticks(range(4))
     ax.set_yticklabels(body.LEG_NAMES[::-1], fontsize=8)
     ax.set_ylim(-0.5, 3.5)
-    ax.set_xlim(t[0], t[-1])
+    ax.set_xlim(times[0], times[-1])
     ax.set_xlabel("s   (black line: commanded stance, coloured bar: foot carrying more than 0.5 N)", fontsize=7)
     ax.tick_params(labelsize=7)
     if cursor is not None:
@@ -112,25 +112,25 @@ def save_isometric(result, path, title="", fps=25, follow=True, span=0.3, grid=0
         ax.set_box_aspect((1, 1, 0.5), zoom=1.3)  # equal scale on all three axes
         ax.set_axis_off()
         # floor grid fixed in the world
-        gx = np.arange(np.floor((centre[0] - span) / grid), np.ceil((centre[0] + span) / grid) + 1) * grid
-        gy = np.arange(np.floor((centre[1] - span) / grid), np.ceil((centre[1] + span) / grid) + 1) * grid
-        for x in gx:
-            ax.plot([x, x], [gy[0], gy[-1]], [0, 0], color="#cccccc", lw=0.6, zorder=0)
-        for y in gy:
-            ax.plot([gx[0], gx[-1]], [y, y], [0, 0], color="#cccccc", lw=0.6, zorder=0)
+        grid_x = np.arange(np.floor((centre[0] - span) / grid), np.ceil((centre[0] + span) / grid) + 1) * grid
+        grid_y = np.arange(np.floor((centre[1] - span) / grid), np.ceil((centre[1] + span) / grid) + 1) * grid
+        for x in grid_x:
+            ax.plot([x, x], [grid_y[0], grid_y[-1]], [0, 0], color="#cccccc", lw=0.6, zorder=0)
+        for y in grid_y:
+            ax.plot([grid_x[0], grid_x[-1]], [y, y], [0, 0], color="#cccccc", lw=0.6, zorder=0)
         outline = _body_outline(frame)
         ax.plot(*outline.T, color=INK, lw=3, zorder=2)
         body_near = toward_camera(frame["origin"], 35.264, -45)
         for leg, name in enumerate(body.LEG_NAMES):
             points = frame["legs3d"][leg]
-            z = 3 if toward_camera(points[0], 35.264, -45) >= body_near else 1  # shoulder nearer than the body centre
-            ax.plot(*points.T, "-", color=LEG_COLOURS[name], lw=3, zorder=z)
+            layer = 3 if toward_camera(points[0], 35.264, -45) >= body_near else 1  # shoulder nearer than the body centre
+            ax.plot(*points.T, "-", color=LEG_COLOURS[name], lw=3, zorder=layer)
             foot = points[2]
             down = frame["loads"][leg] > contact_force
             ax.plot([foot[0]], [foot[1]], [foot[2]], "o", ms=7, color=LEG_COLOURS[name],
-                    mfc=LEG_COLOURS[name] if down else "white", zorder=z)
+                    mfc=LEG_COLOURS[name] if down else "white", zorder=layer)
             ax.plot([foot[0]], [foot[1]], [0.0], ".", ms=3, color=GREY, zorder=0)  # shadow, to read the height
-            ax.text(*(points[0] + [0, 0, 0.02]), name, fontsize=7, color=LEG_COLOURS[name], zorder=z)
+            ax.text(*(points[0] + [0, 0, 0.02]), name, fontsize=7, color=LEG_COLOURS[name], zorder=layer)
         ax.set_title(f"{title}\nt = {t_frames[i]:.2f} s", fontsize=9, color=INK, y=0.93)
         timing.clear()
         draw_timing(timing, result, contact_force, cursor=t_frames[i])

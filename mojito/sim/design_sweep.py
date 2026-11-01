@@ -125,15 +125,15 @@ def evaluate_design(design: QuadrupedDesign, mass_scale: float = 1.0, speeds=SPE
             settings["servo"] = replace(settings["servo"], latency=latency)
         walk_height = scaled_height(design, settings["height"])
         for speed in speeds:
-            r = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period,
-                                     design=design, height=walk_height, masses=masses, servo=settings["servo"])
+            walk = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period,
+                                        design=design, height=walk_height, masses=masses, servo=settings["servo"])
             out["walk"].append({
-                "gait": name, "speed_m_s": speed, "stance_height_m": walk_height, "walked": r["walked"],
-                "within_joint_limits": r["targets_within_joint_limits"],
-                "velocity_ratio": r["measured_velocity_m_s"][0] / speed,
-                "max_tilt_deg": r["max_tilt_deg"], "peak_torque_fraction_of_limit": r["peak_torque_fraction_of_limit"],
-                "fraction_of_walking_saturated": r["fraction_of_walking_saturated"],
-                "feet_down_min": r["feet_down_min"], "slip_max_mm_per_step": r["slip_max_mm_per_step"]})
+                "gait": name, "speed_m_s": speed, "stance_height_m": walk_height, "walked": walk["walked"],
+                "within_joint_limits": walk["targets_within_joint_limits"],
+                "velocity_ratio": walk["measured_velocity_m_s"][0] / speed,
+                "max_tilt_deg": walk["max_tilt_deg"], "peak_torque_fraction_of_limit": walk["peak_torque_fraction_of_limit"],
+                "fraction_of_walking_saturated": walk["fraction_of_walking_saturated"],
+                "feet_down_min": walk["feet_down_min"], "slip_max_mm_per_step": walk["slip_max_mm_per_step"]})
     return out
 
 
@@ -182,14 +182,14 @@ def evaluate_walk(design: QuadrupedDesign, gait_name: str, settings: GaitSetting
     servo = actuators.ServoParams(kp=settings.kp, kd=settings.kd, **({} if latency is None else {"latency": latency}))
     gait = replace(GAITS[gait_name], lift=settings.lift)
     height = height_for_knee(design, settings.knee)
-    r = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period,
-                             design=design, height=height, masses=masses, servo=servo)
-    return {"gait": gait_name, "speed_m_s": speed, "stance_height_m": height, "walked": r["walked"],
-            "within_joint_limits": r["targets_within_joint_limits"],
-            "velocity_ratio": r["measured_velocity_m_s"][0] / speed,
-            "max_tilt_deg": r["max_tilt_deg"], "peak_torque_fraction_of_limit": r["peak_torque_fraction_of_limit"],
-            "fraction_of_walking_saturated": r["fraction_of_walking_saturated"],
-            "feet_down_min": r["feet_down_min"], "slip_max_mm_per_step": r["slip_max_mm_per_step"]}
+    walk = gait_replay.run_gait(gait, (speed, 0.0), 0.0, cycles=(run_time - STAND_TIME - RAMP_TIME) / gait.period,
+                                design=design, height=height, masses=masses, servo=servo)
+    return {"gait": gait_name, "speed_m_s": speed, "stance_height_m": height, "walked": walk["walked"],
+            "within_joint_limits": walk["targets_within_joint_limits"],
+            "velocity_ratio": walk["measured_velocity_m_s"][0] / speed,
+            "max_tilt_deg": walk["max_tilt_deg"], "peak_torque_fraction_of_limit": walk["peak_torque_fraction_of_limit"],
+            "fraction_of_walking_saturated": walk["fraction_of_walking_saturated"],
+            "feet_down_min": walk["feet_down_min"], "slip_max_mm_per_step": walk["slip_max_mm_per_step"]}
 
 
 def is_valid(walk: dict) -> bool:

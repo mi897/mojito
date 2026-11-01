@@ -236,7 +236,7 @@ class TestSpecGrouping(unittest.TestCase):
         rng = np.random.default_rng(1)
         q = rng.uniform(left.limits[:, 0], left.limits[:, 1], size=(50, 3))
         np.testing.assert_allclose(right.forward(mirror.angles(q), left.nominal), mirror.target(left.forward(q, left.nominal)), atol=1e-12)
-        self.assertEqual(mirror.sign_q, (-1.0, 1.0, 1.0))  # abduction flips, as in leg.mirror_angles
+        self.assertEqual(mirror.joint_sign, (-1.0, 1.0, 1.0))  # abduction flips, as in leg.mirror_angles
 
     def test_unsupported_structure_is_refused(self):
         m = robots.planar_urdf()

@@ -18,21 +18,24 @@ import numpy as np
 class Mirror:
     """How a limb relates to the canonical limb of its group.
 
-    FK_this(sign_q * joint_angles, link_lengths) == flip_p * FK_canonical(joint_angles, link_lengths)
+    FK_this(joint_sign * joint_angles, link_lengths) == position_flip * FK_canonical(joint_angles, link_lengths)
 
+    position_flip  (3,) +-1 per Cartesian axis: the sign applied to a tip position or target.
+    joint_sign     (dof,) +-1 per joint: the sign applied to a joint value.
     The defaults are the left/right leg mirror: flip y of the target, flip the abduction angle.
+    Neither field is saved in weight files or manifests: spec.derive_mirror works them out from the URDF.
     """
 
-    flip_p: tuple = (1.0, -1.0, 1.0)
-    sign_q: tuple = (-1.0, 1.0, 1.0)
+    position_flip: tuple = (1.0, -1.0, 1.0)
+    joint_sign: tuple = (-1.0, 1.0, 1.0)
 
     def target(self, target_position):
         """Map a target for this limb into the canonical limb's frame (and back)."""
-        return np.asarray(target_position, dtype=float) * np.asarray(self.flip_p)
+        return np.asarray(target_position, dtype=float) * np.asarray(self.position_flip)
 
     def angles(self, joint_angles):
         """Map canonical joint values to this limb's convention (and back)."""
-        return np.asarray(joint_angles, dtype=float) * np.asarray(self.sign_q)
+        return np.asarray(joint_angles, dtype=float) * np.asarray(self.joint_sign)
 
 
 @runtime_checkable
