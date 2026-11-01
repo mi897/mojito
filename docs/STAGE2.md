@@ -191,6 +191,9 @@ unverified listing figures on placeholder leg lengths.
 
 **Working target, a recommendation rather than a result:** treat 1.5 kg as an
 upper limit for the first robot with the design placeholders, and aim below it.
+The simulator's placeholder masses (`DEFAULT_MASSES`) total 1.72 kg, which is above
+this target and 96% of the 1.79 kg trot bound (1.72 / 1.79), so the physics results in
+this document are for a robot heavier than the target and close to the static limit.
 At 1.5 kg the trot knee needs about 0.78 N·m, 42% of the 5 V stall figure and
 84% of the half-of-stall ceiling at 5 V (78% at 6 V). That is thinner than it
 looked with the 120 mm legs, and the static bound ignores gait peaks. Running
@@ -359,7 +362,7 @@ Each is one branch-sized step. Tick them off here as they land.
    `URDFModel` (so a leg-length change reaches both the IK input and the
    simulator), with a floating base, joint limits from the URDF, a site at each
    foot tip and at the body-frame origin, a floor with friction, and capsule
-   geometry with placeholder masses (`DEFAULT_MASSES`, about 1.5 kg total, not the robot's).
+   geometry with placeholder masses (`DEFAULT_MASSES`, 1.72 kg total, not the robot's).
    Only the foot pads and the floor collide. No actuators yet (work package 2).
    Tests (`tests/sim/test_mjcf.py`): foot positions from MuJoCo equal
    `body.Robot.feet` to 1e-9 m for 25 random draws of per-leg lengths, body size,
