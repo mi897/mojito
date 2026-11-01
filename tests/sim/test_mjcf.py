@@ -98,7 +98,7 @@ class TestMjcf(unittest.TestCase):
         for i in range(d.ncon):
             mujoco.mj_contactForce(m, d, i, f6)
             total += f6[0]  # normal component in the contact frame
-        weight = m.body_subtreemass[1] * 9.81
+        weight = m.body_subtreemass[1] * -m.opt.gravity[2]  # the gravity the model was built with
         self.assertAlmostEqual(total / weight, 1.0, delta=0.03)
         self.assertEqual(d.ncon, 4)
         self.assertGreater(d.qpos[2], 0.15)

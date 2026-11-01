@@ -18,9 +18,10 @@ from mojito.results import defaults_of, results_path, write_result
 from mojito.robot import statics
 from mojito.sim import actuators, stand
 
-RUN_DEFAULTS = defaults_of(stand.run_sit_to_stand)  # the runs below keep its leg lengths and body size
-LENGTHS = np.array(RUN_DEFAULTS["lengths"])
-SIT, STAND = 0.14, 0.2125
+RUN_DEFAULTS = defaults_of(stand.run_sit_to_stand)  # the runs below keep its design: leg lengths, body size, stance height
+DESIGN = RUN_DEFAULTS["design"]
+LENGTHS = DESIGN.lengths
+SIT, STAND = 0.14, DESIGN.stance_height
 RISE_TIMES = (0.5, 1.0, 2.0, 4.0)
 MASSES = (1.5, 2.0, 3.0, 4.0, 5.0)
 # (kp, kd, command resolution in rad or None for the PCA9685 default 0.66 deg). Gains are placeholders, so several are
@@ -62,12 +63,11 @@ def main():
     # Static torque at the crouch against the measured hold, light robot 1.5 kg, for reference.
     r = stand.run_sit_to_stand(SIT, STAND, 2.0, masses=light(1.5))
     from mojito.robot import body
-    robot = body.Robot(body.AnalyticSolver(), lengths=LENGTHS, body_length=RUN_DEFAULTS["body_length"],
-                       body_width=RUN_DEFAULTS["body_width"])
-    q_sit, q_stand = robot.solve(robot.stance(SIT))[0], robot.solve(robot.stance(STAND))[0]
+    robot = body.Robot(body.AnalyticSolver(), lengths=LENGTHS, body_length=DESIGN.body_length, body_width=DESIGN.body_width)
+    sit_joint_angles, stand_joint_angles = robot.solve(robot.stance(SIT))[0], robot.solve(robot.stance(STAND))[0]
     out["static_knee_torque_per_kg_nm"] = {
-        "crouched": round(float(statics.joint_torques(q_sit, LENGTHS, statics.G / 4)[2]), 4),
-        "standing": round(float(statics.joint_torques(q_stand, LENGTHS, statics.G / 4)[2]), 4),
+        "crouched": round(float(statics.joint_torques(sit_joint_angles, LENGTHS, statics.G / 4)[2]), 4),
+        "standing": round(float(statics.joint_torques(stand_joint_angles, LENGTHS, statics.G / 4)[2]), 4),
         "note": "equal quarter of the weight per foot, per kg of robot"}
     out["sweeps"] = {}
     series = {}

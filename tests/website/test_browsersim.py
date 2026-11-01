@@ -43,14 +43,17 @@ class TestBrowserSim(unittest.TestCase):
 
     def test_model_matches_the_python_model(self):
         # a design that is not the default one, so a copied constant would show
-        from mojito.sim import live_sim, stand
+        from mojito.geometry.placeholders import QuadrupedDesign
+        from mojito.sim import live_sim
+        from mojito.sim.robot import SimRobot
 
         lengths, height, length, width, mass = (0.06, 0.13, 0.17), 0.2, 0.35, 0.18, 2.5
-        masses = live_sim.scaled_masses(mass)
+        masses = live_sim.masses_for_total(mass)
         design = dict(la=lengths[0], lu=lengths[1], ll=lengths[2], body_length=length, body_width=width, start_z=height + 0.012,
                       masses=masses, timestep=0.002)
         theirs = mujoco.MjModel.from_xml_string(node({"op": "xml", "design": design})["xml"])
-        _, ours, *_ = stand._open(np.array(lengths), height, length, width, masses, 0.002)
+        ours = SimRobot(QuadrupedDesign(*lengths, body_length=length, body_width=width, stance_height=height, masses=masses),
+                        timestep=0.002).model
         for name in ("nq", "nv", "nu", "nbody", "ngeom", "njnt", "nsite", "nsensor"):
             self.assertEqual(getattr(theirs, name), getattr(ours, name), name)
         for name in ("body_pos", "body_mass", "body_inertia", "geom_size", "geom_pos", "geom_friction", "geom_contype", "jnt_range",

@@ -20,8 +20,10 @@ from collections import deque
 
 import numpy as np
 
+from ..geometry.placeholders import SIM_QUADRUPED
 from ..robot import body, gaits, leg
-from . import actuators, mjcf, stand
+from . import actuators, gait_replay, mjcf, stand
+from .robot import SimRobot, roll_pitch_yaw
 
 SMOOTHING_TIME = 0.3       # s, low-pass on velocity, yaw rate, lift and sway
 MAX_TARGET_SPEED = 1.5     # m/s, limit on how fast a commanded foot position may move
@@ -29,28 +31,33 @@ BLEND_TIME = 0.5           # s, to blend between standing and walking
 HISTORY = 2.0              # s, window for the measured velocity
 CONTACT_FORCE = 0.5        # N, a foot carrying more is "down"
 
+
+
+def preset_for(gait, forward_speed) -> dict:
+    """Live parameters for `gait` commanded at `forward_speed` (m/s): timing and swing from the Gait, servo gains and stance
+    height from `gait_replay.settings_for`, which are what its results in docs/STAGE2.md were measured with."""
+    settings = gait_replay.settings_for(gait)
+    return dict(period=gait.period, duty=gait.duty, offsets=list(gait.offsets), lift=gait.lift, sway=gait.sway,
+                vx=forward_speed, vy=0.0, yaw_rate=0.0, kp=settings["servo"].kp, kd=settings["servo"].kd, height=settings["height"])
+
+
+# The trot gets the tuned settings of gait_replay (kp 50, kd 0.9, 0.16 m stance, 22 mm swing); the crawl and the pace the original
+# servo (kp 10, kd 0.2), the 0.2125 m stance and a 30 mm swing. The speed is the one each preset starts at, m/s.
+PRESETS = {"trot": preset_for(gaits.TROT, 0.15), "crawl": preset_for(gaits.CRAWL, 0.04), "pace": preset_for(gaits.PACE, 0.1)}
 DEFAULTS = dict(
-    period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.022, sway=0.0,
-    vx=0.15, vy=0.0, yaw_rate=0.0,
+    PRESETS["trot"],
     # body posture while the feet stay planted (rad): the body rolls, pitches and yaws about its own centre
     body_roll=0.0, body_pitch=0.0, body_yaw=0.0,
     # body height change (m) relative to the stance height, feet planted; positive raises the body
     body_height=0.0,
-    kp=50.0, kd=0.9, mass=1.72, speed=1.0, walk=False,
-    # robot design: these rebuild the model (like mass). Metres.
-    la=0.05, lu=0.15, ll=0.15, body_length=0.30, body_width=0.15, height=0.16,
-    voltage=5.0,
+    # total mass, kg: the placeholder's 1.72 kg, rounded to 1 g so that it reads 1.72 and not the float sum 1.7200000000000002
+    mass=round(SIM_QUADRUPED.total_mass, 3), speed=1.0, walk=False,
+    # robot design: these rebuild the model (like mass). Metres: abduction offset (la), upper (lu) and lower (ll) leg, body size.
+    # The stance height, `height`, comes from the trot preset and needs no rebuild (see SMOOTHED).
+    la=SIM_QUADRUPED.abduction_offset, lu=SIM_QUADRUPED.upper_length, ll=SIM_QUADRUPED.lower_length,
+    body_length=SIM_QUADRUPED.body_length, body_width=SIM_QUADRUPED.body_width,
+    voltage=actuators.ServoParams().voltage,
 )
-# The trot uses the tuned settings of gait_replay (kp 50, kd 0.9, 0.16 m stance, 22 mm swing); the crawl and the pace keep the original
-# servo (kp 10, kd 0.2), 0.2125 m stance and 30 mm swing, which is what their results in docs/STAGE2.md were measured with.
-PRESETS = {
-    "trot": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.5, 0.0], lift=0.022, sway=0.0, vx=0.15, vy=0.0, yaw_rate=0.0,
-                 kp=50.0, kd=0.9, height=0.16),
-    "crawl": dict(period=2.0, duty=0.85, offsets=[0.75, 0.25, 0.5, 0.0], lift=0.03, sway=0.025, vx=0.04, vy=0.0, yaw_rate=0.0,
-                  kp=10.0, kd=0.2, height=0.2125),
-    "pace": dict(period=1.7, duty=0.5, offsets=[0.0, 0.5, 0.0, 0.5], lift=0.03, sway=0.0, vx=0.1, vy=0.0, yaw_rate=0.0,
-                 kp=10.0, kd=0.2, height=0.2125),
-}
 # Full-stick command (forward m/s, left m/s, yaw rad/s) for drive mode (keyboard or gamepad), per preset. Probed in 6 s runs
 # (forward, back, sideways and turning each alone, and the trot with all three at once): none fell. The pace is left out,
 # it barely moves in physics. The measured speed is lower than the command, see docs/STAGE2.md.
@@ -70,12 +77,19 @@ SMOOTHED = ("vx", "vy", "yaw_rate", "lift", "sway", "body_roll", "body_pitch", "
 POSE = {key: LIMITS[key][1] for key in ("body_roll", "body_pitch", "body_yaw", "body_height")}
 
 
-DEFAULT_TOTAL_MASS = mjcf.DEFAULT_MASSES["body"] + 4 * sum(v for k, v in mjcf.DEFAULT_MASSES.items() if k != "body")  # 1.72 kg
+DEFAULT_TOTAL_MASS = SIM_QUADRUPED.total_mass  # 1.72 kg: body and four legs of mjcf.DEFAULT_MASSES
 
 
-def scaled_masses(total):
-    """The placeholder masses of mjcf.DEFAULT_MASSES, all multiplied by total / 1.72 kg."""
-    return {k: v * total / DEFAULT_TOTAL_MASS for k, v in mjcf.DEFAULT_MASSES.items()}
+def masses_for_total(total_mass):
+    """The placeholder masses of mjcf.DEFAULT_MASSES, all multiplied by total_mass / 1.72 kg, so the robot weighs `total_mass` kg."""
+    return {role: mass * total_mass / DEFAULT_TOTAL_MASS for role, mass in mjcf.DEFAULT_MASSES.items()}
+
+
+def design_of(params):
+    """The placeholders.QuadrupedDesign that live parameters describe: leg (la, lu, ll), body size, stance height, total mass."""
+    return dataclasses.replace(SIM_QUADRUPED, abduction_offset=params["la"], upper_length=params["lu"], lower_length=params["ll"],
+                               body_length=params["body_length"], body_width=params["body_width"],
+                               stance_height=params["height"], masses=masses_for_total(params["mass"]))
 
 
 def browser_constants() -> dict:
@@ -133,22 +147,19 @@ class LiveSim:
         return rebuild
 
     def gait(self) -> gaits.Gait:
-        p = self.params
-        return gaits.Gait("live", period=p["period"], duty=p["duty"], offsets=tuple(p["offsets"]),
+        params = self.params
+        return gaits.Gait("live", period=params["period"], duty=params["duty"], offsets=tuple(params["offsets"]),
                           lift=self._smooth["lift"], sway=self._smooth["sway"])
 
     # ----- state -----
     def reset(self):
         """Rebuild the model with the current parameters and stand still."""
-        import mujoco
-
-        self._mujoco = mujoco
-        p = self.params
-        masses = scaled_masses(p["mass"])
-        self.robot, self.model, self.data, self.qadr, self.dadr, self.aid, self.pad, self.start_z = stand._open(
-            np.array([p["la"], p["lu"], p["ll"]]), p["height"], p["body_length"], p["body_width"], masses, self.timestep)
-        self.servo = actuators.Servo(actuators.ServoParams(kp=p["kp"], kd=p["kd"], voltage=p["voltage"]))
-        self.home = self.robot.stance(p["height"])
+        params = self.params
+        self.physics = SimRobot(design_of(params), timestep=self.timestep)
+        self.robot = self.physics.kinematics  # a body.Robot with the closed-form IK, for the targets
+        self.model, self.data = self.physics.model, self.physics.data
+        self.servo = actuators.Servo(actuators.ServoParams(kp=params["kp"], kd=params["kd"], voltage=params["voltage"]))
+        self.home = self.robot.stance(params["height"])
         self.time = 0.0
         self.cycles = 0.0
         self.blend_progress = 0.0
@@ -161,16 +172,15 @@ class LiveSim:
         self._history = deque()  # (time, origin xy, yaw)
 
     def step(self, n: int = 1):
-        mujoco = self._mujoco
         dt = self.timestep
-        p = self.params
+        params = self.params
         for _ in range(n):
             alpha = 1.0 - np.exp(-dt / SMOOTHING_TIME)
             for key in SMOOTHED:
-                self._smooth[key] += alpha * (p[key] - self._smooth[key])
+                self._smooth[key] += alpha * (params[key] - self._smooth[key])
             gait = self.gait()
             self.home = self.robot.stance(self._smooth["height"])   # the feet follow the eased stance height
-            self.blend_progress = float(np.clip(self.blend_progress + (dt if p["walk"] else -dt) / BLEND_TIME, 0.0, 1.0))
+            self.blend_progress = float(np.clip(self.blend_progress + (dt if params["walk"] else -dt) / BLEND_TIME, 0.0, 1.0))
             velocity = (self._smooth["vx"], self._smooth["vy"])
             gait_time = self.cycles * gait.period
             feet, contact, _ = gaits.foot_targets(gait, gait_time, self.home, velocity, self._smooth["yaw_rate"])
@@ -188,34 +198,19 @@ class LiveSim:
             limit = MAX_TARGET_SPEED * dt
             targets = self._previous_targets + np.clip(targets - self._previous_targets, -limit, limit)
             self._previous_targets = targets
-            if p["walk"]:
+            if params["walk"]:
                 self.cycles += dt / gait.period
             joint_targets = self.robot.solve(targets).ravel()
-            torque = self.servo.step(joint_targets, self.data.qpos[self.qadr], self.data.qvel[self.dadr], dt)
-            self.data.ctrl[self.aid] = torque
-            mujoco.mj_step(self.model, self.data)
+            torque = self.servo.step(joint_targets, self.physics.joint_angles(), self.physics.joint_velocities(), dt)
+            self.physics.step(torque)
             self.time += dt
             self.torque_fraction = float(np.abs(torque).max() / self.servo.params.stall_torque)
             self.saturated = bool(self.servo.last_saturated.any())
             self._record()
 
-    def _foot_loads(self):
-        mujoco = self._mujoco
-        loads = np.zeros(4)
-        wrench = np.zeros(6)
-        for c in range(self.data.ncon):
-            contact = self.data.contact[c]
-            for geom in (contact.geom1, contact.geom2):
-                if geom in self.pad:
-                    mujoco.mj_contactForce(self.model, self.data, c, wrench)
-                    loads[self.pad[geom]] += wrench[0]
-        return loads
-
     def _record(self):
-        self.loads = self._foot_loads()
-        origin = self.data.site("body_origin")
-        rotation = origin.xmat.reshape(3, 3)
-        self._history.append((self.time, origin.xpos[:2].copy(), float(np.arctan2(rotation[1, 0], rotation[0, 0]))))
+        self.loads = self.physics.foot_loads()
+        self._history.append((self.time, self.physics.origin()[:2], self.physics.yaw()))
         while self._history and self._history[0][0] < self.time - HISTORY:
             self._history.popleft()
 
@@ -223,27 +218,24 @@ class LiveSim:
         """Body velocity (forward, left) in m/s over the last HISTORY s, in the body frame at the start of the window."""
         if len(self._history) < 2:
             return [0.0, 0.0]
-        (t0, xy0, yaw0), (t1, xy1, _) = self._history[0], self._history[-1]
-        if t1 - t0 < 0.2:
+        (start_time, start_xy, start_yaw), (end_time, end_xy, _) = self._history[0], self._history[-1]
+        if end_time - start_time < 0.2:
             return [0.0, 0.0]
-        d = xy1 - xy0
-        c, s = np.cos(yaw0), np.sin(yaw0)
-        return [float((c * d[0] + s * d[1]) / (t1 - t0)), float((-s * d[0] + c * d[1]) / (t1 - t0))]
+        # the world displacement in the body frame at the start: forward = cos(yaw) dx + sin(yaw) dy, left = -sin(yaw) dx + cos(yaw) dy
+        displacement = end_xy - start_xy
+        cos_yaw, sin_yaw = np.cos(start_yaw), np.sin(start_yaw)
+        return [float((cos_yaw * displacement[0] + sin_yaw * displacement[1]) / (end_time - start_time)),
+                float((-sin_yaw * displacement[0] + cos_yaw * displacement[1]) / (end_time - start_time))]
 
     def snapshot(self) -> dict:
         """JSON-ready state for drawing and readouts."""
-        d = self.data
-        origin = d.site("body_origin")
-        rotation = origin.xmat.reshape(3, 3)
-        tilt = float(np.degrees(np.arccos(np.clip(rotation[2, 2], -1.0, 1.0))))
-        legs = np.array([[d.body(f"{n}_hip").xpos, d.body(f"{n}_shank").xpos, d.site(f"{n}_foot").xpos]
-                         for n in body.LEG_NAMES])
-        yaw = float(np.degrees(np.arctan2(rotation[1, 0], rotation[0, 0])))
-        pitch = float(np.degrees(np.arcsin(np.clip(-rotation[2, 0], -1.0, 1.0))))  # R = Rz(yaw) Ry(pitch) Rx(roll), body to world
-        roll = float(np.degrees(np.arctan2(rotation[2, 1], rotation[2, 2])))
-        fell = bool(tilt > 60.0 or origin.xpos[2] < 0.5 * self._smooth["height"])
+        origin, rotation = self.physics.origin(), self.physics.body_rotation()
+        tilt = self.physics.tilt_deg()
+        legs = self.physics.legs_world()
+        roll, pitch, yaw = (float(np.degrees(angle)) for angle in roll_pitch_yaw(rotation))  # R = Rz(yaw) Ry(pitch) Rx(roll), body to world
+        fell = bool(tilt > 60.0 or origin[2] < 0.5 * self._smooth["height"])
         return {
-            "time": self.time, "legs": legs.round(5).tolist(), "origin": origin.xpos.round(5).tolist(),
+            "time": self.time, "legs": legs.round(5).tolist(), "origin": origin.round(5).tolist(),
             "rotation": rotation.round(5).tolist(), "loads": self.loads.round(3).tolist(),
             "down": (self.loads > CONTACT_FORCE).tolist(), "commanded_down": self.commanded_contact.tolist(),
             "torque_fraction": round(self.torque_fraction, 3), "saturated": self.saturated,

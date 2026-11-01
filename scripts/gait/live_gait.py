@@ -126,7 +126,7 @@ def make_handler(runner):
                 self.send_response(204)
                 self.end_headers()
             elif self.path == "/meta":
-                self._send({"limits": live_sim.LIMITS, "presets": live_sim.PRESETS, "defaults": live_sim.DEFAULTS, "drive": live_sim.DRIVE, "pose": live_sim.POSE})
+                self._send(live_sim.browser_constants()["meta"])
             else:
                 self.send_error(404)
 

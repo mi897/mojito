@@ -13,6 +13,7 @@ import json
 
 import numpy as np
 
+from mojito.geometry.placeholders import SIM_QUADRUPED
 from mojito.results import results_path, write_result
 from mojito.robot import gaits, leg, statics
 from mojito.sim import actuators  # NumPy only, no MuJoCo
@@ -22,9 +23,10 @@ from mojito.sim import actuators  # NumPy only, no MuJoCo
 # kept within 5 to 6.0 V, so the model never needs a value outside the listed points.
 SERVO_STALL_NM = {f"{v} V": actuators.ServoParams(voltage=v).stall_torque for v in (5.0, 6.0)}
 DERATES = (1.0, 0.5)
-# Stage 2 design placeholders (docs/STAGE2.md): 1.25x the Stage 0-1 placeholders so the
+# Stage 2 design placeholders (docs/STAGE2.md, `placeholders.SIM_QUADRUPED`): 1.25x the Stage 0-1 placeholders so the
 # servos (listed 40 x 20 x 40.5 mm) are not oversized against the legs. Still placeholders.
-DESIGN = {"lengths": [0.05, 0.15, 0.15], "height": 0.2125, "body_length": 0.30, "body_width": 0.15}
+DESIGN = {"lengths": SIM_QUADRUPED.lengths.tolist(), "height": SIM_QUADRUPED.stance_height,
+          "body_length": SIM_QUADRUPED.body_length, "body_width": SIM_QUADRUPED.body_width}
 NAMES = ("abduction", "hip_pitch", "knee")
 
 

@@ -24,7 +24,7 @@ TIMESTEP = defaults_of(gait_replay.run_gait)["timestep"]  # the runs keep run_ga
 VELOCITY = 0.1  # m/s, commanded forward speed of every run
 # The pace was measured with the original 30 mm swing, 0.2125 m stance and kp 10 servo, and still is; `gaits.TROT` is now 22 mm.
 TROT = dataclasses.replace(gaits.TROT, lift=0.03)
-PACE = dataclasses.replace(TROT, name="pace", offsets=(0.0, 0.5, 0.0, 0.5))  # FL RL together, FR RR together
+PACE = gaits.PACE  # FL RL together, FR RR together: the trot's timing and 30 mm swing
 Servo = actuators.ServoParams
 IDEAL = Servo(kp=100.0, kd=1.0, latency=0.0, resolution=1e-4, torque_scale=10.0)
 

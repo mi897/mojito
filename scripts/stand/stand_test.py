@@ -12,7 +12,8 @@ from mojito.robot import statics
 from mojito.sim import actuators, stand
 
 STAND_DEFAULTS = defaults_of(stand.run_stand)  # the runs below change masses, servo and (section 4) height only
-LENGTHS = np.array(STAND_DEFAULTS["lengths"])
+DESIGN = STAND_DEFAULTS["design"]  # the simulator's placeholder quadruped
+LENGTHS = DESIGN.lengths
 CROUCH_HEIGHT, CROUCH_DURATION = 0.14, 2.0  # m, s: the crouch used by the sit-to-stand test, held for a shorter run
 LEG_KG = 4e-4  # per leg in the "light legs" runs: essentially zero, so the static calculation applies
 
@@ -44,7 +45,7 @@ def main():
                    f"mean over the last {STAND_DEFAULTS['window']:g} s of a {STAND_DEFAULTS['duration']:g} s run "
                    f"({CROUCH_DURATION:g} s for the crouch_{CROUCH_HEIGHT * 1000:.0f}mm runs). "
                    "Placeholder dimensions, masses and servo figures.",
-           "lengths_m": LENGTHS.tolist(), "stance_height_m": STAND_DEFAULTS["height"]}
+           "lengths_m": LENGTHS.tolist(), "stance_height_m": DESIGN.stance_height}
 
     # 1. Check against the static calculation: negligible leg mass, 1.5 kg, 5 V.
     r = stand.run_stand(masses=light(1.5))

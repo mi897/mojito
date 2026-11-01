@@ -7,11 +7,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..geometry.placeholders import SIM_QUADRUPED
 from ..robot import body
 from ..palette import AQUA, BLUE, GREY, INK, ORANGE, PURPLE
 
 LEG_COLOURS = {"FL": BLUE, "FR": ORANGE, "RL": AQUA, "RR": PURPLE}
-BODY_LENGTH, BODY_WIDTH = 0.30, 0.15  # as drawn; the model's body is these placeholders (stand.py)
+BODY_LENGTH, BODY_WIDTH = SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width  # as drawn: the simulator's placeholder body
 
 
 def _runs(flags, times):

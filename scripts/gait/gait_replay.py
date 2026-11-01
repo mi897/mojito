@@ -1,7 +1,7 @@
 """Replay the Stage 1 trot (1.7 s period, `gaits.TROT`) and crawl in MuJoCo through the servo model.
 
-The trot uses the tuned settings (`gait_replay.TROT_STANCE_HEIGHT`, `TROT_SERVO`, 22 mm swing); the crawl keeps the original stance
-height (0.2125 m) and servo (kp 10, kd 0.2). Placeholder dimensions, masses (1.72 kg), servo figures (5 V, unverified), friction. Writes
+The trot uses the tuned settings (`gait_replay.TROT_STANCE_HEIGHT`, `TROT_SERVO`, 22 mm swing); the crawl keeps the placeholder's stance
+height (`SIM_QUADRUPED.stance_height`, 0.2125 m) and the original servo (kp 10, kd 0.2). Placeholder dimensions, masses (1.72 kg), servo figures (5 V, unverified), friction. Writes
 results/gait/gait_replay.json. Needs mujoco.
 
     uv run --extra sim python scripts/gait/gait_replay.py
@@ -47,7 +47,7 @@ def main():
                    "actuated MuJoCo model; the body is free. 1 s stand, 0.5 s blend, then whole gait cycles; "
                    "velocity and yaw rate are measured over the walking phase. Placeholder dimensions, masses, "
                    "servo figures and friction.",
-           "lengths_m": list(defaults["lengths"]),
+           "lengths_m": defaults["design"].lengths.tolist(),
            "stance_height_m": {g.name: gait_replay.settings_for(g)["height"] for g in (gaits.TROT, gaits.CRAWL)},
            "servo": {g.name: servo_gains(g) for g in (gaits.TROT, gaits.CRAWL)}, "timestep_s": defaults["timestep"], "runs": []}
     for gait, vx, yaw_rate, cycles in CASES:

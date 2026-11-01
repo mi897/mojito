@@ -55,6 +55,10 @@ TROT_STAGE1 = replace(TROT, name="trot_stage1", period=0.5, lift=0.03)
 # One foot in the air at a time, in the order RL, FL, RR, FR.
 # The body leans away from that foot while all four are down.
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)
+# Left legs together, then right legs: the trot's timing with the pairs on one side. It barely moves in physics and goes
+# backward (scripts/gait/pace_diagnosis.py, docs/STAGE2.md); kept as the live explorer's third preset and for that diagnosis,
+# with the original 30 mm swing it was measured with.
+PACE = Gait("pace", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.0, 0.5), lift=0.03)
 
 
 def sequence_offsets(order, duty, first_lift=0.1):

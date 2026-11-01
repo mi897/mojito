@@ -7,7 +7,7 @@ import numpy as np
 
 from . import leg
 
-G = 9.81  # m/s^2
+G = 9.81  # m/s^2, magnitude of gravity, pointing down (-z). The one value in the code: mjcf.GRAVITY is -G along z.
 
 
 def foot_loads(feet_xy, com_xy, weight=1.0) -> np.ndarray:

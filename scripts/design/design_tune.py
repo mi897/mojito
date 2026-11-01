@@ -37,7 +37,7 @@ def main():
                 candidates = results[i:i + len(settings)]
                 i += len(settings)
                 best = max(range(len(settings)), key=lambda k: design_sweep.tuning_score(candidates[k]))
-                entries.append({"design": dataclasses.asdict(d), "mass_scale": s, "gait": g,
+                entries.append({"design": design_sweep.swept_dimensions(d), "mass_scale": s, "gait": g,
                                 "default": dataclasses.asdict(design_sweep.default_settings(g)),
                                 "best": dataclasses.asdict(settings[best]), "best_walk": candidates[best],
                                 "n_valid": sum(design_sweep.is_valid(c) for c in candidates),

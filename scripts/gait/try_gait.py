@@ -22,7 +22,8 @@ import numpy as np
 
 from mojito.results import results_path, write_result
 from mojito.robot import body, gaits
-from mojito.sim import gait_plots, gait_replay, live_sim
+from mojito.geometry.placeholders import SIM_QUADRUPED
+from mojito.sim import gait_plots, gait_replay
 
 OUT = results_path("gait", "try")
 
@@ -43,7 +44,7 @@ def parse_args():
     p.add_argument("--cycles", type=int, default=3)
     p.add_argument("--kp", type=float, help=f"servo position gain, N·m/rad (default: {trot.kp:g} for the trot, {crawl.kp:g} for the crawl)")
     p.add_argument("--kd", type=float, help=f"servo damping (default: {trot.kd:g} for the trot, {crawl.kd:g} for the crawl)")
-    p.add_argument("--mass", type=float, help=f"total mass, kg, all in the body (default: placeholder masses, {live_sim.DEFAULT_TOTAL_MASS:.2f} kg)")
+    p.add_argument("--mass", type=float, help=f"total mass, kg, all in the body (default: placeholder masses, {SIM_QUADRUPED.total_mass:.2f} kg)")
     p.add_argument("--no-gif", action="store_true")
     return p.parse_args()
 

@@ -26,7 +26,7 @@ class TestDesignGrid(unittest.TestCase):
         self.assertTrue(all((d.upper_length, d.lower_length) == (0.15, 0.15) for d in grid[9:]))
 
     def test_masses_scale_every_role(self):
-        scaled = design_sweep.scaled_masses(2.0)
+        scaled = design_sweep.masses_scaled_by(2.0)
         for role, mass in design_sweep.mjcf.DEFAULT_MASSES.items():
             self.assertAlmostEqual(scaled[role], 2 * mass)
 
@@ -46,7 +46,7 @@ class TestDraws(unittest.TestCase):
 class TestScaledHeight(unittest.TestCase):
     def test_placeholder_leg_gives_back_the_tuned_height(self):
         for base in (gait_replay.DEFAULT_STANCE_HEIGHT, gait_replay.TROT_STANCE_HEIGHT):
-            self.assertAlmostEqual(design_sweep.scaled_height(design_sweep.Design(), base), base, places=12)
+            self.assertAlmostEqual(design_sweep.scaled_height(design_sweep.REFERENCE_DESIGN, base), base, places=12)
 
     def test_every_design_stands_with_the_placeholder_knee_bend_found_by_the_ik(self):
         """Independent check of the law-of-cosines height: closed-form IK at that height returns the same knee angle."""
@@ -62,7 +62,7 @@ class TestTuningHelpers(unittest.TestCase):
     def test_default_settings_reproduce_the_untuned_heights(self):
         for name, height in (("trot", gait_replay.TROT_STANCE_HEIGHT), ("crawl", gait_replay.DEFAULT_STANCE_HEIGHT)):
             settings = design_sweep.default_settings(name)
-            self.assertAlmostEqual(design_sweep.height_for_knee(design_sweep.Design(), settings.knee), height, places=12)
+            self.assertAlmostEqual(design_sweep.height_for_knee(design_sweep.REFERENCE_DESIGN, settings.knee), height, places=12)
 
     def test_knee_from_ik_at_the_height_for_a_knee_returns_that_knee(self):
         """Independent check of the law of cosines: closed-form IK at the height gives back the knee angle."""
@@ -89,7 +89,7 @@ class TestStaticBound(unittest.TestCase):
         with open(path) as f:
             envelope = json.load(f)
         servo = actuators.ServoParams()
-        bound = design_sweep.static_mass_bound(design_sweep.Design(), 0.2125, servo.stall_torque)
+        bound = design_sweep.static_mass_bound(design_sweep.REFERENCE_DESIGN, 0.2125, servo.stall_torque)
         expected = envelope["max_total_mass_kg"]["stand_4_feet"]["5.0 V derate 1.0"]
         self.assertAlmostEqual(bound, expected, delta=0.01)
 
@@ -98,7 +98,7 @@ class TestStaticBound(unittest.TestCase):
 class TestEvaluateDesign(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.result = design_sweep.evaluate_design(design_sweep.Design(), 1.0, speeds=(0.10,), run_time=5.0)
+        cls.result = design_sweep.evaluate_design(design_sweep.REFERENCE_DESIGN, 1.0, speeds=(0.10,), run_time=5.0)
 
     def test_placeholder_design_stands_at_the_stored_stand_test_figures(self):
         path = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand", "stand_test.json")
@@ -106,13 +106,13 @@ class TestEvaluateDesign(unittest.TestCase):
             stored = json.load(f)
         self.assertAlmostEqual(self.result["stand"]["total_mass_kg"], 1.72, places=2)
         self.assertTrue(self.result["stand"]["stood"])
-        self.assertEqual(stored["lengths_m"], design_sweep.Design().lengths.tolist())
+        self.assertEqual(stored["lengths_m"], design_sweep.REFERENCE_DESIGN.lengths.tolist())
 
     def test_one_walk_per_gait_and_speed(self):
         self.assertEqual([(w["gait"], w["speed_m_s"]) for w in self.result["walk"]], [("trot", 0.10), ("crawl", 0.10)])
 
     def test_evaluate_walk_with_default_settings_matches_evaluate_design(self):
-        walk = design_sweep.evaluate_walk(design_sweep.Design(), "trot", design_sweep.default_settings("trot"), 1.0, 0.10, run_time=5.0)
+        walk = design_sweep.evaluate_walk(design_sweep.REFERENCE_DESIGN, "trot", design_sweep.default_settings("trot"), 1.0, 0.10, run_time=5.0)
         self.assertAlmostEqual(walk["velocity_ratio"], self.result["walk"][0]["velocity_ratio"], places=6)
 
     def test_trot_at_placeholder_dimensions_walks(self):
