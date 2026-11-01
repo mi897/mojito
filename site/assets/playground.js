@@ -31,12 +31,15 @@
   /* =============================================================
    * Kinematic lab
    * ============================================================= */
-  const DEFAULTS = {
-    la: 0.05, lu: 0.15, ll: 0.15, bl: 0.30, bw: 0.15, h: 0.2125, sFL: 1,
+  // gait sliders of a gait preset (mojito.js, from gaits.py) commanded at `vx` m/s
+  const gaitSet = (gait, vx, wz = 0) => ({ period: gait.period, duty: gait.duty, lift: gait.lift, sway: gait.sway,
+    o0: gait.offsets[0], o1: gait.offsets[1], o2: gait.offsets[2], o3: gait.offsets[3], vx, vy: 0, wz });
+  // the Stage 2 design placeholders, trot, servo supply and total mass: all from data/constants.js, through mojito.js
+  const DESIGN = M.DESIGN, DEFAULTS = Object.assign({
+    la: DESIGN.abduction_offset, lu: DESIGN.upper_length, ll: DESIGN.lower_length, bl: DESIGN.body_length, bw: DESIGN.body_width,
+    h: DESIGN.stance_height, sFL: 1,
     px: 0, py: 0, pz: 0, roll: 0, pitch: 0, yaw: 0,
-    period: 1.7, duty: 0.5, lift: 0.022, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0,
-    vx: 0.15, vy: 0, wz: 0, mass: 1.5, volts: 5,
-  };
+  }, gaitSet(M.TROT, M.GAIT_SPEEDS.trot), { mass: DESIGN.total_mass, volts: M.SERVO.voltage });
   const kin = { st: Object.assign({}, DEFAULTS), mode: 'gait', gaitName: 'trot', t: 0, playing: true, speed: 1, ctl: {},
     eff: { vx: DEFAULTS.vx, vy: DEFAULTS.vy, wz: DEFAULTS.wz }, pose: { x: 0, y: 0, yaw: 0 }, drive: null };
   // time constant of the easing of the commanded velocity (s): the live simulation's, so a steered robot does not jump (livemeta.js)
@@ -80,14 +83,14 @@
         ['sway', 'crawl lean', 0, 0.06, 0.005, ' mm', 1000], ['o0', 'start FL', 0, 1, 0.01, '', 1], ['o1', 'start FR', 0, 1, 0.01, '', 1],
         ['o2', 'start RL', 0, 1, 0.01, '', 1], ['o3', 'start RR', 0, 1, 0.01, '', 1]]],
       ['Command', [['vx', 'forward', -0.4, 0.4, 0.01, ' m/s', 1], ['vy', 'left', -0.3, 0.3, 0.01, ' m/s', 1], ['wz', 'turn rate', -2.5, 2.5, 0.1, ' rad/s', 1]]],
-      ['Load', [['mass', 'total mass', 0.5, 6, 0.1, ' kg', 1], ['volts', 'servo supply', 5, 6, 0.1, ' V', 1]]],
+      ['Load', [['mass', 'total mass', 0.5, 6, 0.01, ' kg', 1], ['volts', 'servo supply', 5, 6, 0.1, ' V', 1]]],
     ];
   }
   const PRESETS = {
-    trot: { mode: 'gait', gait: 'trot', set: { period: 1.7, duty: 0.5, lift: 0.022, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0, vx: 0.15, vy: 0, wz: 0 } },
-    crawl: { mode: 'gait', gait: 'crawl', set: { period: 2, duty: 0.85, lift: 0.03, sway: 0.025, o0: 0.75, o1: 0.25, o2: 0.5, o3: 0, vx: 0.04, vy: 0, wz: 0 } },
-    pace: { mode: 'gait', gait: 'pace', set: { period: 1.7, duty: 0.5, lift: 0.03, sway: 0, o0: 0, o1: 0.5, o2: 0, o3: 0.5, vx: 0.1, vy: 0, wz: 0 } },
-    spin: { mode: 'gait', gait: 'trot', set: { period: 1.7, duty: 0.5, lift: 0.022, sway: 0, o0: 0, o1: 0.5, o2: 0.5, o3: 0, vx: 0, vy: 0, wz: 0.6 } },
+    trot: { mode: 'gait', gait: 'trot', set: gaitSet(M.TROT, M.GAIT_SPEEDS.trot) },
+    crawl: { mode: 'gait', gait: 'crawl', set: gaitSet(M.CRAWL, M.GAIT_SPEEDS.crawl) },
+    pace: { mode: 'gait', gait: 'pace', set: gaitSet(M.PACE, M.GAIT_SPEEDS.pace) },
+    spin: { mode: 'gait', gait: 'trot', set: gaitSet(M.TROT, 0, 0.6) },
     stand: { mode: 'stand', gait: 'trot', set: {} },
     twist: { mode: 'stand', gait: 'trot', set: { roll: 12, pitch: -8, yaw: 16, pz: 0.02 } },
   };
@@ -193,7 +196,7 @@
     const nDown = res.loadsN.filter(l => l > 1e-6).length;
     $('kin-kpis').innerHTML = kpi('feet carrying weight', nDown + ' of 4', nDown <= 2 ? 'bad' : '')
       + kpi('servo torque now / stall', fmt(res.peakFraction, 2), res.peakFraction >= 1 ? 'bad' : '', 'N·m needed: ' + fmt(res.peakTorque, 2))
-      + kpi('stall torque', fmt(res.stall, 2) + ' N·m', '', 'listed, unverified: straight line between 19 kg·cm at 5 V and 21.5 kg·cm at 6.8 V')
+      + kpi('stall torque', fmt(res.stall, 2) + ' N·m', '', `listed, unverified: straight line between ${fmt(M.SERVO.stall_5v, 2)} N·m at 5 V and ${fmt(M.SERVO.stall_68v, 2)} N·m at 6.8 V`)
       + kpi('closest joint to limit', fmt(res.marginDeg, 1) + '°', res.marginDeg < 0.5 ? 'bad' : '')
       + kpi('body-centre margin', nDown >= 3 ? fmt(1000 * res.stability, 0) + ' mm' : 'n/a', nDown >= 3 && res.stability < 0 ? 'bad' : '');
     const phase = standing ? 0 : (kin.t % T) / T;
@@ -300,6 +303,11 @@
   const phys = { sel: { gait: 'trot', speed: 0.15, kp: 10, mass: 1, lift: 0.03 }, t: 0, playing: true, speed: 0.5, run: null, built: false };
   let physView, physRobot;
 
+  // total mass (kg) of the runs at a mass scale: what the runs themselves recorded, else the placeholder total times the scale
+  function sweepMass(scale) {
+    const run = window.MOJITO_SWEEP.runs.find(r => r.mass_scale === scale);
+    return run ? run.total_mass_kg : M.DESIGN.total_mass * scale;
+  }
   function findRun(sel) {
     const S = window.MOJITO_SWEEP;
     return S.runs.find(r => r.gait === sel.gait && Math.abs(r.speed_m_s - sel.speed) < 1e-9 && r.kp === sel.kp && r.mass_scale === sel.mass && Math.abs(r.lift_m - sel.lift) < 1e-9);
@@ -330,7 +338,7 @@
     add('ps-lift', 'swing height', S.axes.lift_m.map(v => [v, Math.round(v * 1000) + ' mm']), () => sel.lift, v => { sel.lift = parseFloat(v); });
     heading(box, 'Servos and body');
     add('ps-kp', 'servo stiffness kp', S.axes.kp.map(v => [v, `${v} N·m/rad (kd ${S.axes.kd[v]})`]), () => sel.kp, v => { sel.kp = parseInt(v, 10); });
-    add('ps-mass', 'total mass', S.axes.mass_scale.map(v => [v, (1.72 * v).toFixed(2) + ' kg' + (v === 1 ? ' (placeholder)' : '')]), () => sel.mass, v => { sel.mass = parseFloat(v); });
+    add('ps-mass', 'total mass', S.axes.mass_scale.map(v => [v, sweepMass(v).toFixed(2) + ' kg' + (v === 1 ? ' (placeholder)' : '')]), () => sel.mass, v => { sel.mass = parseFloat(v); });
     heading(box, 'Try one of these');
     buttons(box, [
       ['Soft → stiff servos', () => setSel({ gait: 'trot', speed: 0.15, kp: 10, mass: 1, lift: 0.03 }, 'Compare kp 10 with kp 100: the body gets much closer to the commanded speed.'), 'docs/STAGE2.md: "Why the body falls short"'],
@@ -393,8 +401,8 @@
     $('phys-msgs').innerHTML = msgs.join('');
     $('phys-kpis').innerHTML = kpi('measured speed', fmt(run.measured_speed_m_s, 3) + ' m/s', cmd > 0 && run.measured_speed_m_s <= 0 ? 'bad' : '', 'body displacement over the walking phase')
       + kpi('commanded speed', fmt(cmd, 2) + ' m/s') + kpi('upright and walked', run.walked ? 'yes' : 'no', run.walked ? 'good' : 'bad')
-      + kpi('largest tilt', fmt(run.max_tilt_deg, 1) + '°', run.max_tilt_deg > 10 ? 'bad' : '') + kpi('lowest body height', fmt(run.min_body_height_mm, 0) + ' mm', '', 'the stance height is 212.5 mm')
-      + kpi('peak servo torque / stall', fmt(run.peak_torque_fraction, 2), run.peak_torque_fraction >= 0.99 ? 'bad' : '', 'stall = 1.86 N·m at 5 V (unverified)')
+      + kpi('largest tilt', fmt(run.max_tilt_deg, 1) + '°', run.max_tilt_deg > 10 ? 'bad' : '') + kpi('lowest body height', fmt(run.min_body_height_mm, 0) + ' mm', '', `the stance height is ${fmt(1000 * window.MOJITO_SWEEP.stance_height_m, 1)} mm`)
+      + kpi('peak servo torque / stall', fmt(run.peak_torque_fraction, 2), run.peak_torque_fraction >= 0.99 ? 'bad' : '', `stall = ${fmt(M.stallTorque(M.SERVO.voltage), 2)} N·m at ${M.SERVO.voltage} V (unverified)`)
       + kpi('servos saturated', fmt(100 * run.fraction_saturated, 0) + '% of walk', run.fraction_saturated > 0.05 ? 'bad' : '')
       + kpi('feet down, min / mean', run.feet_down_min + ' / ' + fmt(run.feet_down_mean, 1), '', 'feet carrying more than 0.5 N')
       + kpi('largest joint gap', fmt(run.max_joint_gap_deg, 0) + '°', '', 'commanded minus actual joint angle')
@@ -403,7 +411,7 @@
 
   function physHeat() {
     const S = window.MOJITO_SWEEP, sel = phys.sel, kps = S.axes.kp, ms = S.axes.mass_scale;
-    let html = '<table class="heat"><tr><th></th>' + ms.map(m => `<th>${(1.72 * m).toFixed(2)} kg</th>`).join('') + '</tr>';
+    let html = '<table class="heat"><tr><th></th>' + ms.map(m => `<th>${sweepMass(m).toFixed(2)} kg</th>`).join('') + '</tr>';
     kps.forEach(kp => {
       html += `<tr><th>kp ${kp}</th>`;
       ms.forEach(m => {

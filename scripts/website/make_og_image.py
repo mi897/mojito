@@ -2,6 +2,7 @@
 
 The image is the website's own RobotView drawing the trot from mojito.js, frozen mid-stride, next to the
 project's one-line description. Needs a Chromium-family browser (google-chrome, chromium) on the PATH.
+Reads site/data/constants.js (the Python placeholders), so run scripts/website/build_site.py first.
 Run it again after changing mojito.js or the viewer.
 """
 import argparse
@@ -32,14 +33,15 @@ canvas{{position:absolute;left:400px;top:40px;width:820px;height:560px;border:0;
 <h1>Mojito</h1><p class="sub">Robots that learn to move by themselves: from simulation first, then from real interaction.</p>
 <div class="tag">A 12-motor quadruped</div></div>
 <canvas id="v"></canvas></div>
-<script src="file://{site}/assets/mojito.js"></script><script src="file://{site}/assets/viewer.js"></script>
+<script src="file://{site}/data/constants.js"></script><script src="file://{site}/assets/mojito.js"></script><script src="file://{site}/assets/viewer.js"></script>
 <script>
 const cv = document.getElementById('v'), cx = cv.getContext('2d'), set = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'lineWidth').set;
 Object.defineProperty(cx, 'lineWidth', {{ get() {{ return 1; }}, set(v) {{ set.call(cx, v * 1.7); }} }});  // thicker strokes: this is read at thumbnail size
 const M = window.Mojito, view = new RobotView(cv, {{ az: -40, el: 20, zoom: 1.12, span: 1.1 }}), robot = new M.Robot();
-const t = {t}, v = [0.15, 0], r = M.evaluate({{ robot, gait: M.TROT, t, velocity: v, yawRate: 0, height: 0.2125, mass: 1.5, volts: 5 }});
+const t = {t}, v = [M.GAIT_SPEEDS.trot, 0], height = M.DESIGN.stance_height;
+const r = M.evaluate({{ robot, gait: M.TROT, t, velocity: v, yawRate: 0, height, mass: M.DESIGN.total_mass, volts: M.SERVO.voltage }});
 const [, shift] = M.planarFlow(t, v, 0), off = r.offset;
-view.setScene({{ origin: [shift[0] + off[0], shift[1] + off[1], 0.2125 + off[2]], R: r.R, bodySize: [robot.bodyLength, robot.bodyWidth],
+view.setScene({{ origin: [shift[0] + off[0], shift[1] + off[1], height + off[2]], R: r.R, bodySize: [robot.bodyLength, robot.bodyWidth],
   points: r.points, down: r.loadsN.map(l => l > 1e-6), bad: [0, 0, 0, 0] }});
 </script></body></html>
 """
@@ -57,6 +59,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=OUT)
     args = parser.parse_args()
+    if not os.path.exists(os.path.join(SITE, "data", "constants.js")):
+        sys.exit("site/data/constants.js is missing: run scripts/website/build_site.py first")
     with tempfile.TemporaryDirectory() as tmp:
         page = os.path.join(tmp, "og.html")
         with open(page, "w") as f:

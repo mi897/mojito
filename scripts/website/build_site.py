@@ -9,7 +9,8 @@ animations from results/, the interactive leg demo from docs/, and the Markdown 
 
 Generated files (site/data, site/media) are not committed; the `site` workflow runs this before publishing.
 Each result's `provenance` block (mojito/results.py) is moved out of `data/results.js` into `data/build.js`
-(`MOJITO_BUILD.results_provenance`), so the pages see the same result shapes as before.
+(`MOJITO_BUILD.results_provenance`), so the pages see the same result shapes as before. `data/constants.js` holds the Python
+constants that site/assets/mojito.js needs (`site_constants`), and `data/livemeta.js` those of the browser simulation.
 """
 import argparse
 import datetime
@@ -19,14 +20,47 @@ import shutil
 import subprocess
 import sys
 
+from mojito.geometry.placeholders import JOINT_LIMITS, SIM_QUADRUPED, STAGE1_QUADRUPED
 from mojito.results import ROOT, without_provenance
-from mojito.sim import live_sim  # NumPy only (MuJoCo is imported lazily): the constants the browser simulation needs
+from mojito.robot import gaits, statics
+from mojito.sim import actuators, live_sim  # NumPy only (MuJoCo is imported lazily): the constants the browser simulation needs
 
 # results/<name>.json -> key in window.MOJITO_RESULTS
 RESULT_FILES = ["metrics", "calibration", "body_metrics", "torque_envelope", "stand_test", "sit_to_stand", "gait_replay",
                 "gait_speed_diagnosis", "pace_diagnosis", "trot_period_sweep", "trot_period_robustness", "trot_1p7_parameter_sweep", "trot_1p7_one_at_a_time", "trot_1p7_kp_kd_grid_summary", "trot_1p7_combined_summary", "training_log"]
 DOCS = {"README": "README.md", "USAGE": "docs/USAGE.md", "RESULTS": "docs/RESULTS.md", "PHYSICS": "docs/PHYSICS.md", "PLAN": "docs/PLAN.md", "STAGE2": "docs/STAGE2.md", "NAMING": "docs/NAMING.md", "CLAUDE": "CLAUDE.md"}
 MEDIA_SUFFIXES = (".gif", ".png")
+
+
+def _design(design):
+    """A QuadrupedDesign's dimensions (m), and its total mass (kg) when it has masses."""
+    out = {key: getattr(design, key) for key in ("abduction_offset", "upper_length", "lower_length", "body_length", "body_width",
+                                                  "stance_height")}
+    if design.masses is not None:
+        out["total_mass"] = round(design.total_mass, 6)  # 1.72, not the float sum 1.7200000000000002
+    return out
+
+
+def site_constants() -> dict:
+    """The Python constants that site/assets/mojito.js and the pages using it need (window.MOJITO_CONSTANTS, data/constants.js):
+    the placeholder designs, joint limits, gait presets and the speed each starts at, gravity and the listed servo figures.
+    Generated so no number is copied by hand into the JavaScript."""
+    servo = actuators.ServoParams()
+    return {
+        "joint_limits": [[float(low), float(high)] for low, high in JOINT_LIMITS],
+        "sim_quadruped": _design(SIM_QUADRUPED),
+        "stage1_quadruped": _design(STAGE1_QUADRUPED),
+        "gaits": {gait.name: {"period": gait.period, "duty": gait.duty, "offsets": list(gait.offsets), "lift": gait.lift,
+                              "sway": gait.sway} for gait in (gaits.TROT, gaits.CRAWL, gaits.PACE)},
+        "gait_speeds": {name: preset["vx"] for name, preset in live_sim.PRESETS.items()},  # m/s each preset starts at
+        "gravity": statics.G,
+        "servo": {"voltage": servo.voltage, "stall_5v": servo.stall_5v, "stall_68v": servo.stall_68v},
+    }
+
+
+def constants_js() -> str:
+    """data/constants.js. It sets globalThis, not window, so that Node (the tests) can load it as well as the pages."""
+    return "globalThis.MOJITO_CONSTANTS=" + json.dumps(site_constants(), separators=(",", ":")) + ";\n"
 
 
 def write_js(path, name, payload):
@@ -94,6 +128,8 @@ def build(out):
         print("missing physics_sweep.json under results/: run scripts/website/site_sweep.py (needs mujoco) for the physics playground", file=sys.stderr)
 
     write_js(os.path.join(data_dir, "livemeta.js"), "MOJITO_LIVE", live_sim.browser_constants())
+    with open(os.path.join(data_dir, "constants.js"), "w") as f:
+        f.write(constants_js())
 
     docs = {}
     for key, rel in DOCS.items():

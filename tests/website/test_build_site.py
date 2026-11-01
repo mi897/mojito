@@ -34,6 +34,19 @@ class TestBuildSite(unittest.TestCase):
             with open(os.path.join(out, "data", "build.js")) as f:
                 text = f.read()
             self.assertIn("results_provenance", json.loads(text[len("window.MOJITO_BUILD="):].rstrip().rstrip(";")))
+            with open(os.path.join(out, "data", "constants.js")) as f:
+                text = f.read()
+            self.assertTrue(text.startswith("globalThis.MOJITO_CONSTANTS="))
+            self.assertEqual(json.loads(text[len("globalThis.MOJITO_CONSTANTS="):].rstrip().rstrip(";")), build_site.site_constants())
+
+    def test_pages_load_the_constants_before_mojito_js(self):
+        # mojito.js throws without window.MOJITO_CONSTANTS, so every page that loads it must load data/constants.js first
+        for page in glob.glob(os.path.join(ROOT, "site", "*.html")):
+            with open(page) as f:
+                text = f.read()
+            if "assets/mojito.js" in text:
+                self.assertIn("data/constants.js", text, page)
+                self.assertLess(text.index("data/constants.js"), text.index("assets/mojito.js"), page)
 
     def test_provenance_is_kept_out_of_the_result(self):
         # A result written by mojito.results.write_result reads back with the same shape as before, the block apart.
