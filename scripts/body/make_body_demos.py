@@ -84,26 +84,27 @@ def gait_script(robot, gait, velocity, yaw_rate, cycles, fps, title):
 
 def measure(robot, reference, s):
     """Run the network on every frame and record how well it did."""
-    q = robot.solve(s["targets"])  # the model's outputs: (T, 4, 3)
-    err = robot.tracking_error(s["targets"], q) * 1000
-    s["q"], s["err_mm"] = q, err
+    joint_angles = robot.solve(s["targets"])  # the model's outputs: (T, 4, 3)
+    error_mm = robot.tracking_error(s["targets"], joint_angles) * 1000
+    s["q"], s["err_mm"] = joint_angles, error_mm
+    n_frames = len(joint_angles)
     s["points_world"] = body.to_world(
-        robot.joint_points(q).reshape(len(q), 16, 3), s["position"], *s["rpy"].T).reshape(len(q), 4, 4, 3)
+        robot.joint_points(joint_angles).reshape(n_frames, 16, 3), s["position"], *s["rpy"].T).reshape(n_frames, 4, 4, 3)
     out = dict(
-        frames=int(len(q)),
+        frames=int(n_frames),
         all_targets_within_joint_limits=bool(robot.reachable(s["targets"]).all()),
-        foot_error_mm=dict(median=float(np.median(err)), p95=float(np.percentile(err, 95)), max=float(err.max())),
-        joint_limit_margin_deg=float(np.degrees(robot.limit_margin(q).min())),
-        max_joint_difference_from_exact_deg=float(np.degrees(np.abs(q - reference.solve(s["targets"])).max())),
+        foot_error_mm=dict(median=float(np.median(error_mm)), p95=float(np.percentile(error_mm, 95)), max=float(error_mm.max())),
+        joint_limit_margin_deg=float(np.degrees(robot.limit_margin(joint_angles).min())),
+        max_joint_difference_from_exact_deg=float(np.degrees(np.abs(joint_angles - reference.solve(s["targets"])).max())),
     )
     if "gait" in s:
-        g = s["gait"]
+        gait = s["gait"]
         planted = s["contact"][1:] & s["contact"][:-1]
         actual_world = s["points_world"][:, :, 3]
         slip = np.linalg.norm(np.diff(actual_world, axis=0), axis=-1)[planted]
         margin = gaits.stability_margin(s["feet_world"][..., :2], s["contact"], s["position"][:, :2])
         out.update(
-            gait=g.name, period_s=g.period, duty=g.duty, velocity_m_s=list(s["velocity"]), yaw_rate_rad_s=s["yaw_rate"],
+            gait=gait.name, period_s=gait.period, duty=gait.duty, velocity_m_s=list(s["velocity"]), yaw_rate_rad_s=s["yaw_rate"],
             feet_down_min=int(s["contact"].sum(1).min()),
             stance_foot_drift_mm_per_frame_max=float(slip.max() * 1000),
             body_centre_inside_support_mm_min=float(margin.min() * 1000),
@@ -112,7 +113,7 @@ def measure(robot, reference, s):
 
 
 def animate(robot, s, path, dpi=80):
-    T = len(s["t"])
+    n_frames = len(s["t"])
     fig = plt.figure(figsize=(10, 5.4))
     gs = fig.add_gridspec(3, 2, width_ratios=[1.65, 1], left=0.0, right=0.97, top=0.9, bottom=0.1, hspace=0.75, wspace=0.08)
     ax = fig.add_subplot(gs[:, 0], projection="3d")
@@ -129,10 +130,10 @@ def animate(robot, s, path, dpi=80):
         lo, hi = ax_in.get_ylim(); ax_in.set_ylim(lo, hi + 0.35 * (hi - lo))
     else:
         dt = s["t"][1] - s["t"][0]
-        for k, name in enumerate(body.LEG_NAMES):
-            on = s["contact"][:, k]
-            edges = np.flatnonzero(np.diff(np.concatenate([[0], on.astype(int), [0]])))
-            ax_in.broken_barh([(s["t"][a] if a < T else s["t"][-1] + dt, (b - a) * dt) for a, b in zip(edges[::2], edges[1::2])],
+        for k in range(len(body.LEG_NAMES)):
+            grounded = s["contact"][:, k]
+            edges = np.flatnonzero(np.diff(np.concatenate([[0], grounded.astype(int), [0]])))
+            ax_in.broken_barh([(s["t"][a] if a < n_frames else s["t"][-1] + dt, (b - a) * dt) for a, b in zip(edges[::2], edges[1::2])],
                               (3 - k - 0.3, 0.6), color=BLUE, lw=0)
         ax_in.set_yticks(range(4)); ax_in.set_yticklabels(body.LEG_NAMES[::-1]); ax_in.set_ylim(-0.6, 3.6)
         ax_in.grid(False)
@@ -153,7 +154,7 @@ def animate(robot, s, path, dpi=80):
     ax.computed_zorder = False  # painted by the zorder set per frame: far legs under the torso, near legs over it
     ax.view_init(elev=22, azim=-58); ax.set_box_aspect((1, 1, 0.62), zoom=1.45)
     half = 0.27
-    gx = np.arange(-2.0, 2.0001, 0.05)
+    grid_positions = np.arange(-2.0, 2.0001, 0.05)  # m, ground grid lines in x and in y
     grid_lines = [ax.plot([], [], [], color=GRID, lw=0.7, zorder=0)[0] for _ in range(2)]
     shadow = Poly3DCollection([np.zeros((4, 3))], facecolor="#e9e8e3", edgecolor="none")
     ax.add_collection3d(shadow)
@@ -171,46 +172,49 @@ def animate(robot, s, path, dpi=80):
     centre0 = s["position"][0].copy()
 
     def draw(i):
-        P = s["points_world"][i]  # (4 legs, 4 points, 3)
-        c = s["position"][i] if "gait" in s else centre0
-        ax.set_xlim(c[0] - half, c[0] + half); ax.set_ylim(c[1] - half, c[1] + half); ax.set_zlim(-0.17, -0.17 + 2 * half * 0.62)
+        points = s["points_world"][i]  # (4 legs, 4 points, 3)
+        centre = s["position"][i] if "gait" in s else centre0
+        ax.set_xlim(centre[0] - half, centre[0] + half); ax.set_ylim(centre[1] - half, centre[1] + half)
+        ax.set_zlim(-0.17, -0.17 + 2 * half * 0.62)
         # ground grid, clipped to the view
-        xs = gx[(gx > c[0] - half) & (gx < c[0] + half)]; ys = gx[(gx > c[1] - half) & (gx < c[1] + half)]
-        seg_x = np.concatenate([[[x, c[1] - half, -0.17], [x, c[1] + half, -0.17], [np.nan] * 3] for x in xs])
-        seg_y = np.concatenate([[[c[0] - half, y, -0.17], [c[0] + half, y, -0.17], [np.nan] * 3] for y in ys])
+        xs = grid_positions[(grid_positions > centre[0] - half) & (grid_positions < centre[0] + half)]
+        ys = grid_positions[(grid_positions > centre[1] - half) & (grid_positions < centre[1] + half)]
+        seg_x = np.concatenate([[[x, centre[1] - half, -0.17], [x, centre[1] + half, -0.17], [np.nan] * 3] for x in xs])
+        seg_y = np.concatenate([[[centre[0] - half, y, -0.17], [centre[0] + half, y, -0.17], [np.nan] * 3] for y in ys])
         for line, seg in zip(grid_lines, (seg_x, seg_y)):
             line.set_data_3d(seg[:, 0], seg[:, 1], seg[:, 2])
-        sh = P[order, 0].copy(); sh[:, 2] = -0.1695
-        shadow.set_verts([sh])
-        torso.set_verts([P[order, 0]])
-        front = P[[0, 1], 0].mean(axis=0) + 0.6 * (P[[0, 1], 0].mean(axis=0) - P[[2, 3], 0].mean(axis=0)) * 0.12
+        shadow_corners = points[order, 0].copy()
+        shadow_corners[:, 2] = -0.1695
+        shadow.set_verts([shadow_corners])
+        torso.set_verts([points[order, 0]])
+        front = points[[0, 1], 0].mean(axis=0) + 0.6 * (points[[0, 1], 0].mean(axis=0) - points[[2, 3], 0].mean(axis=0)) * 0.12
         front_label.set_position_3d((front[0], front[1], front[2] + 0.012))
         view = np.array([np.cos(np.radians(22)) * np.cos(np.radians(-58)), np.cos(np.radians(22)) * np.sin(np.radians(-58)),
                          np.sin(np.radians(22))])  # toward the camera
-        body_near = P[order, 0].mean(axis=0) @ view
-        for line, pts in zip(legs, P):
-            line.set_data_3d(pts[:, 0], pts[:, 1], pts[:, 2])
-            line.set_zorder(3 if pts[0] @ view >= body_near else 1)  # shoulder nearer than the torso centre
-        tw = body.to_world(s["targets"][i], s["position"][i], *s["rpy"][i])
-        on = s["contact"][i]
-        targets_on.set_data_3d(tw[on, 0], tw[on, 1], tw[on, 2])
-        targets_off.set_data_3d(tw[~on, 0], tw[~on, 1], tw[~on, 2])
+        body_near = points[order, 0].mean(axis=0) @ view
+        for line, leg_points in zip(legs, points):
+            line.set_data_3d(leg_points[:, 0], leg_points[:, 1], leg_points[:, 2])
+            line.set_zorder(3 if leg_points[0] @ view >= body_near else 1)  # shoulder nearer than the torso centre
+        targets_world = body.to_world(s["targets"][i], s["position"][i], *s["rpy"][i])
+        grounded = s["contact"][i]
+        targets_on.set_data_3d(targets_world[grounded, 0], targets_world[grounded, 1], targets_world[grounded, 2])
+        targets_off.set_data_3d(targets_world[~grounded, 0], targets_world[~grounded, 1], targets_world[~grounded, 2])
         readout.set_text(f"t = {s['t'][i]:5.2f} s    worst foot error {s['err_mm'][i].max():.2f} mm")
-        for cur in cursors:
-            cur.set_xdata([s["t"][i]] * 2)
+        for cursor in cursors:
+            cursor.set_xdata([s["t"][i]] * 2)
         return []
 
-    FuncAnimation(fig, draw, frames=T, blit=False).save(path, writer=PillowWriter(fps=s["fps"]), dpi=dpi)
+    FuncAnimation(fig, draw, frames=n_frames, blit=False).save(path, writer=PillowWriter(fps=s["fps"]), dpi=dpi)
     plt.close(fig)
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
-    ap.add_argument("--only", nargs="*", default=None)
-    ap.add_argument("--no-gif", action="store_true", help="compute the metrics only")
-    add_backend_argument(ap)
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
+    parser.add_argument("--only", nargs="*", default=None)
+    parser.add_argument("--no-gif", action="store_true", help="compute the metrics only")
+    add_backend_argument(parser)
+    args = parser.parse_args()
     robot = body.Robot(mojito.load_model(args.weights, backend=args.backend))
     reference = body.Robot(body.AnalyticSolver(), robot.lengths)
 
