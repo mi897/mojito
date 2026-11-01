@@ -78,7 +78,7 @@ otherwise; `--gpu` or `--cpu` force one and skip detection. Already have uv and 
 with `uv run --extra sim`, for example `uv run --extra sim python scripts/body/make_body_demos.py` (plain `python` works
 inside the activated `.venv`, where `uv sync` installs the `mojito` package editable). Dependencies live in
 `pyproject.toml`; `uv.lock` pins exact versions. `just results` regenerates every committed result in dependency order
-(several hours; `just results-fast` skips the slow steps).
+(about 75 min on a 4-CPU Linux container; `just results-fast` skips the slow steps).
 
 The trained network is in the repository (`weights/ik_leg.npz`), so nothing
 needs training to try it. Open `docs/demo.html` in a browser to drag a foot

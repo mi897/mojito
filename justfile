@@ -20,7 +20,7 @@ test:
 lint *args:
     uvx ruff@0.16.9 check . {{args}}
 
-# Train the leg network (about 15 min on a 4-CPU Linux container, NumPy); extra flags pass through
+# Train the leg network (16 min on a 4-CPU Linux container, NumPy); extra flags pass through
 train *args:
     {{py}} scripts/learning/train.py {{args}}
 
@@ -70,10 +70,10 @@ site-live:
 site-sweep:
     {{py}} scripts/website/site_sweep.py
 
-# Order: weights, then what reads them, then the physics, then the site. The training is about 15 min (re-timed), the kp x kd grid about
-# two hours, the combined sweep about an hour, the design draws, tuning and tuned sweep about 80 min together (times from the
-# scripts' docstrings, not re-timed). `just results-fast` skips the steps marked slow.
-# SLOW, several hours: regenerate every committed result in dependency order
+# Order: weights, then what reads them, then the physics, then the site. Times are measured on a 4-CPU Linux container and rounded up: training 16 min, the kp x kd grid 10 min, the
+# combined sweep 5 min, the design draws 7 min, tuning 10 min, the tuned sweep 13 min, about 75 min for the whole run. The grid, the
+# combined sweep and the tuned sweep ran at the same time as another sweep, so alone they may take less. `just results-fast` skips the steps marked slow.
+# SLOW, about 75 min: regenerate every committed result in dependency order
 results: train results-from-weights results-physics results-sweeps-slow results-design-slow results-site
 
 # Every result except the slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tuned sweep)
@@ -106,14 +106,14 @@ results-physics:
     {{py}} scripts/design/design_sweep.py
     {{py}} scripts/design/plot_design_sweep.py
 
-# SLOW: the kp x kd grid (about two hours) and the combined sweep (about an hour), each with its plot
+# SLOW: the kp x kd grid (10 min) and the combined sweep (5 min), both run alongside another job so possibly less, each with its plot
 results-sweeps-slow:
     {{py}} scripts/gait/sweeps/trot_1p7_kp_kd_grid.py
     {{py}} scripts/gait/sweeps/plot_trot_1p7_kp_kd_grid.py
     {{py}} scripts/gait/sweeps/trot_1p7_combined.py
     {{py}} scripts/gait/sweeps/plot_trot_1p7_combined.py
 
-# SLOW: design sweep with draws (about 25 min), per-design tuning (about 35 min), the tuned sweep (about 20 min)
+# SLOW: design sweep with draws (7 min), per-design tuning (10 min), the tuned sweep (13 min, run alongside another job)
 results-design-slow:
     {{py}} scripts/design/design_sweep_draws.py
     {{py}} scripts/design/plot_design_sweep_draws.py

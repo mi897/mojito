@@ -18,7 +18,7 @@ Every results JSON a script writes goes through `mojito.results.write_result`, w
 `git_dirty: true` means tracked files differed from that commit, so the commit alone does not reproduce the numbers.
 Files committed before this was added have no block until their script is run again.
 
-To regenerate everything in dependency order, `just results` (several hours; the steps and their times are in the
+To regenerate everything in dependency order, `just results` (about 75 min on a 4-CPU Linux container; the steps and their times are in the
 `justfile`): the weights, then evaluate, calibrate, make_demo and the body demos, then torque, stand and gait in
 physics, the sweeps and the design sweeps, then `site_sweep.py` and `build_site.py`. `just results-fast` keeps the
 current weights and skips the slow sweeps; `just results-from-weights` re-runs only what reads `weights/ik_leg.npz`.
