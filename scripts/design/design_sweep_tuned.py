@@ -21,7 +21,10 @@ DRAWS = 10
 def one(cell):
     design, gait, settings, scale, speed, draw = cell
     walk = design_sweep.evaluate_walk(design, gait, settings, scale, speed, draw=draw)
-    return {**walk, "mass_scale": scale, "draw": draw, "design": design.__dict__}
+    # The four dimensions the sweep varies (what the committed file records). Not design.__dict__: that now holds the read-only
+    # masses (a mappingproxy, which a worker cannot send back to the pool) and the fixed dimensions too.
+    dimensions = {name: getattr(design, name) for name in ("upper_length", "lower_length", "body_length", "body_width")}
+    return {**walk, "mass_scale": scale, "draw": draw, "design": dimensions}
 
 
 def main():
