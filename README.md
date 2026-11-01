@@ -86,7 +86,7 @@ target around and change the link lengths live.
 
 | Script | What it does | Writes |
 |---|---|---|
-| `scripts/learning/train.py` | Train the leg network (about 12 minutes on 2 CPU cores) | `weights/ik_leg.npz`, `results/learning/training_log.json` |
+| `scripts/learning/train.py` | Train the leg network (907 s on a 4-CPU Linux container with NumPy, the run in `results/learning/training_log.json`; about 12 minutes on 2 cores when first timed) | `weights/ik_leg.npz`, `results/learning/training_log.json` |
 | `scripts/learning/evaluate.py` | Compare the network with exact IK | `results/learning/metrics.json`, four plots |
 | `scripts/learning/calibrate.py` | Adapt to a simulated leg with unknown lengths | `results/learning/calibration.json` |
 | `scripts/learning/make_demo.py` | Single-leg demos | `results/learning/step_demo.gif`, `docs/demo.html` |

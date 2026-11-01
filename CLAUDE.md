@@ -92,7 +92,7 @@ slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tun
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
 uvx ruff@0.16.9 check .                    # lint (just lint; just lint --fix applies the safe fixes); rules in pyproject.toml [tool.ruff]
 just results                               # every committed result in dependency order (SLOW, hours); just results-fast skips the slow steps
-python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
+python scripts/learning/train.py                    # 40000 steps (907 s on a 4-CPU Linux container, NumPy: results/learning/training_log.json), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
 python scripts/learning/calibrate.py                # results/learning/calibration.json
 python scripts/learning/make_demo.py                # results/learning/step_demo.gif, docs/demo.html

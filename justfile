@@ -20,7 +20,7 @@ test:
 lint *args:
     uvx ruff@0.16.9 check . {{args}}
 
-# Train the leg network (about 12 min on 2 CPU cores); extra flags pass through
+# Train the leg network (about 15 min on a 4-CPU Linux container, NumPy); extra flags pass through
 train *args:
     {{py}} scripts/learning/train.py {{args}}
 
@@ -70,7 +70,7 @@ site-live:
 site-sweep:
     {{py}} scripts/website/site_sweep.py
 
-# Order: weights, then what reads them, then the physics, then the site. The training is about 12 min, the kp x kd grid about
+# Order: weights, then what reads them, then the physics, then the site. The training is about 15 min (re-timed), the kp x kd grid about
 # two hours, the combined sweep about an hour, the design draws, tuning and tuned sweep about 80 min together (times from the
 # scripts' docstrings, not re-timed). `just results-fast` skips the steps marked slow.
 # SLOW, several hours: regenerate every committed result in dependency order
