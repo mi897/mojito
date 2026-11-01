@@ -108,9 +108,13 @@ Applied to the whole library, `mojito/`: the numerical core (`leg.py`, `kinemati
 `run_stand`, `run_sit_to_stand` and `run_gait` return follow
 `<quantity>_<command|actual>_<unit>` (`joint_angles_command_rad`, `feet_body_actual_m`).
 
-Not yet swept, so shorthand remains there: `live_sim.py` (whose parameter keys `la`,
-`lu`, `ll` are shared with the website), the rest of the plotting and experiment code in
-`scripts/`, and `tests/` (local variables such as `q`, `p`, `r` and `J`). `ruff`
+The live simulation's parameter keys (`live_sim.DEFAULTS`, shared with the website) are
+now `abduction_offset`, `upper_length`, `lower_length`; the old `la`, `lu`, `ll` are still
+read through `live_sim.PARAMETER_ALIASES` for one release, so a page cached before the
+rename keeps working, and are then to be removed.
+
+Not yet swept, so shorthand remains there: the locals of `live_sim.py`, the rest of the
+plotting and experiment code in `scripts/`, and `tests/` (local variables such as `q`, `p`, `r` and `J`). `ruff`
 (`just lint`) catches the worst of it, the ambiguous `l`. Clean these up as you touch
 them, following the rules above, rather than renaming in bulk with search-and-replace:
 a blanket `p` rename already collided with pitch, loop variables and the Adam optimiser.
