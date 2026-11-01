@@ -258,6 +258,7 @@ class TestSiteConstants(unittest.TestCase):
     def test_mojito_js_refuses_to_run_without_constants(self):
         if os.path.exists(os.path.join(HERE, "..", "..", "site", "data", "constants.js")):
             self.skipTest("a site build is present, which mojito.js loads in Node")
-        run = subprocess.run([NODE, "-e", "require('../../site/assets/mojito.js')"], cwd=HERE, capture_output=True, text=True)
+        run = subprocess.run([NODE, "-e", "require('../../site/assets/mojito.js')"], cwd=HERE, capture_output=True, text=True,
+                             check=False)
         self.assertNotEqual(run.returncode, 0)
         self.assertIn("build_site.py", run.stderr)
