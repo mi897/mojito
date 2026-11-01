@@ -17,10 +17,10 @@
   const smoothstep = x => { x = clamp(x, 0, 1); return x ** 3 * (10 - 15 * x + 6 * x * x); };
 
   /* ---------- the MuJoCo model (mjcf.mjcf_from_urdf of robots.quadruped_urdf, actuated) ---------- */
-  // design: {la, lu, ll, body_length, body_width, start_z, masses, timestep}; c = live.constants
+  // design: {abduction_offset, upper_length, lower_length, body_length, body_width, start_z, masses, timestep}; c = live.constants
   function mjcfQuadruped(c, design) {
     const m = c.model, M = design.masses, lim = c.joint_limits;
-    const x = design.body_length / 2, y = design.body_width / 2, la = design.la, lu = design.lu, ll = design.ll;
+    const x = design.body_length / 2, y = design.body_width / 2, la = design.abduction_offset, lu = design.upper_length, ll = design.lower_length;   // as in mjcf.py
     const body = [design.body_length, design.body_width, m.body_thickness].map(v => v / 2);
     const friction = `${m.foot_friction} ${m.friction_torsion} ${m.friction_rolling}`;
     const capsule = (end, mass) => `<geom type="capsule" fromto="${fmt([0, 0, 0, ...end])}" size="${m.link_radius}" mass="${mass}" rgba="0.8 0.8 0.85 1" />`;
@@ -94,7 +94,8 @@
     // Apply changes (clamped). Returns true if the model must be rebuilt (a design value or the mass changed).
     setParams(changes) {
       let rebuild = false;
-      for (const [key, raw] of Object.entries(changes)) {
+      for (const [name, raw] of Object.entries(changes)) {
+        const key = this.c.parameter_aliases[name] || name;   // old names (la, lu, ll) of live_sim.PARAMETER_ALIASES, for one release
         if (!(key in this.params)) continue;
         let value = raw;
         if (key === 'offsets') {
@@ -120,10 +121,10 @@
       if (this.data) this.data.delete();
       if (this.model) this.model.delete();
       const masses = Object.fromEntries(Object.entries(c.masses).map(([k, v]) => [k, v * scale]));
-      this.robot = new Mojito.Robot({ lengths: [p.la, p.lu, p.ll], bodyLength: p.body_length, bodyWidth: p.body_width, limits: c.joint_limits });
+      this.robot = new Mojito.Robot({ lengths: [p.abduction_offset, p.upper_length, p.lower_length], bodyLength: p.body_length, bodyWidth: p.body_width, limits: c.joint_limits });
       const initial = this.robot.solve(this.robot.stance(p.height));
       this.startZ = p.height + c.model.foot_radius;   // the pad centre is the foot tip; its lowest point is one radius lower
-      const xml = mjcfQuadruped(c, { la: p.la, lu: p.lu, ll: p.ll, body_length: p.body_length, body_width: p.body_width,
+      const xml = mjcfQuadruped(c, { abduction_offset: p.abduction_offset, upper_length: p.upper_length, lower_length: p.lower_length, body_length: p.body_length, body_width: p.body_width,
         start_z: this.startZ, masses, timestep: this.timestep });
       this.model = mj.MjModel.from_xml_string(xml);
       this.data = new mj.MjData(this.model);

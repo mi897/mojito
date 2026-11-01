@@ -12,7 +12,7 @@
     o0: gait.offsets[0], o1: gait.offsets[1], o2: gait.offsets[2], o3: gait.offsets[3], vx, vy: 0, wz });
   // the Stage 2 design placeholders, trot, servo supply and total mass: all from data/constants.js, through mojito.js
   const DESIGN = M.DESIGN, DEFAULTS = Object.assign({
-    la: DESIGN.abduction_offset, lu: DESIGN.upper_length, ll: DESIGN.lower_length, bl: DESIGN.body_length, bw: DESIGN.body_width,
+    abduction_offset: DESIGN.abduction_offset, upper_length: DESIGN.upper_length, lower_length: DESIGN.lower_length, bl: DESIGN.body_length, bw: DESIGN.body_width,
     h: DESIGN.stance_height, sFL: 1,
     px: 0, py: 0, pz: 0, roll: 0, pitch: 0, yaw: 0,
   }, gaitSet(M.TROT, M.GAIT_SPEEDS.trot), { mass: DESIGN.total_mass, volts: M.SERVO.voltage });
@@ -22,7 +22,7 @@
   const commandTau = () => (window.MOJITO_LIVE ? window.MOJITO_LIVE.constants.smoothing_time : 0);
 
   function robotOf(st) {
-    const r = new M.Robot({ lengths: [st.la, st.lu, st.ll], bodyLength: st.bl, bodyWidth: st.bw });
+    const r = new M.Robot({ lengths: [st.abduction_offset, st.upper_length, st.lower_length], bodyLength: st.bl, bodyWidth: st.bw });
     r.lengths[0] = r.lengths[0].map((v, i) => (i ? v * st.sFL : v));
     return r;
   }
@@ -50,8 +50,8 @@
 
   function kinSpecs() {
     return [
-      ['Robot design (placeholders)', [['la', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['lu', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000],
-        ['ll', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000], ['bl', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['bw', 'body width', 0.08, 0.3, 0.01, ' mm', 1000],
+      ['Robot design (placeholders)', [['abduction_offset', 'abduction offset', 0.02, 0.09, 0.0025, ' mm', 1000], ['upper_length', 'upper leg', 0.08, 0.24, 0.005, ' mm', 1000],
+        ['lower_length', 'lower leg', 0.08, 0.24, 0.005, ' mm', 1000], ['bl', 'body length', 0.15, 0.5, 0.01, ' mm', 1000], ['bw', 'body width', 0.08, 0.3, 0.01, ' mm', 1000],
         ['h', 'stand height', 0.1, 0.32, 0.0025, ' mm', 1000], ['sFL', 'FL leg scale', 0.8, 1.25, 0.01, '×', 1]]],
       ['Body posture (feet stay put)', [['px', 'shift forward', -0.06, 0.06, 0.0025, ' mm', 1000], ['py', 'shift left', -0.06, 0.06, 0.0025, ' mm', 1000],
         ['pz', 'raise', -0.06, 0.06, 0.0025, ' mm', 1000], ['roll', 'roll', -30, 30, 0.5, '°', 1], ['pitch', 'pitch', -30, 30, 0.5, '°', 1], ['yaw', 'yaw', -30, 30, 0.5, '°', 1]]],

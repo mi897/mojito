@@ -49,7 +49,7 @@ class TestBrowserSim(unittest.TestCase):
 
         lengths, height, length, width, mass = (0.06, 0.13, 0.17), 0.2, 0.35, 0.18, 2.5
         masses = live_sim.masses_for_total(mass)
-        design = dict(la=lengths[0], lu=lengths[1], ll=lengths[2], body_length=length, body_width=width, start_z=height + 0.012,
+        design = dict(abduction_offset=lengths[0], upper_length=lengths[1], lower_length=lengths[2], body_length=length, body_width=width, start_z=height + 0.012,
                       masses=masses, timestep=0.002)
         theirs = mujoco.MjModel.from_xml_string(node({"op": "xml", "design": design})["xml"])
         ours = SimRobot(QuadrupedDesign(*lengths, body_length=length, body_width=width, stance_height=height, masses=masses),
@@ -120,8 +120,9 @@ class TestBrowserSim(unittest.TestCase):
     def test_changing_design_and_params_while_running_matches(self):
         from mojito.sim import live_sim
 
-        schedule = [dict(steps=500), dict(changes=dict(walk=True, vx=0.2), steps=750), dict(changes=dict(mass=2.4, lu=0.13), steps=500),
-                    dict(changes=dict(kp=30.0, lift=0.03), steps=500)]
+        schedule = [dict(steps=500), dict(changes=dict(walk=True, vx=0.2), steps=750), dict(changes=dict(mass=2.4, upper_length=0.13), steps=500),
+                    dict(changes=dict(kp=30.0, lift=0.03), steps=500),
+                    dict(changes=dict(ll=0.16), steps=250)]  # an old parameter name (live_sim.PARAMETER_ALIASES): both must accept it
         theirs = node({"op": "run", "params": live_sim.PRESETS["trot"], "schedule": schedule})["snapshots"][-1]
         sim = live_sim.LiveSim(live_sim.PRESETS["trot"])
         for entry in schedule:
