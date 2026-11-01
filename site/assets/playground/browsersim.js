@@ -8,7 +8,7 @@
  * Placeholder dimensions, masses, servo figures and friction, like the Python version (docs/STAGE2.md). */
 (function (root) {
   'use strict';
-  const Mojito = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('./mojito.js') : root.Mojito;
+  const Mojito = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('../mojito.js') : root.Mojito;
   const LEGS = ['FL', 'FR', 'RL', 'RR'], JOINTS = ['abduction', 'hip_pitch', 'knee'];
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);

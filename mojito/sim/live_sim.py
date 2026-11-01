@@ -92,7 +92,7 @@ def design_of(params):
 
 
 def browser_constants() -> dict:
-    """Everything the JavaScript port of this simulation (site/assets/browsersim.js) needs that is a number in Python: written to
+    """Everything the JavaScript port of this simulation (site/assets/playground/browsersim.js) needs that is a number in Python: written to
     site/data/livemeta.js by scripts/website/build_site.py, so no figure is copied by hand. `meta` is what the local server's /meta serves."""
     servo = {k: float(v) for k, v in dataclasses.asdict(actuators.ServoParams()).items()}
     return {

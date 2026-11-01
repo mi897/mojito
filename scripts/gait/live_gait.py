@@ -22,7 +22,7 @@ from mojito.results import repo_path
 from mojito.sim import live_sim
 
 PAGE = os.path.join(os.path.dirname(__file__), "live_gait.html")
-ASSETS = repo_path("site", "assets")  # drive.js and touchpad.js are shared with the playground
+ASSETS = repo_path("site", "assets", "playground")  # drive.js and touchpad.js are shared with the playground
 FRAME_SECONDS = 1.0 / 60.0
 LOOPBACK = ("127.0.0.1", "localhost", "[::1]")
 

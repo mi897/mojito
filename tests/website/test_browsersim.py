@@ -1,4 +1,4 @@
-"""The in-browser simulation (site/assets/browsersim.js, MuJoCo WebAssembly) against the Python it is a port of.
+"""The in-browser simulation (site/assets/playground/browsersim.js, MuJoCo WebAssembly) against the Python it is a port of.
 
 Needs node, `python scripts/website/build_site.py` (it writes site/data/livemeta.js) and the @mujoco/mujoco package: skipped if any is
 missing. Install the package with `npm install --no-save @mujoco/mujoco@3.16.0` in the repository root (the version of the MuJoCo that the
