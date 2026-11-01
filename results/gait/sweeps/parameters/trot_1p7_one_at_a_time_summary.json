@@ -682,5 +682,14 @@
     "torque_sd": 0.014628738838327807
    }
   ]
+ },
+ "provenance": {
+  "git_commit": "ac73cf9d74aefaa20a54d0faa0d0b669763016d0",
+  "git_dirty": false,
+  "script": "scripts/gait/sweeps/plot_trot_1p7_one_at_a_time.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:15:25Z"
  }
 }

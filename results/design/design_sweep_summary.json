@@ -11,5 +11,14 @@
   "1.03 kg": "11 of 11",
   "1.72 kg": "11 of 11",
   "3.01 kg": "10 of 11"
+ },
+ "provenance": {
+  "git_commit": "ac73cf9d74aefaa20a54d0faa0d0b669763016d0",
+  "git_dirty": false,
+  "script": "scripts/design/plot_design_sweep.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:16:09Z"
  }
 }
