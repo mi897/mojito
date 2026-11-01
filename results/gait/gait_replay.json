@@ -228,5 +228,15 @@
       "slip_max_mm_per_step": 1.6,
       "slip_mean_mm_per_step": 0.091
     }
-  ]
+  ],
+  "provenance": {
+    "git_commit": "c7dca30f7011518e9f14fbcec0d10969c1db0dc8",
+    "git_dirty": false,
+    "script": "scripts/gait/gait_replay.py",
+    "argv": [],
+    "python": "3.12.3",
+    "numpy": "2.5.4",
+    "utc": "2026-11-01T08:11:56Z",
+    "mujoco": "3.16.0"
+  }
 }

@@ -84,22 +84,22 @@ Setup is `./scripts/setup.sh` (installs uv and just, then `uv sync`); dependenci
 without a `sys.path` line and work from any directory. Tasks live in the `justfile` (`just` lists them). Run any script as
 `uv run --extra sim python <script>` (plain `python` works inside the activated `.venv`; outside it `mojito` is not importable).
 `just results` regenerates every committed result in dependency order (weights, evaluate/calibrate/make_demo, body demos,
-torque, stand, gait, sweeps, design, site_sweep, build_site); it takes several hours, and `just results-fast` skips the
+torque, stand, gait, sweeps, design, site_sweep, build_site); it takes about 75 min on a 4-CPU Linux container (summed from the measured steps, see the justfile), and `just results-fast` skips the
 slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tuned sweep).
 
 ```bash
 # Inside the activated .venv (source .venv/bin/activate); otherwise prefix each line with: uv run --extra sim
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
 uvx ruff@0.16.9 check .                    # lint (just lint; just lint --fix applies the safe fixes); rules in pyproject.toml [tool.ruff]
-just results                               # every committed result in dependency order (SLOW, hours); just results-fast skips the slow steps
-python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
+just results                               # every committed result in dependency order (SLOW, about 75 min on 4 CPUs); just results-fast skips the slow steps
+python scripts/learning/train.py                    # 40000 steps (933 s on a 4-CPU Linux container, NumPy 2.5.4, Python 3.12: results/learning/training_log.json), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
 python scripts/learning/calibrate.py                # results/learning/calibration.json
 python scripts/learning/make_demo.py                # results/learning/step_demo.gif, docs/demo.html
 python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
 python scripts/stand/stand_test.py               # results/stand/stand_test.json (needs mujoco)
 python scripts/stand/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
-python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, about 2.5 min on 4 cores); then plot_design_sweep.py; design_sweep_draws.py is the same with 10 mass and latency draws per cell (about 25 min); design_tune.py (grid search of gait settings per design, about 35 min) then design_sweep_tuned.py (about 20 min)
+python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, 1 min on 4 cores); then plot_design_sweep.py; design_sweep_draws.py is the same with 10 mass and latency draws per cell (7 min); design_tune.py (grid search of gait settings per design, 10 min) then design_sweep_tuned.py (13 min, run while another sweep was using the cores)
 python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
 python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/

@@ -6,7 +6,7 @@ scripts/design/design_sweep_draws.py (masses times a uniform 0.95 to 1.05, laten
 settings are in design_sweep_draws.json for comparison. A tuned setting is only as good as its search: it was picked on one speed and
 the nominal run, so the other two speeds and the draws are a check on it, not part of the fit.
 
-    uv run --extra sim python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, about 20 min on 4 cores
+    uv run --extra sim python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, 13 min on a 4-CPU Linux container, run while another sweep used the cores
 """
 import json
 import multiprocessing
@@ -21,7 +21,10 @@ DRAWS = 10
 def one(cell):
     design, gait, settings, scale, speed, draw = cell
     walk = design_sweep.evaluate_walk(design, gait, settings, scale, speed, draw=draw)
-    return {**walk, "mass_scale": scale, "draw": draw, "design": design.__dict__}
+    # The four dimensions the sweep varies (what the committed file records). Not design.__dict__: that now holds the read-only
+    # masses (a mappingproxy, which a worker cannot send back to the pool) and the fixed dimensions too.
+    dimensions = {name: getattr(design, name) for name in ("upper_length", "lower_length", "body_length", "body_width")}
+    return {**walk, "mass_scale": scale, "draw": draw, "design": dimensions}
 
 
 def main():

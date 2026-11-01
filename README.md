@@ -78,7 +78,7 @@ otherwise; `--gpu` or `--cpu` force one and skip detection. Already have uv and 
 with `uv run --extra sim`, for example `uv run --extra sim python scripts/body/make_body_demos.py` (plain `python` works
 inside the activated `.venv`, where `uv sync` installs the `mojito` package editable). Dependencies live in
 `pyproject.toml`; `uv.lock` pins exact versions. `just results` regenerates every committed result in dependency order
-(several hours; `just results-fast` skips the slow steps).
+(about 75 min on a 4-CPU Linux container; `just results-fast` skips the slow steps).
 
 The trained network is in the repository (`weights/ik_leg.npz`), so nothing
 needs training to try it. Open `docs/demo.html` in a browser to drag a foot
@@ -86,7 +86,7 @@ target around and change the link lengths live.
 
 | Script | What it does | Writes |
 |---|---|---|
-| `scripts/learning/train.py` | Train the leg network (about 12 minutes on 2 CPU cores) | `weights/ik_leg.npz`, `results/learning/training_log.json` |
+| `scripts/learning/train.py` | Train the leg network (933 s on a 4-CPU Linux container with NumPy 2.5.4 on Python 3.12, the run in `results/learning/training_log.json`; about 12 minutes on 2 cores when first timed) | `weights/ik_leg.npz`, `results/learning/training_log.json` |
 | `scripts/learning/evaluate.py` | Compare the network with exact IK | `results/learning/metrics.json`, four plots |
 | `scripts/learning/calibrate.py` | Adapt to a simulated leg with unknown lengths | `results/learning/calibration.json` |
 | `scripts/learning/make_demo.py` | Single-leg demos | `results/learning/step_demo.gif`, `docs/demo.html` |

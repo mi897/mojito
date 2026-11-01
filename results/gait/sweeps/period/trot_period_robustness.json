@@ -1903,5 +1903,15 @@
    "fraction_of_walking_saturated": 0.831,
    "feet_down_min": 0
   }
- ]
+ ],
+ "provenance": {
+  "git_commit": "ac73cf9d74aefaa20a54d0faa0d0b669763016d0",
+  "git_dirty": false,
+  "script": "scripts/gait/sweeps/trot_period_robustness.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:14:10Z",
+  "mujoco": "3.16.0"
+ }
 }

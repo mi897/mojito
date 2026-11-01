@@ -3280,5 +3280,14 @@
    "ratio_at_kd_0": 0.536,
    "ratio_at_lowest_plateau_edge": 0.7736000000000001
   }
- ]
+ ],
+ "provenance": {
+  "git_commit": "e98b285fe3dc2357a8d07fa65f7ee8b2165964f0",
+  "git_dirty": false,
+  "script": "scripts/gait/sweeps/plot_trot_1p7_kp_kd_grid.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:41:24Z"
+ }
 }
