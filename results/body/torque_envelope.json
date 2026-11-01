@@ -98,5 +98,14 @@
    "crawl_max_mass_kg": 2.08,
    "crawl_min_foot_load_fraction": 0.169
   }
+ },
+ "provenance": {
+  "git_commit": "c7dca30f7011518e9f14fbcec0d10969c1db0dc8",
+  "git_dirty": false,
+  "script": "scripts/body/torque_envelope.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:11:34Z"
  }
 }
