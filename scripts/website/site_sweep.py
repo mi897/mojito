@@ -41,6 +41,7 @@ DESIGN = RUN_DEFAULTS["design"]
 FRAME_STEP = 20  # physics steps per recorded frame: 20 x 2 ms = FRAME_DT (25 Hz)
 FRAME_DT = round(FRAME_STEP * RUN_DEFAULTS["timestep"], 9)  # s; rounded so 20 x 0.002 is written as 0.04
 RECORD_FROM = 0.5  # s
+WALK_FROM = RUN_DEFAULTS["stand_time"] + RUN_DEFAULTS["ramp_time"]  # s: run_gait stands, then blends into the gait, then walks
 
 
 def one_run(name, speed, kp, scale, lift):
@@ -87,7 +88,7 @@ def main():
         "what": "Grid of MuJoCo gait replays (mojito.sim.gait_replay.run_gait), one run per cell, no randomisation, no "
                 "interpolation between cells. Placeholder 50/150/150 mm legs, 300 x 150 mm body, 5 V, unverified servo "
                 "figures, placeholder friction. Mass is the placeholder masses scaled together (1.72 kg at scale 1).",
-        "frame_dt_s": FRAME_DT, "record_from_s": RECORD_FROM,
+        "frame_dt_s": FRAME_DT, "record_from_s": RECORD_FROM, "walk_from_s": WALK_FROM, "n_runs": len(runs),
         "frame_columns": "ox oy oz [mm], roll pitch yaw [0.01 deg], 12 foot positions in the body frame [mm] "
                          "(FL FR RL RR, x y z), 4 pad loads [0.1 N], commanded-stance bits (FL = bit 0)",
         "axes": {"gait": {k: list(v[1]) for k, v in GAITS.items()}, "kp": list(KP), "kd": KP,

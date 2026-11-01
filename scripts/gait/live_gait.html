@@ -135,7 +135,7 @@ function showMode(mode){
 function setDrive(on){drive.setOn(on);const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
 function setChase(on){view.chase=on;document.getElementById('chase').classList.toggle('on',on);if(on){view.zoom=Math.max(view.zoom,1.6);view.follow=true;document.getElementById('follow').classList.add('on');}}
 function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/reset');}
-// ---- drive: keyboard and gamepad (shared with the playground, site/assets/drive.js) ----
+// ---- drive: keyboard and gamepad (shared with the playground, site/assets/playground/drive.js) ----
 let drive=null;
 let touchpad=null;
 function startDrive(){

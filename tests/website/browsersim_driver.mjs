@@ -8,7 +8,7 @@ import { pathToFileURL } from 'url';
 import fs from 'fs';
 const require = createRequire(import.meta.url);
 const here = new URL('.', import.meta.url).pathname;
-const B = require(here + '../../site/assets/browsersim.js');
+const B = require(here + '../../site/assets/playground/browsersim.js');
 const live = JSON.parse(fs.readFileSync(here + '../../site/data/livemeta.js', 'utf8').replace(/^window\.MOJITO_LIVE=/, '').replace(/;\s*$/, ''));
 const request = JSON.parse(fs.readFileSync(0, 'utf8'));
 if (request.op === 'xml') {

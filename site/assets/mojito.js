@@ -8,13 +8,24 @@
 (function (root) {
   'use strict';
 
-  const NOMINAL = [0.05, 0.15, 0.15];                    // abduction offset, upper, lower: Stage 2 design placeholders
-  const STAGE01 = [0.04, 0.12, 0.12];                    // Stage 0-1 placeholders
-  const LIMITS = [[-0.6, 0.6], [0.0, 1.5], [-2.3, -0.3]]; // abduction, hip pitch, knee
+  // Every number that is a constant in Python comes from data/constants.js (window.MOJITO_CONSTANTS), which
+  // scripts/website/build_site.py writes from mojito.geometry.placeholders, gaits, statics and actuators: nothing is copied by hand.
+  // Pages load data/constants.js before this file; Node loads it here (run build_site.py first, or preload it as the tests do).
+  if (!root.MOJITO_CONSTANTS && !globalThis.MOJITO_CONSTANTS && typeof require !== 'undefined') {
+    try { require('../data/constants.js'); } catch (e) { /* reported just below */ }
+  }
+  const C = root.MOJITO_CONSTANTS || globalThis.MOJITO_CONSTANTS;
+  if (!C) throw new Error('mojito.js needs data/constants.js: run scripts/website/build_site.py');
+  const lengthsOf = d => [d.abduction_offset, d.upper_length, d.lower_length];
+  const DESIGN = C.sim_quadruped;                        // the Stage 2 design placeholders (with total_mass, kg)
+  const NOMINAL = lengthsOf(DESIGN);                     // abduction offset, upper, lower
+  const STAGE01 = lengthsOf(C.stage1_quadruped);         // Stage 0-1 placeholders
+  const LIMITS = C.joint_limits;                         // abduction, hip pitch, knee
   const LEG_NAMES = ['FL', 'FR', 'RL', 'RR'];
   const IS_RIGHT = [false, true, false, true];
-  const G = 9.81;
-  const KGCM = 0.0980665;
+  const G = C.gravity;
+  const SERVO = C.servo;                                 // listed (unverified) figures: supply voltage, stall torque at 5 and 6.8 V
+  const GAIT_SPEEDS = C.gait_speeds;                     // m/s each gait preset starts at (live_sim.PRESETS)
 
   const clip = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const add = (a, b) => a.map((v, i) => v + b[i]);
@@ -84,15 +95,15 @@
   class Robot {
     constructor(opts = {}) {
       this.lengths = [0, 1, 2, 3].map(() => (opts.lengths || NOMINAL).slice());   // 4 x 3, may be edited at any time
-      this.bodyLength = opts.bodyLength ?? 0.30;
-      this.bodyWidth = opts.bodyWidth ?? 0.15;
+      this.bodyLength = opts.bodyLength ?? DESIGN.body_length;
+      this.bodyWidth = opts.bodyWidth ?? DESIGN.body_width;
       this.limits = opts.limits || LIMITS;
     }
     get shoulders() {
       const hx = this.bodyLength / 2, hy = this.bodyWidth / 2;
       return [[hx, hy, 0], [hx, -hy, 0], [-hx, hy, 0], [-hx, -hy, 0]];
     }
-    stance(height = 0.2125) {
+    stance(height = DESIGN.stance_height) {
       const s = this.shoulders;
       return s.map((p, i) => [p[0], p[1] + (IS_RIGHT[i] ? -1 : 1) * this.lengths[i][0], -height]);
     }
@@ -130,9 +141,10 @@
   }
 
   /* ---------- gaits ---------- */
-  const TROT = { name: 'trot', period: 1.7, duty: 0.5, offsets: [0, 0.5, 0.5, 0], lift: 0.022, sway: 0 };
-  const CRAWL = { name: 'crawl', period: 2.0, duty: 0.85, offsets: [0.75, 0.25, 0.5, 0], lift: 0.03, sway: 0.025 };
-  const PACE = { name: 'pace', period: 1.7, duty: 0.5, offsets: [0, 0.5, 0, 0.5], lift: 0.03, sway: 0 };
+  const gaitPreset = name => Object.assign({ name }, C.gaits[name]);   // period, duty, offsets, lift, sway, as in gaits.py
+  const TROT = gaitPreset('trot');
+  const CRAWL = gaitPreset('crawl');
+  const PACE = gaitPreset('pace');
 
   const mod1 = x => ((x % 1) + 1) % 1;
 
@@ -264,8 +276,9 @@
 
   /* ---------- servo ---------- */
   const lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
-  // Listed (unverified) stall torque, N·m: 19 kg·cm at 5 V and 21.5 kg·cm at 6.8 V, straight line between.
-  const stallTorque = volts => lerp(volts, 5, 19 * KGCM, 6.8, 21.5 * KGCM);
+  // Listed (unverified) stall torque, N·m: SERVO.stall_5v at 5 V and SERVO.stall_68v at 6.8 V, straight line between
+  // (actuators.ServoParams.stall_torque, whose two reference voltages these are).
+  const stallTorque = volts => lerp(volts, 5, SERVO.stall_5v, 6.8, SERVO.stall_68v);
 
   /* ---------- one frame of the whole body, for the playground ---------- */
   // opts: robot, gait, t, velocity [vx, vy], yawRate, height, posture {x,y,z,roll,pitch,yaw}, mass (kg), volts
@@ -302,7 +315,7 @@
     };
   }
 
-  const api = { NOMINAL, STAGE01, LIMITS, LEG_NAMES, IS_RIGHT, G, leg, rotation, matVec, matTVec, applyPosture, toWorld, Robot,
+  const api = { DESIGN, NOMINAL, STAGE01, LIMITS, LEG_NAMES, IS_RIGHT, G, SERVO, GAIT_SPEEDS, leg, rotation, matVec, matTVec, applyPosture, toWorld, Robot,
     TROT, CRAWL, PACE, planarFlow, advancePose, easeTo, stancePoint, footTargets, bodySway, stabilityMargin, footLoads, jointTorques,
     stallTorque, evaluate };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Mojito = api;

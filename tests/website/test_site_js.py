@@ -8,6 +8,8 @@ import json
 import os
 import shutil
 import subprocess
+import sys
+import tempfile
 import unittest
 
 import numpy as np
@@ -17,6 +19,23 @@ from mojito.sim import actuators
 
 NODE = shutil.which("node")
 HERE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(HERE, "..", "..", "scripts", "website"))
+import build_site  # noqa: E402
+
+# data/constants.js as build_site.py writes it, in a folder removed when the process exits
+_PRELOAD_DIR = tempfile.TemporaryDirectory(prefix="mojito-constants-")
+_PRELOAD = None
+
+
+def node(*args, **options):
+    """Run node with data/constants.js (as build_site.py writes it) preloaded, so mojito.js finds the Python constants
+    without a site build. Returns the CompletedProcess."""
+    global _PRELOAD
+    if _PRELOAD is None:
+        _PRELOAD = os.path.join(_PRELOAD_DIR.name, "constants.js")
+        with open(_PRELOAD, "w") as f:
+            f.write(build_site.constants_js())
+    return subprocess.run([NODE, "-r", _PRELOAD, *args], capture_output=True, text=True, check=True, **options)
 GAIT_BY_NAME = {"trot": gaits.TROT, "crawl": gaits.CRAWL}
 
 
@@ -103,8 +122,7 @@ class TestSiteJavaScript(unittest.TestCase):
         for v in (5.0, 5.4, 6.0):
             cases["stall"].append(v)
             py["stall"].append(actuators.ServoParams(voltage=v).stall_torque)
-        run = subprocess.run([NODE, os.path.join(HERE, "site_js_check.js")], input=json.dumps(cases), capture_output=True,
-                             text=True, check=True)
+        run = node(os.path.join(HERE, "site_js_check.js"), input=json.dumps(cases))
         cls.js, cls.py, cls.cases = json.loads(run.stdout), py, cases
 
     def close(self, a, b, atol=1e-9):
@@ -161,7 +179,7 @@ class TestSiteStatics(unittest.TestCase):
         const feet=[[.15,.075],[.15,-.075],[-.15,.075],[-.15,-.075]];
         const out=[[0,0],[0.03,0.01],[0.2,0],[0,0.02]].map(c=>M.footLoads(feet,[true,true,true,true],c,10));
         console.log(JSON.stringify(out));"""
-        run = subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True)
+        run = node("-e", script, cwd=HERE)
         feet = np.array([[.15, .075], [.15, -.075], [-.15, .075], [-.15, -.075]])
         for com, loads in zip([[0, 0], [0.03, 0.01], [0.2, 0], [0, 0.02]], json.loads(run.stdout)):
             loads = np.asarray(loads)
@@ -180,7 +198,7 @@ class TestSteering(unittest.TestCase):
 
     def js(self, expression):
         script = "const M=require('../../site/assets/mojito.js');console.log(JSON.stringify(%s));" % expression
-        return json.loads(subprocess.run([NODE, "-e", script], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+        return json.loads(node("-e", script, cwd=HERE).stdout)
 
     def test_advance_pose_follows_the_closed_form_arc(self):
         # a constant command from rest: stepping the pose must land where planarFlow (the exact solution) says
@@ -203,6 +221,45 @@ class TestSteering(unittest.TestCase):
             return {v,jump:M.easeTo(5,2,0.1,0)};})()""")
         self.assertAlmostEqual(out["v"], -0.1 + 0.3 * np.exp(-1.0 / 0.3), places=9)   # target + (start - target) exp(-t / tau)
         self.assertEqual(out["jump"], 2)   # tau = 0 jumps
+
+
+@unittest.skipIf(NODE is None, "node is not installed")
+class TestSiteConstants(unittest.TestCase):
+    """mojito.js takes its constants from data/constants.js: they must be the Python ones, not a copy."""
+
+    def test_constants_are_the_python_values(self):
+        script = """const M=require('../../site/assets/mojito.js');const r=new M.Robot();
+        console.log(JSON.stringify({nominal:M.NOMINAL,stage01:M.STAGE01,limits:M.LIMITS,g:M.G,trot:M.TROT,crawl:M.CRAWL,pace:M.PACE,
+          body:[r.bodyLength,r.bodyWidth],stance:r.stance(),mass:M.DESIGN.total_mass,speeds:M.GAIT_SPEEDS,volts:M.SERVO.voltage}));"""
+        js = json.loads(node("-e", script, cwd=HERE).stdout)
+        from mojito.geometry import placeholders
+        from mojito.sim import live_sim
+        sim = placeholders.SIM_QUADRUPED
+        self.close = lambda a, b: np.testing.assert_allclose(np.asarray(a, float), np.asarray(b, float), atol=1e-12)
+        self.close(js["nominal"], sim.lengths)
+        self.close(js["stage01"], placeholders.STAGE1_QUADRUPED.lengths)
+        self.close(js["limits"], leg.JOINT_LIMITS)
+        self.assertEqual(js["g"], statics.G)
+        for name, gait in (("trot", gaits.TROT), ("crawl", gaits.CRAWL), ("pace", gaits.PACE)):
+            self.assertEqual(js[name]["name"], gait.name)
+            for key in ("period", "duty", "lift", "sway"):
+                self.assertEqual(js[name][key], getattr(gait, key), (name, key))
+            self.assertEqual(js[name]["offsets"], list(gait.offsets))
+            self.assertEqual(js["speeds"][name], live_sim.PRESETS[name]["vx"])
+        self.close(js["body"], [sim.body_length, sim.body_width])
+        robot = body.Robot(body.AnalyticSolver(), lengths=np.tile(sim.lengths, (4, 1)), body_length=sim.body_length,
+                           body_width=sim.body_width)
+        self.close(js["stance"], robot.stance(sim.stance_height))
+        self.assertAlmostEqual(js["mass"], sim.total_mass, places=9)
+        self.assertEqual(js["volts"], actuators.ServoParams().voltage)
+
+    def test_mojito_js_refuses_to_run_without_constants(self):
+        if os.path.exists(os.path.join(HERE, "..", "..", "site", "data", "constants.js")):
+            self.skipTest("a site build is present, which mojito.js loads in Node")
+        run = subprocess.run([NODE, "-e", "require('../../site/assets/mojito.js')"], cwd=HERE, capture_output=True, text=True,
+                             check=False)
+        self.assertNotEqual(run.returncode, 0)
+        self.assertIn("build_site.py", run.stderr)
 
 
 if __name__ == "__main__":
