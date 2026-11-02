@@ -1,8 +1,8 @@
 /* Mojito site. One palette (blue, orange, aqua), neutral ink, light and dark. */
 :root {
   --bg: #fcfcfb; --panel: #ffffff; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781; --line: #e6e5e0; --soft: #f3f2ee;
-  --blue: #2a78d6; --orange: #eb6834; --aqua: #1baf7a; --violet: #8a5cc2; --warn-bg: #fff4ec; --warn-line: #f2c3a8;
-  --FL: #2a78d6; --FR: #eb6834; --RL: #1baf7a; --RR: #8a5cc2; --body: #333;
+  --blue: #2a78d6; --orange: #eb6834; --aqua: #1fa6a0; --violet: #8a5cc2; --warn-bg: #fff4ec; --warn-line: #f2c3a8;
+  --FL: #2a78d6; --FR: #eb6834; --RL: #1fa6a0; --RR: #8a5cc2; --body: #333;
   --code-bg: #f3f2ee; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.05);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -10,14 +10,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #121212; --panel: #1b1b1a; --ink: #ecebe6; --ink2: #b4b2aa; --muted: #86847d; --line: #33322f; --soft: #232321;
-    --blue: #5b9bea; --orange: #f08a5c; --aqua: #38c795; --violet: #a883d6; --warn-bg: #2b1f18; --warn-line: #5b3d2b;
-    --FL: #5b9bea; --FR: #f08a5c; --RL: #38c795; --RR: #a883d6; --body: #ddd; --code-bg: #232321; --shadow: none;
+    --blue: #5b9bea; --orange: #f08a5c; --aqua: #38c7bf; --violet: #a883d6; --warn-bg: #2b1f18; --warn-line: #5b3d2b;
+    --FL: #5b9bea; --FR: #f08a5c; --RL: #38c7bf; --RR: #a883d6; --body: #ddd; --code-bg: #232321; --shadow: none;
   }
 }
 :root[data-theme="dark"] {
   --bg: #121212; --panel: #1b1b1a; --ink: #ecebe6; --ink2: #b4b2aa; --muted: #86847d; --line: #33322f; --soft: #232321;
-  --blue: #5b9bea; --orange: #f08a5c; --aqua: #38c795; --violet: #a883d6; --warn-bg: #2b1f18; --warn-line: #5b3d2b;
-  --FL: #5b9bea; --FR: #f08a5c; --RL: #38c795; --RR: #a883d6; --body: #ddd; --code-bg: #232321; --shadow: none;
+  --blue: #5b9bea; --orange: #f08a5c; --aqua: #38c7bf; --violet: #a883d6; --warn-bg: #2b1f18; --warn-line: #5b3d2b;
+  --FL: #5b9bea; --FR: #f08a5c; --RL: #38c7bf; --RR: #a883d6; --body: #ddd; --code-bg: #232321; --shadow: none;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 72px; }

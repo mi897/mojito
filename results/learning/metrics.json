@@ -40,9 +40,9 @@
   "max_mm": 5.398512037274157
  },
  "speed": {
-  "batched_ns_per_target_learned": 4554.513885000233,
-  "batched_ns_per_target_analytic": 109.89272499955405,
-  "single_call_us_learned": 32.58987499998511
+  "batched_ns_per_target_learned": 4003.630555000655,
+  "batched_ns_per_target_analytic": 100.96256499991796,
+  "single_call_us_learned": 36.010022000027675
  },
  "length_scale_sweep": [
   {
@@ -150,5 +150,15 @@
    "median_mm": 1.8817198565741324,
    "p95_mm": 3.3957088400852435
   }
- ]
+ ],
+ "slice_reachable_fraction": 0.25795641189944835,
+ "provenance": {
+  "git_commit": "5a54d8605c2707913b932fdb73d1a07c983322cf",
+  "git_dirty": false,
+  "script": "scripts/learning/evaluate.py",
+  "argv": [],
+  "python": "3.12.3",
+  "numpy": "2.5.4",
+  "utc": "2026-11-01T08:11:04Z"
+ }
 }

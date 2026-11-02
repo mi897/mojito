@@ -1,4 +1,4 @@
-"""The in-browser simulation (site/assets/browsersim.js, MuJoCo WebAssembly) against the Python it is a port of.
+"""The in-browser simulation (site/assets/playground/browsersim.js, MuJoCo WebAssembly) against the Python it is a port of.
 
 Needs node, `python scripts/website/build_site.py` (it writes site/data/livemeta.js) and the @mujoco/mujoco package: skipped if any is
 missing. Install the package with `npm install --no-save @mujoco/mujoco@3.16.0` in the repository root (the version of the MuJoCo that the
@@ -43,14 +43,17 @@ class TestBrowserSim(unittest.TestCase):
 
     def test_model_matches_the_python_model(self):
         # a design that is not the default one, so a copied constant would show
-        from mojito.sim import live_sim, stand
+        from mojito.geometry.placeholders import QuadrupedDesign
+        from mojito.sim import live_sim
+        from mojito.sim.robot import SimRobot
 
         lengths, height, length, width, mass = (0.06, 0.13, 0.17), 0.2, 0.35, 0.18, 2.5
-        masses = live_sim.scaled_masses(mass)
-        design = dict(la=lengths[0], lu=lengths[1], ll=lengths[2], body_length=length, body_width=width, start_z=height + 0.012,
+        masses = live_sim.masses_for_total(mass)
+        design = dict(abduction_offset=lengths[0], upper_length=lengths[1], lower_length=lengths[2], body_length=length, body_width=width, start_z=height + 0.012,
                       masses=masses, timestep=0.002)
         theirs = mujoco.MjModel.from_xml_string(node({"op": "xml", "design": design})["xml"])
-        _, ours, *_ = stand._open(np.array(lengths), height, length, width, masses, 0.002)
+        ours = SimRobot(QuadrupedDesign(*lengths, body_length=length, body_width=width, stance_height=height, masses=masses),
+                        timestep=0.002).model
         for name in ("nq", "nv", "nu", "nbody", "ngeom", "njnt", "nsite", "nsensor"):
             self.assertEqual(getattr(theirs, name), getattr(ours, name), name)
         for name in ("body_pos", "body_mass", "body_inertia", "geom_size", "geom_pos", "geom_friction", "geom_contype", "jnt_range",
@@ -117,8 +120,10 @@ class TestBrowserSim(unittest.TestCase):
     def test_changing_design_and_params_while_running_matches(self):
         from mojito.sim import live_sim
 
-        schedule = [dict(steps=500), dict(changes=dict(walk=True, vx=0.2), steps=750), dict(changes=dict(mass=2.4, lu=0.13), steps=500),
-                    dict(changes=dict(kp=30.0, lift=0.03), steps=500)]
+        schedule = [dict(steps=500), dict(changes=dict(walk=True, vx=0.2), steps=750), dict(changes=dict(mass=2.4, upper_length=0.13), steps=500),
+                    dict(changes=dict(kp=30.0, lift=0.03), steps=500),
+                    dict(changes=dict(ll=0.16), steps=250),  # an old parameter name (live_sim.PARAMETER_ALIASES): both must accept it
+                    dict(changes=dict(la=0.07, abduction_offset=0.06), steps=250)]  # both names: the new one wins in both
         theirs = node({"op": "run", "params": live_sim.PRESETS["trot"], "schedule": schedule})["snapshots"][-1]
         sim = live_sim.LiveSim(live_sim.PRESETS["trot"])
         for entry in schedule:
@@ -127,6 +132,7 @@ class TestBrowserSim(unittest.TestCase):
             sim.step(entry["steps"])
         self.assert_close(theirs, sim.snapshot())
         self.assertAlmostEqual(theirs["total_mass_kg"], 2.4, places=3)
+        self.assertEqual(sim.params["abduction_offset"], 0.06)
 
     def test_changing_the_stance_height_while_walking_matches(self):
         # the stance height is eased and needs no rebuild; the same schedule for both, trot and crawl

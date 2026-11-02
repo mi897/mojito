@@ -6,32 +6,33 @@ scripts/design/design_sweep_draws.py (masses times a uniform 0.95 to 1.05, laten
 settings are in design_sweep_draws.json for comparison. A tuned setting is only as good as its search: it was picked on one speed and
 the nominal run, so the other two speeds and the draws are a check on it, not part of the fit.
 
-    python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, about 20 min on 4 cores
+    uv run --extra sim python scripts/design/design_sweep_tuned.py        # needs mujoco; 66 entries x 3 speeds x 10 draws = 1980 runs, 13 min on a 4-CPU Linux container, run while another sweep used the cores
 """
 import json
 import multiprocessing
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.sim import design_sweep  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.sim import design_sweep
 
-OUTPUT = "results/design/design_sweep_tuned.json"
+OUTPUT = results_path("design", "design_sweep_tuned.json")
 DRAWS = 10
 
 
 def one(cell):
     design, gait, settings, scale, speed, draw = cell
     walk = design_sweep.evaluate_walk(design, gait, settings, scale, speed, draw=draw)
-    return {**walk, "mass_scale": scale, "draw": draw, "design": design.__dict__}
+    # The four dimensions the sweep varies (what the committed file records). Not design.__dict__: that now holds the read-only
+    # masses (a mappingproxy, which a worker cannot send back to the pool) and the fixed dimensions too.
+    dimensions = {name: getattr(design, name) for name in ("upper_length", "lower_length", "body_length", "body_width")}
+    return {**walk, "mass_scale": scale, "draw": draw, "design": dimensions}
 
 
 def main():
-    with open("results/design/design_tuning.json") as f:
+    with open(results_path("design", "design_tuning.json")) as f:
         tuning = json.load(f)
     cells = []
     for e in tuning["entries"]:
-        design = design_sweep.Design(**e["design"])
+        design = design_sweep.make_design(**e["design"])
         settings = design_sweep.GaitSettings(**e["best"])
         for speed in design_sweep.SPEEDS:
             for draw in range(DRAWS):
@@ -46,9 +47,7 @@ def main():
                    "each, 10 s per run. All dimensions, masses, servo figures, friction and joint limits are placeholders.",
            "draws": DRAWS, "speeds_m_s": list(design_sweep.SPEEDS), "settings": {
                f"{e['gait']} {e['mass_scale']} {e['design']}": e["best"] for e in tuning["entries"]}, "runs": runs}
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w") as f:
-        json.dump(out, f)
+    write_result(OUTPUT, out, indent=None)
     print(f"{sum(design_sweep.is_valid(r) for r in runs)} of {len(runs)} valid")
 
 

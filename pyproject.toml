@@ -18,9 +18,36 @@ sim = ["mujoco"]
 torch-cpu = ["torch"]
 torch-gpu = ["torch"]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Only the library is packaged; scripts/, tests/, robots/ and results/ stay in the repository.
+[tool.hatch.build.targets.wheel]
+packages = ["mojito"]
+
+# Lint with `just lint` (uvx ruff@0.16.9 check .). ruff runs through uvx rather than as a dev dependency so that
+# adding it does not need a new uv.lock (locking reaches the PyTorch indexes, which some sessions cannot).
+[tool.ruff]
+# The repository's lines run long (about 1 in 300 is over 150 characters), so the limit only steers how isort wraps
+# imports: line length itself is not checked (E501 is not selected).
+line-length = 150
+extend-exclude = ["site/vendor", "node_modules"]
+
+[tool.ruff.lint]
+# F: pyflakes (unused imports and variables, undefined names). E741: `l`, `O`, `I` as names. B: bugbear. I: import order.
+select = ["F", "E741", "B", "I"]
+# B905 asks for zip(..., strict=...) everywhere; the zips here pair arrays built to the same length, and strict=True
+# would change behaviour wherever a script relies on zip stopping at the shorter one.
+ignore = ["B905"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["mojito"]
+combine-as-imports = true
+
 [tool.uv]
-# A set of scripts around a library run from the repo root, not an installable package.
-package = false
+# `uv sync` installs the `mojito` package editable into .venv, so scripts import it from anywhere without a sys.path line.
+package = true
 
 # The two torch builds cannot be installed together.
 conflicts = [[{ extra = "torch-cpu" }, { extra = "torch-gpu" }]]

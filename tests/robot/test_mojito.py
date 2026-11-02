@@ -7,8 +7,8 @@ import unittest
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from mojito.robot import leg
 from mojito import IKNet  # noqa: E402
+from mojito.robot import leg
 
 
 class TestLeg(unittest.TestCase):
@@ -29,6 +29,40 @@ class TestLeg(unittest.TestCase):
             d[j] = eps
             num = (leg.forward(q + d, lengths) - leg.forward(q - d, lengths)) / (2 * eps)
             np.testing.assert_allclose(J[:, :, j], num, atol=1e-8)
+
+    def test_leg_config_and_limb_spec_share_the_limb_model_interface(self):
+        from mojito.geometry import robots, spec
+        from mojito.geometry.limb_model import LimbModel, Mirror
+
+        limb = spec.build_limb(robots.leg_urdf(), "body", "L_foot", reach=0.24)
+        for config in (self.config, limb):
+            self.assertIsInstance(config, LimbModel)
+            self.assertTrue(config.backend_agnostic)
+        self.assertEqual(self.config.mirror, Mirror())
+        self.assertIsNone(limb.mirror)
+        # default_factory: each config gets its own copy of the placeholders, equal to them.
+        other = leg.LegConfig()
+        self.assertIsNot(other.nominal, self.config.nominal)
+        np.testing.assert_array_equal(other.nominal, leg.NOMINAL_LENGTHS)
+        np.testing.assert_array_equal(other.limits, leg.JOINT_LIMITS)
+
+    def test_explicit_none_means_the_placeholder(self):
+        # scripts/learning/train.py builds LegConfig(nominal, None, tolerance); None must still mean the default.
+        config = leg.LegConfig(np.array([0.05, 0.13, 0.11]), None, 0.2)
+        np.testing.assert_array_equal(config.limits, leg.JOINT_LIMITS)
+        np.testing.assert_array_equal(leg.LegConfig(None, None).nominal, leg.NOMINAL_LENGTHS)
+        net = IKNet(config, hidden=(8,))
+        np.testing.assert_allclose(net.joint_mid, leg.JOINT_LIMITS.mean(axis=1))
+
+    def test_placeholders_feed_the_generated_manifests(self):
+        from mojito.geometry import placeholders, robots
+        from mojito.robot import body
+
+        self.assertIs(leg.NOMINAL_LENGTHS, placeholders.NOMINAL_LENGTHS)
+        self.assertIs(leg.JOINT_LIMITS, placeholders.JOINT_LIMITS)
+        self.assertEqual((body.BODY_LENGTH, body.BODY_WIDTH), (placeholders.BODY_LENGTH, placeholders.BODY_WIDTH))
+        self.assertEqual(robots.QUADRUPED_MANIFEST["groups"]["leg"]["reach"], leg.LegConfig().reach)
+        self.assertEqual(robots.HEXAPOD_MANIFEST["groups"]["leg"]["reach"], leg.LegConfig().reach)
 
     def test_analytic_ik_recovers_angles(self):
         for uniform in (True, False):

@@ -6,20 +6,23 @@ limits, body upright, measured speed positive) and the mean and sample standard 
 valid or not. The spread is from the random mass and latency draws only. The plot shows the mean speed ratio at 0.10 m/s with the
 valid count (k/10) under it.
 
-    python scripts/design/plot_design_sweep_draws.py
+    uv run --extra sim python scripts/design/plot_design_sweep_draws.py
 """
 import json
 import os
 import statistics
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1fa6a0"
-INK, GREY = "#333333", "#9a9a9a"
-DIRECTORY = "results/design"
+from mojito.geometry.placeholders import SIM_QUADRUPED  # noqa: E402
+from mojito.palette import INK, ORANGE  # noqa: E402
+from mojito.results import results_path, write_result  # noqa: E402
+
+DIRECTORY = results_path("design")
 PLOT_SPEED = 0.10
 LENGTHS = (0.10, 0.15, 0.20)
 
@@ -59,10 +62,9 @@ def main():
                 mean, sd = mean_sd([w["velocity_ratio"] for w in walks])
                 row["walks"][f"{gait} {speed:g}"] = {"valid": sum(valid(w) for w in walks), "ratio_mean": mean, "ratio_sd": sd}
         rows.append(row)
-    with open(os.path.join(DIRECTORY, "design_sweep_draws_summary.json"), "w") as f:
-        json.dump({"draws": draws, "rows": rows}, f, indent=1)
+    write_result(os.path.join(DIRECTORY, "design_sweep_draws_summary.json"), {"draws": draws, "rows": rows})
 
-    def find(upper, lower, scale, body=(0.30, 0.15)):
+    def find(upper, lower, scale, body=(SIM_QUADRUPED.body_length, SIM_QUADRUPED.body_width)):
         return next(r for r in rows if abs(r["upper_mm"] - 1000 * upper) < 1e-6 and abs(r["lower_mm"] - 1000 * lower) < 1e-6
                     and abs(r["body_mm"][0] - 1000 * body[0]) < 1e-6 and r["mass_scale"] == scale)
 

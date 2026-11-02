@@ -48,12 +48,18 @@ def _is_torch(x) -> bool:
     return type(x).__module__.split(".")[0] == "torch"
 
 
-def _lib(x):
+def array_library(x):
+    """The module that holds `x`'s array type: torch for a torch tensor, else NumPy. Shared with mojito.robot.leg."""
     if _is_torch(x):
         import torch
 
         return torch
     return np
+
+
+def as_array(x):
+    """`x` unchanged if it is a torch tensor, else as a float NumPy array. Shared with mojito.robot.leg."""
+    return x if _is_torch(x) else np.asarray(x, dtype=float)
 
 
 def _const(xp, reference, values):
@@ -82,9 +88,37 @@ def _axis_rotation(xp, reference, axis, angle):
     axis = np.asarray(axis, dtype=float)
     cross_matrix = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
     outer = np.outer(axis, axis)
-    identity, cross_matrix, outer = (_const(xp, reference, m) for m in (np.eye(3), cross_matrix, outer))
+    identity, cross_matrix, outer = (_const(xp, reference, matrix) for matrix in (np.eye(3), cross_matrix, outer))
     cos_angle, sin_angle = xp.cos(angle)[..., None, None], xp.sin(angle)[..., None, None]
     return cos_angle * identity + sin_angle * cross_matrix + (1.0 - cos_angle) * outer
+
+
+# ----------------------------------------------------------------- rotations (NumPy)
+def rpy_rotation(roll=0.0, pitch=0.0, yaw=0.0) -> np.ndarray:
+    """Fixed-axis roll-pitch-yaw rotation R = Rz(yaw) Ry(pitch) Rx(roll). Shape (..., 3, 3).
+
+    The URDF `rpy` convention and the body-to-world rotation of `mojito.robot.body`.
+    Arguments broadcast against each other; scalars give a (3, 3) matrix.
+    Multiplied out, with c_ and s_ the cosine and sine of roll (r), pitch (p) and yaw (y):
+        [[c_y c_p,  c_y s_p s_r - s_y c_r,  c_y s_p c_r + s_y s_r],
+         [s_y c_p,  s_y s_p s_r + c_y c_r,  s_y s_p c_r - c_y s_r],
+         [-s_p,     c_p s_r,                c_p c_r              ]]
+    """
+    roll, pitch, yaw = np.broadcast_arrays(*(np.asarray(angle, dtype=float) for angle in (roll, pitch, yaw)))
+    cos_roll, sin_roll = np.cos(roll), np.sin(roll)
+    cos_pitch, sin_pitch = np.cos(pitch), np.sin(pitch)
+    cos_yaw, sin_yaw = np.cos(yaw), np.sin(yaw)
+    rotation = np.empty(roll.shape + (3, 3))
+    rotation[..., 0, 0] = cos_yaw * cos_pitch
+    rotation[..., 0, 1] = cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll
+    rotation[..., 0, 2] = cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll
+    rotation[..., 1, 0] = sin_yaw * cos_pitch
+    rotation[..., 1, 1] = sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll
+    rotation[..., 1, 2] = sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll
+    rotation[..., 2, 0] = -sin_pitch
+    rotation[..., 2, 1] = cos_pitch * sin_roll
+    rotation[..., 2, 2] = cos_pitch * cos_roll
+    return rotation
 
 
 # ----------------------------------------------------------------- kinematics
@@ -96,9 +130,8 @@ def _walk(chain: Chain, joint_values, link_lengths):
     applies its fixed rotation, then its joint: a revolute joint rotates the
     frame about its axis, a prismatic one slides the position along it.
     """
-    xp = _lib(joint_values)
-    joint_values = joint_values if _is_torch(joint_values) else np.asarray(joint_values, dtype=float)
-    link_lengths = link_lengths if _is_torch(link_lengths) else np.asarray(link_lengths, dtype=float)
+    xp = array_library(joint_values)
+    joint_values, link_lengths = as_array(joint_values), as_array(link_lengths)
     batch = joint_values.shape[:-1]
     rotation = xp.broadcast_to(_const(xp, joint_values, np.eye(3)), batch + (3, 3))  # frame orientation so far
     position = xp.zeros(batch + (3,), dtype=joint_values.dtype, **({"device": joint_values.device} if xp is not np else {}))
@@ -129,7 +162,7 @@ def fk(chain: Chain, joint_values, link_lengths):
 def points(chain: Chain, joint_values, link_lengths):
     """Limb origin, each joint's position and the tip, shape (..., dof + 2, 3). For drawing."""
     tip, joint_origins, _ = _walk(chain, joint_values, link_lengths)
-    xp = _lib(joint_values)
+    xp = array_library(joint_values)
     return xp.stack([xp.zeros_like(tip)] + joint_origins + [tip], -2)
 
 
@@ -140,7 +173,7 @@ def jacobian(chain: Chain, joint_values, link_lengths):
         revolute:   a_j x (p - o_j)     (the tip moves at right angles to its lever arm)
         prismatic:  a_j                 (the tip slides along the axis)
     """
-    xp = _lib(joint_values)
+    xp = array_library(joint_values)
     tip, joint_origins, joint_world_axes = _walk(chain, joint_values, link_lengths)
     is_prismatic = [None] * chain.dof
     for element, joint in enumerate(chain.joint_index):
@@ -165,6 +198,16 @@ def numeric_ik(chain: Chain, limits, target_position, link_lengths, initial_join
     Each iteration solves for the joint step that moves the tip toward the target:
         step = J^T (J J^T + damping^2 I)^-1 error,    error = target - fk(joint_values)
     The damping term keeps the step finite near singular poses.
+
+    Two things to know when reading the result:
+    - Convergence is checked over the whole batch: the loop stops only when the
+      largest error of any target is below `tolerance` (or after `max_iterations`),
+      so every target gets as many iterations as the slowest one needs. Check the
+      error of each target yourself; nothing here reports which ones converged.
+    - The joint values are clipped to the limits after every step. A step that
+      leaves the range is cut back to the limit, and the next step may point out
+      of range again, so a solve whose answer lies past a limit (or whose path
+      runs along one) can stall at that limit with a residual error.
     """
     target_position = np.asarray(target_position, dtype=float)
     limits = np.asarray(limits, dtype=float)

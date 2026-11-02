@@ -48,12 +48,17 @@ class Gait:
 # The period is 1.7 s. Stage 1 first used 0.5 s, set before any physics; a period sweep in MuJoCo showed that was not
 # optimal and 1.7 s was chosen from it (docs/STAGE2.md, "Longer trot periods"). The swing height is 22 mm, from the one-at-a-time
 # and combined sweeps ("Pushing the best settings further", "Do the best values add up?"); it was 30 mm before.
-# TROT_STAGE1 keeps the original 0.5 s and 30 mm for comparison.
+# TROT_STAGE1 keeps the original 0.5 s and 30 mm for comparison. It has its own name so that code keyed on the name "trot"
+# (gait_replay.settings_for: 0.16 m stance, kp 50, kd 0.9, all tuned for the 1.7 s trot) does not treat it as the tuned trot.
 TROT = Gait("trot", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.5, 0.0), lift=0.022)
-TROT_STAGE1 = replace(TROT, period=0.5, lift=0.03)
+TROT_STAGE1 = replace(TROT, name="trot_stage1", period=0.5, lift=0.03)
 # One foot in the air at a time, in the order RL, FL, RR, FR.
 # The body leans away from that foot while all four are down.
 CRAWL = Gait("crawl", period=2.0, duty=0.85, offsets=(0.75, 0.25, 0.5, 0.0), lift=0.03, sway=0.025)
+# Left legs together, then right legs: the trot's timing with the pairs on one side. It barely moves in physics and goes
+# backward (scripts/gait/pace_diagnosis.py, docs/STAGE2.md); kept as the live explorer's third preset and for that diagnosis,
+# with the original 30 mm swing it was measured with.
+PACE = Gait("pace", period=1.7, duty=0.5, offsets=(0.0, 0.5, 0.0, 0.5), lift=0.03)
 
 
 def sequence_offsets(order, duty, first_lift=0.1):
@@ -124,7 +129,7 @@ def foot_targets(gait: Gait, times, home, velocity=(0.0, 0.0), yaw_rate=0.0):
     # Fraction of the cycle each leg has completed since its stance began, in [0, 1).
     phase = (times / gait.period - np.asarray(gait.offsets)[None]) % 1.0  # (T, 4)
     contact = phase < gait.duty
-    stance_duration = gait.duty * gait.period  # seconds
+    stance_duration = gait.stance_time  # seconds
 
     # Stance: progress runs 0 -> 1 and the foot passes `home` at progress = 0.5,
     # so the time until it reaches home is (0.5 - progress) * stance_duration.
@@ -159,7 +164,7 @@ def body_sway(gait: Gait, times, home):
     times = np.atleast_1d(np.asarray(times, float))
     out = np.zeros((times.shape[0], 3))
     swing_len = 1.0 - gait.duty
-    starts = (np.asarray(gait.offsets) + gait.duty) % 1.0  # phase at which each leg lifts
+    starts = gait.swing_starts()  # phase at which each leg lifts
     order = np.argsort(starts)
     gaps = np.diff(np.append(starts[order], starts[order][0] + 1.0)) - swing_len
     if gait.sway == 0.0 or np.any(gaps < -1e-9):
@@ -192,29 +197,73 @@ def stability_margin(feet_xy, contact, point_xy):
 
     Positive when the point is inside the polygon of grounded feet. With fewer
     than three feet down the support is a line, and the result is minus the
-    distance to it. Feet must be given in FL, FR, RL, RR order.
+    distance to it. With no foot down there is no support at all and the result
+    is -inf. Feet that sit on the same spot count once, so two coincident feet
+    make a point and three feet with two coincident a line (no zero-length edge).
+    Only feet next to each other around the body are merged; two diagonal feet
+    on one spot (not a stance a leg can reach) are kept and the polygon is not
+    convex. Feet must be given in FL, FR, RL, RR order.
+
+    Arguments: feet_xy (T, 4, 2) foot positions, contact (T, 4) bool, point_xy (T, 2); returns (T,).
+    No Python loop over time steps: every step is computed on fixed-size (T, 4) masked arrays.
+    tests/robot/test_body.py checks it against the per-step loop it replaced, on every contact pattern,
+    random batches and the coincident-foot cases.
     """
+    feet_xy = np.asarray(feet_xy, float)
+    contact = np.asarray(contact, bool)
+    point_xy = np.asarray(point_xy, float)
     walk_order = [0, 1, 3, 2]  # FL, FR, RR, RL: around the body, clockwise seen from above
-    margin = np.empty(feet_xy.shape[0])
-    for i in range(feet_xy.shape[0]):
-        grounded = np.array([feet_xy[i, k] for k in walk_order if contact[i, k]])
-        point = point_xy[i]
-        if len(grounded) < 3:
-            # Support is a point or a segment from a to b. Closest point on it is
-            # start + f (end - start) with f = (point - start).(end - start) / |end - start|^2, clamped to [0, 1].
-            start, end = grounded[0], grounded[-1]
-            edge = end - start
-            fraction = np.clip(np.dot(point - start, edge) / max(np.dot(edge, edge), 1e-12), 0, 1)
-            margin[i] = -np.linalg.norm(point - (start + fraction * edge))
-            continue
-        signed_distances = []
-        for j in range(len(grounded)):
-            start, end = grounded[j], grounded[(j + 1) % len(grounded)]
-            edge = end - start
-            # 2-D cross product edge x (point - start), divided by |edge|, is the
-            # signed distance from the edge's line to the point.
-            cross = edge[0] * (point[1] - start[1]) - edge[1] * (point[0] - start[0])
-            signed_distances.append(cross / np.linalg.norm(edge))
-        # Feet are visited clockwise seen from above, so inside means every cross product is negative.
-        margin[i] = (-np.array(signed_distances)).min()
-    return margin
+    walk_feet = feet_xy[:, walk_order]  # (T, 4, 2), position along the walk is the second axis
+    grounded = contact[:, walk_order]  # (T, 4)
+    n_steps = walk_feet.shape[0]
+    rows = np.arange(n_steps)
+    positions = np.arange(4)
+
+    # The same computation for every step, on fixed-size (T, 4) arrays with masks instead of per-step lists.
+    # Step 1, merging. For each position j, the grounded foot before it around the polygon is the first grounded
+    # one at j - offset (mod 4), offset = 1, 2, 3; if there is none, j itself (a lone grounded foot is its own
+    # neighbour, distance 0, so it is merged away and restored below, as the loop version does with grounded[:1]).
+    previous = np.broadcast_to(positions, (n_steps, 4)).copy()
+    for offset in (3, 2, 1):  # nearest offset assigned last, so it wins
+        candidate = (positions - offset) % 4
+        previous = np.where(grounded[:, candidate], candidate, previous)
+    gap = walk_feet - walk_feet[rows[:, None], previous]
+    kept = grounded & (np.sqrt(gap[..., 0] ** 2 + gap[..., 1] ** 2) > 1e-12)
+    # All grounded feet on one spot: keep the first one.
+    first_grounded = np.argmax(grounded, axis=1)
+    none_kept = grounded.any(axis=1) & ~kept.any(axis=1)
+    kept[rows[none_kept], first_grounded[none_kept]] = True
+    n_kept = kept.sum(axis=1)
+
+    # Step 2, polygon (three or more distinct feet). The edge from kept foot start to the next kept foot end
+    # (cyclically) has edge = end - start. The 2-D cross product edge x (point - start), divided by |edge|, is
+    # the signed distance from the edge's line to the point. Feet are visited clockwise seen from above, so
+    # inside means every cross product is negative: the margin is the minimum of -cross / |edge|.
+    following = np.broadcast_to(positions, (n_steps, 4)).copy()
+    for offset in (3, 2, 1):
+        candidate = (positions + offset) % 4
+        following = np.where(kept[:, candidate], candidate, following)
+    start = walk_feet
+    edge = walk_feet[rows[:, None], following] - start
+    offset_to_point = point_xy[:, None, :] - start
+    cross = edge[..., 0] * offset_to_point[..., 1] - edge[..., 1] * offset_to_point[..., 0]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        signed_distances = -cross / np.sqrt(edge[..., 0] ** 2 + edge[..., 1] ** 2)
+    polygon_margin = np.where(kept, signed_distances, np.inf).min(axis=1)
+
+    # Step 3, point or segment (one or two distinct feet) from first to last kept foot. Closest point on it is
+    # start + fraction (end - start), fraction = (point - start).(end - start) / |end - start|^2 clamped to [0, 1];
+    # the denominator is floored at 1e-12 so a single foot (end == start) gives the distance to that foot.
+    first_kept = np.argmax(kept, axis=1)
+    last_kept = 3 - np.argmax(kept[:, ::-1], axis=1)
+    line_start = walk_feet[rows, first_kept]
+    line_edge = walk_feet[rows, last_kept] - line_start
+    line_offset = point_xy - line_start
+    fraction = np.clip(
+        (line_offset * line_edge).sum(axis=1) / np.maximum((line_edge * line_edge).sum(axis=1), 1e-12), 0, 1
+    )
+    residual = line_offset - fraction[:, None] * line_edge
+    segment_margin = -np.sqrt((residual * residual).sum(axis=1))
+
+    margin = np.where(n_kept < 3, segment_margin, polygon_margin)
+    return np.where(n_kept == 0, -np.inf, margin)

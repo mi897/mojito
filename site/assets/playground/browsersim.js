@@ -8,7 +8,7 @@
  * Placeholder dimensions, masses, servo figures and friction, like the Python version (docs/STAGE2.md). */
 (function (root) {
   'use strict';
-  const Mojito = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('./mojito.js') : root.Mojito;
+  const Mojito = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('../mojito.js') : root.Mojito;
   const LEGS = ['FL', 'FR', 'RL', 'RR'], JOINTS = ['abduction', 'hip_pitch', 'knee'];
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
@@ -17,10 +17,10 @@
   const smoothstep = x => { x = clamp(x, 0, 1); return x ** 3 * (10 - 15 * x + 6 * x * x); };
 
   /* ---------- the MuJoCo model (mjcf.mjcf_from_urdf of robots.quadruped_urdf, actuated) ---------- */
-  // design: {la, lu, ll, body_length, body_width, start_z, masses, timestep}; c = live.constants
+  // design: {abduction_offset, upper_length, lower_length, body_length, body_width, start_z, masses, timestep}; c = live.constants
   function mjcfQuadruped(c, design) {
     const m = c.model, M = design.masses, lim = c.joint_limits;
-    const x = design.body_length / 2, y = design.body_width / 2, la = design.la, lu = design.lu, ll = design.ll;
+    const x = design.body_length / 2, y = design.body_width / 2;
     const body = [design.body_length, design.body_width, m.body_thickness].map(v => v / 2);
     const friction = `${m.foot_friction} ${m.friction_torsion} ${m.friction_rolling}`;
     const capsule = (end, mass) => `<geom type="capsule" fromto="${fmt([0, 0, 0, ...end])}" size="${m.link_radius}" mass="${mass}" rgba="0.8 0.8 0.85 1" />`;
@@ -30,12 +30,12 @@
       const [mx, my] = mounts[name], right = my < 0, side = right ? -1 : 1;
       const [a, h, k] = lim, abd = right ? [-a[1], -a[0]] : a;   // only the abduction range is mirrored
       legs += `<body name="${name}_hip" pos="${fmt([mx, my, 0])}"><joint name="${name}_abduction" type="hinge" axis="1 0 0" range="${fmt(abd)}" />`
-        + capsule([0, side * la, 0], M.hip)
-        + `<body name="${name}_thigh" pos="${fmt([0, side * la, 0])}"><joint name="${name}_hip_pitch" type="hinge" axis="0 1 0" range="${fmt(h)}" />`
-        + capsule([0, 0, -lu], M.thigh)
-        + `<body name="${name}_shank" pos="${fmt([0, 0, -lu])}"><joint name="${name}_knee" type="hinge" axis="0 1 0" range="${fmt(k)}" />`
-        + capsule([0, 0, -ll], M.shank)
-        + `<body name="${name}_foot" pos="${fmt([0, 0, -ll])}"><site name="${name}_foot" size="0.004" rgba="0 0.6 1 1" />`
+        + capsule([0, side * design.abduction_offset, 0], M.hip)
+        + `<body name="${name}_thigh" pos="${fmt([0, side * design.abduction_offset, 0])}"><joint name="${name}_hip_pitch" type="hinge" axis="0 1 0" range="${fmt(h)}" />`
+        + capsule([0, 0, -design.upper_length], M.thigh)
+        + `<body name="${name}_shank" pos="${fmt([0, 0, -design.upper_length])}"><joint name="${name}_knee" type="hinge" axis="0 1 0" range="${fmt(k)}" />`
+        + capsule([0, 0, -design.lower_length], M.shank)
+        + `<body name="${name}_foot" pos="${fmt([0, 0, -design.lower_length])}"><site name="${name}_foot" size="0.004" rgba="0 0.6 1 1" />`
         + `<geom name="${name}_foot_pad" type="sphere" size="${m.foot_radius}" mass="${M.foot}" contype="1" conaffinity="1" friction="${friction}" rgba="0.1 0.1 0.1 1" />`
         + '</body></body></body></body>';
       for (const j of JOINTS) motors += `<motor name="${name}_${j}" joint="${name}_${j}" gear="1" />`;
@@ -52,18 +52,19 @@
   /* ---------- actuators.Servo ---------- */
   class Servo {
     constructor(params) { this.params = Object.assign({}, params); this.reset(); }
-    reset() { this.queue = []; this.time = 0; this.held = null; this.lastSaturated = false; }
+    reset() { this.queue = []; this.stepIndex = 0; this.held = null; this.lastSaturated = false; }
     get stallTorque() { const p = this.params; return p.torque_scale * lerp(p.voltage, 5, p.stall_5v, 6.8, p.stall_68v); }
     get noloadSpeed() { const p = this.params; return lerp(p.voltage, 5, p.noload_5v, 6.8, p.noload_68v); }
     quantise(targets) { const p = this.params; return targets.map(t => p.centre + rint((t - p.centre) / p.resolution) * p.resolution); }
     // commanded joint targets and true state -> torques; `lastSaturated` says whether any joint was at its limit
     step(targets, angles, velocities, dt) {
       const p = this.params;
-      this.queue.push([this.time + p.latency, this.quantise(targets)]);
+      // seen at the first step at or after send time + latency, counted in whole steps: ceil(latency / dt), as in actuators.py
+      this.queue.push([this.stepIndex + Math.ceil(p.latency / dt - 1e-9), this.quantise(targets)]);
       let seen = null;
-      while (this.queue.length && this.queue[0][0] <= this.time + 1e-12) seen = this.queue.shift()[1];
+      while (this.queue.length && this.queue[0][0] <= this.stepIndex) seen = this.queue.shift()[1];
       if (seen !== null) this.held = seen; else if (this.held === null) this.held = this.quantise(angles);
-      this.time += dt;
+      this.stepIndex += 1;
       const stall = this.stallTorque, noload = this.noloadSpeed;
       let saturated = false;
       const out = angles.map((angle, i) => {
@@ -93,7 +94,11 @@
     // Apply changes (clamped). Returns true if the model must be rebuilt (a design value or the mass changed).
     setParams(changes) {
       let rebuild = false;
-      for (const [key, raw] of Object.entries(changes)) {
+      for (const [name, raw] of Object.entries(changes)) {
+        // old names (la, lu, ll) of live_sim.PARAMETER_ALIASES, for one release; the new name wins when a request has both
+        const alias = this.c.parameter_aliases[name];
+        if (alias && alias in changes) continue;
+        const key = alias || name;
         if (!(key in this.params)) continue;
         let value = raw;
         if (key === 'offsets') {
@@ -119,10 +124,10 @@
       if (this.data) this.data.delete();
       if (this.model) this.model.delete();
       const masses = Object.fromEntries(Object.entries(c.masses).map(([k, v]) => [k, v * scale]));
-      this.robot = new Mojito.Robot({ lengths: [p.la, p.lu, p.ll], bodyLength: p.body_length, bodyWidth: p.body_width, limits: c.joint_limits });
+      this.robot = new Mojito.Robot({ lengths: [p.abduction_offset, p.upper_length, p.lower_length], bodyLength: p.body_length, bodyWidth: p.body_width, limits: c.joint_limits });
       const initial = this.robot.solve(this.robot.stance(p.height));
       this.startZ = p.height + c.model.foot_radius;   // the pad centre is the foot tip; its lowest point is one radius lower
-      const xml = mjcfQuadruped(c, { la: p.la, lu: p.lu, ll: p.ll, body_length: p.body_length, body_width: p.body_width,
+      const xml = mjcfQuadruped(c, { abduction_offset: p.abduction_offset, upper_length: p.upper_length, lower_length: p.lower_length, body_length: p.body_length, body_width: p.body_width,
         start_z: this.startZ, masses, timestep: this.timestep });
       this.model = mj.MjModel.from_xml_string(xml);
       this.data = new mj.MjData(this.model);

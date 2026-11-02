@@ -15,26 +15,21 @@ every value, so values are compared on the same perturbations): every body mass 
 and the servo latency drawn uniformly from 18 to 22 ms (the baseline is 20 ms). The spread in the results is the spread from these
 perturbations only; it is not a measurement of anything on a real robot.
 
-    python scripts/gait/sweeps/trot_1p7_one_at_a_time.py        # needs mujoco; 420 runs, parallel over the CPU cores
+    uv run --extra sim python scripts/gait/sweeps/trot_1p7_one_at_a_time.py        # needs mujoco; 420 runs, parallel over the CPU cores
 """
 import dataclasses
-import json
 import math
 import multiprocessing
-import os
-import sys
 
-import numpy as np
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-from mojito.robot import gaits  # noqa: E402
-from mojito.sim import actuators, gait_replay, mjcf  # noqa: E402
+from mojito.results import results_path, write_result
+from mojito.robot import gaits
+from mojito.sim import actuators, design_sweep, gait_replay
 
 PERIOD, DUTY, SPEED = 1.7, 0.5, 0.15
 BASE = {"kp": 30.0, "kd": 0.5, "lift": 0.03, "height": 0.19}
 ITERATIONS = 10
-MASS_SPREAD = 0.05  # each mass times a uniform factor in 1 +- this
-LATENCY = (0.018, 0.022)  # s, uniform
+MASS_SPREAD = design_sweep.MASS_SPREAD  # each mass times a uniform factor in 1 +- this
+LATENCY = design_sweep.LATENCY  # s, uniform
 SWEEPS = {
     "kp": [float(k) for k in range(15, 151, 15)],
     "kd": [0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 1.0, 1.25, 1.5, 2.0],
@@ -53,9 +48,7 @@ def one(cell):
     p[sweep] = value
     if sweep == "kp":
         p["kd"] = kd_for(value)
-    rng = np.random.default_rng(iteration)
-    masses = {k: v * rng.uniform(1 - MASS_SPREAD, 1 + MASS_SPREAD) for k, v in mjcf.DEFAULT_MASSES.items()}
-    latency = rng.uniform(*LATENCY)
+    masses, latency = design_sweep.draw_masses_and_latency(1.0, iteration)  # draw i seeds the generator with i
     gait = dataclasses.replace(gaits.TROT, period=PERIOD, duty=DUTY, lift=p["lift"])
     r = gait_replay.run_gait(gait, (SPEED, 0.0), 0.0, cycles=3, height=p["height"], masses=masses,
                              servo=actuators.ServoParams(kp=p["kp"], kd=p["kd"], latency=latency))
@@ -88,8 +81,7 @@ def main():
                         "lift_m": BASE["lift"], "height_m": BASE["height"]},
            "kd_rule": "kd = 0.5 * sqrt(kp / 30) in the kp sweep", "iterations": ITERATIONS,
            "mass_spread": MASS_SPREAD, "latency_s_range": list(LATENCY), "sweeps": SWEEPS, "runs": runs}
-    with open("results/gait/sweeps/parameters/trot_1p7_one_at_a_time.json", "w") as f:
-        json.dump(out, f, indent=1)
+    write_result(results_path("gait", "sweeps", "parameters", "trot_1p7_one_at_a_time.json"), out)
     print(f"{sum(r['walked'] for r in runs)} of {len(runs)} walked")
 
 

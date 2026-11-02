@@ -731,5 +731,15 @@
       "feet_down_mean": 2.76,
       "slip_max_mm_per_step": 4.75
     }
-  ]
+  ],
+  "provenance": {
+    "git_commit": "ac73cf9d74aefaa20a54d0faa0d0b669763016d0",
+    "git_dirty": false,
+    "script": "scripts/gait/sweeps/trot_period_sweep.py",
+    "argv": [],
+    "python": "3.12.3",
+    "numpy": "2.5.4",
+    "utc": "2026-11-01T08:12:53Z",
+    "mujoco": "3.16.0"
+  }
 }

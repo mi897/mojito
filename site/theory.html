@@ -161,7 +161,7 @@
       <div class="card chart-card" style="margin:1.2em 0"><h4>Torque-speed line</h4><p class="sub">available torque along the direction of motion, from the model's formulas</p>
         <div class="row" style="grid-template-columns:110px 1fr 60px;max-width:420px"><label for="volts">supply voltage</label><input type="range" id="volts" min="5" max="6" step="0.1" value="5"><output id="volts-v">5.0 V</output></div>
         <div id="c-servo"></div>
-        <p class="read">Listed (unverified) figures: 19 kg·cm and 0.16 s/60° at 5 V; 21.5 kg·cm and 0.14 s/60° at 6.8 V; 1 kg·cm = 0.0980665 N·m. The model refuses to run outside 5–6 V.</p></div>
+        <p class="read">Listed (unverified) figures: <span id="servo-5v"></span> at 5 V; <span id="servo-68v"></span> at 6.8 V. The model refuses to run outside 5–6 V.</p></div>
       <p>Test against a closed form: a servo holding a mass \(m\) on a horizontal arm of length \(L\) settles at the root of \(k_p q = m g L\cos q\) while the torque is below the limit, and above the limit sags until \(\cos q = \tau_{\text{stall}}/(m g L)\). The gains (kp 10, kd 0.2) are placeholders, and the physics results depend on them: <a href="results.html#s2c">kp 10 against kp 100</a> changes the crawl from 0.028 to 0.040&nbsp;m/s.</p>
 
       <h2 id="physics">Physics <small class="muted">· <code>mojito/sim/mjcf.py</code>, <code>stand.py</code>, <code>gait_replay.py</code></small></h2>
@@ -187,28 +187,36 @@
 
       <h2 id="repro">Reproduce it</h2>
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
-pip install -r requirements.txt            # NumPy, SciPy, Matplotlib, Pillow
+./scripts/setup.sh                         # installs uv and just, then NumPy, SciPy, Matplotlib, Pillow, MuJoCo and the mojito package
+source .venv/bin/activate                  # every command below runs inside it (or prefix each with: uv run --extra sim)
 python -m unittest discover tests          # all tests (PyTorch, MuJoCo and Node ones skip if absent)
-python scripts/learning/evaluate.py                 # network against exact IK -> results/learning/metrics.json
-python scripts/body/make_body_demos.py          # posture, trot, crawl -> results/body/body_metrics.json, GIFs
-pip install mujoco
-python scripts/stand/stand_test.py               # stand test in physics
-python scripts/gait/gait_replay.py              # trot and crawl in physics
-python scripts/gait/live_gait.py                # live gait explorer at 127.0.0.1:8765
-python scripts/website/site_sweep.py               # the 144 runs behind the physics lab on this site
-python scripts/website/build_site.py &amp;&amp; python -m http.server -d site   # this website</code></pre>
+python scripts/learning/evaluate.py        # network against exact IK -> results/learning/metrics.json
+python scripts/body/make_body_demos.py     # posture, trot, crawl -> results/body/body_metrics.json, GIFs
+python scripts/stand/stand_test.py         # stand test in physics
+python scripts/gait/gait_replay.py         # trot and crawl in physics
+python scripts/gait/live_gait.py           # live gait explorer at 127.0.0.1:8765
+python scripts/website/site_sweep.py       # the recorded runs behind the physics lab on this site
+python scripts/website/build_site.py &amp;&amp; python -m http.server -d site   # this website
+just results                               # or: every result in dependency order (several hours)</code></pre>
     </div>
   </div>
 </main>
 <script src="assets/charts.js"></script>
+<script src="data/constants.js"></script>
 <script>
 document.addEventListener('mojito-ready', () => {
-  const KGCM = 0.0980665, lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
-  const el = document.getElementById('c-servo'), range = document.getElementById('volts'), out = document.getElementById('volts-v');
+  // listed servo figures from data/constants.js (actuators.ServoParams): N·m stall torque and rad/s no-load speed at 5 and 6.8 V
+  const C = window.MOJITO_CONSTANTS, el = document.getElementById('c-servo');
+  if (!C) { el.innerHTML = '<p class="muted small">site data missing: run scripts/website/build_site.py</p>'; return; }
+  const S = C.servo, lerp = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+  const range = document.getElementById('volts'), out = document.getElementById('volts-v');
+  const figures = (stall, noload) => `${stall.toFixed(2)} N·m and ${((Math.PI / 3) / noload).toFixed(2)} s/60°`;
+  document.getElementById('servo-5v').textContent = figures(S.stall_5v, S.noload_5v);
+  document.getElementById('servo-68v').textContent = figures(S.stall_68v, S.noload_68v);
   function draw() {
     const v = parseFloat(range.value); out.textContent = v.toFixed(1) + ' V';
-    const stall = lerp(v, 5, 19 * KGCM, 6.8, 21.5 * KGCM), noload = lerp(v, 5, (Math.PI / 3) / 0.16, 6.8, (Math.PI / 3) / 0.14);
-    const ref = lerp(5, 5, 19 * KGCM, 6.8, 21.5 * KGCM), refNo = (Math.PI / 3) / 0.16;
+    const stall = lerp(v, 5, S.stall_5v, 6.8, S.stall_68v), noload = lerp(v, 5, S.noload_5v, 6.8, S.noload_68v);
+    const ref = S.stall_5v, refNo = S.noload_5v;
     Charts.line(el, { x: { label: 'joint speed, rad/s', domain: [0, 7], zero: true, fmt: x => x }, y: { label: 'available torque, N·m', domain: [0, 2.2], fmt: x => x.toFixed(1) },
       series: [{ name: 'at 5 V', color: 'var(--muted)', dashed: true, width: 1.6, points: [[0, ref], [refNo, 0]] }, { name: `at ${v.toFixed(1)} V`, color: 'var(--blue)', width: 2.6, points: [[0, stall], [noload, 0]] }],
       hlines: [{ y: stall / 2, label: 'half of stall', color: 'var(--orange)' }], aspect: 2.4 });

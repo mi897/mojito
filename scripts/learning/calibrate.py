@@ -5,39 +5,38 @@ offsets differ from the drawing. We command some poses, "measure" where the
 foot ended up (with noise), fit the six unknowns through forward kinematics,
 and hand the fitted lengths to the same network. No retraining.
 
-    python scripts/learning/calibrate.py [--measurements 30] [--noise-mm 1.0]
+    uv run --extra sim python scripts/learning/calibrate.py [--measurements 30] [--noise-mm 1.0]
 
 With --urdf the network is checked against that URDF's limb, and the fitted
 lengths are written back into a copy of the URDF (--out-urdf):
 
-    python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FL
+    uv run --extra sim python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FL
 """
 import argparse
 import json
 import os
-import sys
 
 import numpy as np
 from scipy.optimize import least_squares
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-import mojito  # noqa: E402
-from mojito.geometry import spec as specmod, urdf as urdf_mod  # noqa: E402
+import mojito
+from mojito.geometry import spec as specmod, urdf as urdf_mod
+from mojito.learning.backend import add_backend_argument
+from mojito.results import portable_path, repo_path, results_path, write_result
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default="weights/ik_leg.npz")
+    ap.add_argument("--weights", default=repo_path("weights", "ik_leg.npz"))
     ap.add_argument("--measurements", type=int, default=30)
     ap.add_argument("--noise-mm", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=7)
-    ap.add_argument("--out", default="results/learning/calibration.json")
+    ap.add_argument("--out", default=results_path("learning", "calibration.json"))
     ap.add_argument("--urdf", help="check the weights against this URDF and write the calibrated lengths back")
     ap.add_argument("--manifest")
     ap.add_argument("--limb", help="which limb of the URDF is the one being calibrated (default: the first)")
-    ap.add_argument("--out-urdf", default="results/learning/calibrated.urdf")
-    ap.add_argument("--backend", choices=mojito.learning.backend.BACKENDS, default=None,
-                    help="numpy or torch; default is $MOJITO_BACKEND, else numpy")
+    ap.add_argument("--out-urdf", default=results_path("learning", "calibrated.urdf"))
+    add_backend_argument(ap)
     args = ap.parse_args()
 
     robot = limb = None
@@ -88,10 +87,8 @@ def main():
         calibrated = robot.write_back({limb.name: est_lengths})
         os.makedirs(os.path.dirname(args.out_urdf) or ".", exist_ok=True)
         urdf_mod.write(calibrated, args.out_urdf)
-        out.update(limb=limb.name, calibrated_urdf=args.out_urdf, outside_trained_range=warn)
-    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    with open(args.out, "w") as f:
-        json.dump(out, f, indent=1)
+        out.update(limb=limb.name, calibrated_urdf=portable_path(args.out_urdf), outside_trained_range=warn)
+    write_result(args.out, out)
     print(json.dumps(out, indent=1))
 
 

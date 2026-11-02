@@ -84,7 +84,7 @@ the first robot and DC motors with position, velocity and current feedback later
 `docs/STAGE2.md`). A first static bound on total mass is done: with the Stage 2
 design placeholders (150 mm links, 1.25× the Stage 0–1 ones so the servos are not
 oversized), about 1.8 kg (trot) to 2.2 kg (crawl) at most at 5 V and half of stall
-torque, before leg and servo mass and gait dynamics; 1.5 kg is the working target, set below that bound.
+torque, before leg and servo mass and gait dynamics; 1.5 kg is the working target, set below that bound (the simulator's placeholder masses total 1.72 kg, above it).
 Stage 0–1 keeps its 120 mm placeholders until a design is chosen. Simulation ground truth (foot and base world positions) is used
 for evaluation and rewards, not as policy input.
 

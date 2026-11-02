@@ -34,7 +34,7 @@
 
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-kin" aria-selected="true">Kinematic lab · live, any value</button>
-    <button role="tab" id="tab-phys" aria-selected="false">Physics lab · MuJoCo runs, 144 combinations</button>
+    <button role="tab" id="tab-phys" aria-selected="false">Physics lab · MuJoCo runs, <span data-bind="physics_sweep_summary/n_runs" data-fmt="0"></span> combinations</button>
     <button role="tab" id="tab-live" aria-selected="false">Live physics · MuJoCo, live</button>
   </div>
 
@@ -76,7 +76,7 @@
             <li><b>Foot positions</b> come from the gait generator: a grounded foot stays fixed in the world, a swinging foot lifts and moves to where its next stance starts. The legs follow by closed-form inverse kinematics; the trained network is not used here (it agrees with the closed form to a median 0.17 mm, see Results).</li>
             <li><b>Weight sharing.</b> Three feet down: the loads that balance the weight are unique. Two feet: the centre of mass is projected on to the line between them. Four feet: the balance is redundant, so the page takes the smallest loads that balance it, dropping any foot that would pull. MuJoCo shows the real split is not even (about 24% / 26% front / rear for a light-legged robot), so treat four-foot torques as an estimate of the order of magnitude.</li>
             <li><b>Body centre = centre of mass</b>, and the legs weigh nothing. The Physics lab has the real masses.</li>
-            <li><b>Torque</b> is |Jᵀ F| for the vertical foot force F, in each leg's frame. <b>Stall torque</b> is the listed (unverified) 19 kg·cm at 5 V and 21.5 kg·cm at 6.8 V, on a straight line between.</li>
+            <li><b>Torque</b> is |Jᵀ F| for the vertical foot force F, in each leg's frame. <b>Stall torque</b> is the listed (unverified) <span id="kin-stall-5v"></span> N·m at 5 V and <span id="kin-stall-68v"></span> N·m at 6.8 V, on a straight line between.</li>
             <li><b>"Heaviest robot"</b> scales the current mass until the worst torque in the cycle is half the stall torque (an assumed continuous rating). It is an upper bound from weight alone, like <code>torque_envelope.py</code>.</li>
             <li>Nothing here says the robot balances while moving: the trot has two feet down, so the body centre is never inside a support polygon, and that needs dynamics.</li>
           </ul></details>
@@ -123,9 +123,9 @@
       It runs MuJoCo in this page (WebAssembly, downloaded once from jsDelivr, about 11 MB: that failed or is blocked, or this copy of the site was built without <code>data/livemeta.js</code>), or in Python on your computer, which this page then only draws.
       The local server listens on 127.0.0.1 only and refuses other hosts and origins; nothing is sent anywhere.
 <pre><code>git clone https://github.com/mi897/mojito &amp;&amp; cd mojito
-pip install numpy scipy matplotlib pillow mujoco
-python scripts/website/build_site.py
-python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/playground.html#live</code></pre>
+./scripts/setup.sh                                        # installs uv, then the dependencies and the mojito package
+uv run --extra sim python scripts/website/build_site.py
+uv run --extra sim python scripts/website/serve_site.py   # then open http://127.0.0.1:8000/playground.html#live</code></pre>
       Meanwhile the Kinematic and Physics labs work without either.</div>
     <div class="notice" id="live-loading" hidden><b>Loading the physics engine…</b> MuJoCo's WebAssembly build is about 11 MB; the browser keeps it afterwards.</div>
     <div id="live-ui" hidden>
@@ -152,14 +152,17 @@ python scripts/website/serve_site.py        # then open http://127.0.0.1:8000/pl
 </main>
 
 <script src="assets/charts.js"></script>
+<script src="data/constants.js"></script>
 <script src="assets/mojito.js"></script>
 <script src="assets/viewer.js"></script>
-<script src="assets/playground.js"></script>
+<script src="assets/playground/common.js"></script>
+<script src="assets/playground/kinematic.js"></script>
+<script src="assets/playground/replay.js"></script>
 <script src="data/livemeta.js"></script>
-<script src="assets/browsersim.js"></script>
-<script src="assets/touchpad.js"></script>
-<script src="assets/drive.js"></script>
-<script src="assets/livephys.js"></script>
+<script src="assets/playground/browsersim.js"></script>
+<script src="assets/playground/touchpad.js"></script>
+<script src="assets/playground/drive.js"></script>
+<script src="assets/playground/livephys.js"></script>
 <script>
   // The physics grid is 1.3 MB: fetch it only when the tab is opened.
   window.loadSweep = () => window.MOJITO_SWEEP ? Promise.resolve() : new Promise((ok, no) => {

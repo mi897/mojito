@@ -17,7 +17,7 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
   `docs/claude-guides`. One topic per branch. Push the branch; open a pull
   request only when asked.
 - If a branch builds on another unmerged branch, say so when reporting.
-- Run the tests before every commit: `python -m unittest discover tests`.
+- Run the tests before every commit: `python -m unittest discover tests`, and keep `just lint` (ruff) clean.
 - New maths gets a test that checks it against something independent:
   finite differences, the closed-form IK, or a conservation property (for
   example "grounded feet do not move in the world").
@@ -32,16 +32,22 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
 ## Layout
 
 ```
-mojito/                the library, in four subpackages (each holds at most about a dozen files)
+mojito/                the library, in four subpackages (each holds at most about a dozen files), plus
+                       results.py (write_result: results JSON with a provenance block; paths from the repo root)
+                       and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
-                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/)
+                       kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
+                       placeholders.py (placeholder dimensions; QuadrupedDesign, STAGE1_QUADRUPED, SIM_QUADRUPED with masses), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
-  learning/            model.py (IK network, NumPy, Adam), torch_model.py (PyTorch backend), backend.py (make_model, load_model)
+  learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
+                       torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
-                       stand.py, gait_replay.py, design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
+                       robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py,
+                       design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
-site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics), charts, viewer, playground, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html), touchpad.js, browsersim.js (live_sim in the browser on MuJoCo WebAssembly; constants from the generated data/livemeta.js); data/ and media/ are generated
+site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics; constants from the generated data/constants.js), charts, viewer,
+                       assets/playground/ (common.js, kinematic.js and replay.js for the two labs, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html), touchpad.js, browsersim.js (live_sim in the browser on MuJoCo WebAssembly; constants from the generated data/livemeta.js)); data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
   body/                make_body_demos, torque_envelope
@@ -51,7 +57,8 @@ scripts/               entry points, one folder per topic
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
-tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/;
+                       test_results.py for mojito/results.py (and that scripts use it and the palette)
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
@@ -73,18 +80,26 @@ docs/PLAN.md           roadmap;  docs/STAGE2.md  current stage;  docs/demo.html 
 ## Commands
 
 Setup is `./scripts/setup.sh` (installs uv and just, then `uv sync`); dependencies are in `pyproject.toml`, pinned in
-`uv.lock`. Tasks live in the `justfile` (`just` lists them). Run any script as `uv run --extra sim python <script>`.
+`uv.lock`. `uv sync` installs the `mojito` package editable (hatchling, only `mojito/` is packaged), so scripts import it
+without a `sys.path` line and work from any directory. Tasks live in the `justfile` (`just` lists them). Run any script as
+`uv run --extra sim python <script>` (plain `python` works inside the activated `.venv`; outside it `mojito` is not importable).
+`just results` regenerates every committed result in dependency order (weights, evaluate/calibrate/make_demo, body demos,
+torque, stand, gait, sweeps, design, site_sweep, build_site); it takes about 75 min on a 4-CPU Linux container (summed from the measured steps, see the justfile), and `just results-fast` skips the
+slow steps (training, kp x kd grid, combined sweep, design draws, tuning and tuned sweep).
 
 ```bash
+# Inside the activated .venv (source .venv/bin/activate); otherwise prefix each line with: uv run --extra sim
 python -m unittest discover tests          # all tests (just test); PyTorch ones skip if torch is absent
-python scripts/learning/train.py                    # 40000 steps (about 12 min on 2 CPU cores, not re-timed), writes weights/ik_leg.npz
+uvx ruff@0.16.9 check .                    # lint (just lint; just lint --fix applies the safe fixes); rules in pyproject.toml [tool.ruff]
+just results                               # every committed result in dependency order (SLOW, about 75 min on 4 CPUs); just results-fast skips the slow steps
+python scripts/learning/train.py                    # 40000 steps (933 s on a 4-CPU Linux container, NumPy 2.5.4, Python 3.12: results/learning/training_log.json), writes weights/ik_leg.npz
 python scripts/learning/evaluate.py                 # results/learning/metrics.json and plots
 python scripts/learning/calibrate.py                # results/learning/calibration.json
 python scripts/learning/make_demo.py                # results/learning/step_demo.gif, docs/demo.html
 python scripts/body/torque_envelope.py          # results/body/torque_envelope.json, static mass bound
 python scripts/stand/stand_test.py               # results/stand/stand_test.json (needs mujoco)
 python scripts/stand/sit_to_stand.py             # results/stand/sit_to_stand.json and .png (needs mujoco)
-python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, about 2.5 min on 4 cores); then plot_design_sweep.py; design_sweep_draws.py is the same with 10 mass and latency draws per cell (about 25 min); design_tune.py (grid search of gait settings per design, about 35 min) then design_sweep_tuned.py (about 20 min)
+python scripts/design/design_sweep.py         # results/design/design_sweep.json (needs mujoco, 1 min on 4 cores); then plot_design_sweep.py; design_sweep_draws.py is the same with 10 mass and latency draws per cell (7 min); design_tune.py (grid search of gait settings per design, 10 min) then design_sweep_tuned.py (13 min, run while another sweep was using the cores)
 python scripts/stand/make_stand_demo.py          # results/stand/stand_demo.gif, sit_to_stand_demo.gif (needs mujoco)
 python scripts/gait/gait_replay.py              # results/gait/gait_replay.json (needs mujoco)
 python scripts/gait/try_gait.py --help          # try other gait timings in physics, GIF in results/gait/try/
@@ -118,8 +133,14 @@ else NumPy.
   limits and the number of free lengths come from `robots/*/*.urdf` (plus the
   JSON manifest) via `mojito/geometry/spec.py`, not from Python constants. Weight files
   embed the limb spec; loading them against a different URDF raises
-  `SpecMismatch`. The example URDFs in `robots/` come from the generators
-  in `mojito/geometry/robots.py`, so change the generator and regenerate rather than
+  `SpecMismatch`. The example URDFs and manifests in `robots/` come from the generators
+  in `mojito/geometry/robots.py`, which take their placeholder dimensions from
+  `mojito/geometry/placeholders.py` (the one place they are written; `leg.NOMINAL_LENGTHS`,
+  `leg.JOINT_LIMITS`, `body.BODY_LENGTH` and `body.BODY_WIDTH` re-export them for the
+  built-in leg model). The simulator's larger placeholder quadruped is `placeholders.SIM_QUADRUPED`
+  (a `QuadrupedDesign`: leg lengths, body size, stance height, masses); the simulation functions
+  take `design=` and default to it, so never retype its numbers. Gravity is `statics.G` (magnitude;
+  `mjcf.GRAVITY` is `-G` along z). Change the placeholder or generator and regenerate rather than
   hand-editing both. Joint-limit changes need retraining;
   link-length changes do not.
 - **Link lengths are arguments, never module constants.** For the built-in
@@ -138,7 +159,7 @@ else NumPy.
   they do not depend on trained weights.
 - **Backends:** both must keep the same public methods (`predict`,
   `predict_leg`, `train_step`, `loss_and_grads`, `state`, `save`, `load`,
-  `to_json`) and the same `.npz` layout, with `W[i]` shaped (inputs, outputs).
+  `to_json`; the shared part is `IKNetBase` in `mojito/learning/base.py`) and the same `.npz` layout, with `W[i]` shaped (inputs, outputs).
   `predict` takes and returns NumPy arrays on both. A change to one backend
   needs the matching change to the other and a parity test in
   `tests/learning/test_backends.py`.
@@ -146,8 +167,8 @@ else NumPy.
 ## Website rules
 
 - The pages never hold a measured number: bind it with `data-bind` to `results/*.json` (checked by `tests/website/test_build_site.py`) or draw it from the JSON in a script.
-- `site/assets/mojito.js` is a port of `mojito/robot/leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/website/test_site_js.py` compares them.
-- `site/assets/browsersim.js` is a port of `mojito/sim/live_sim.py`, `actuators.py` (Servo) and `mjcf.py` (the quadruped). Change one, change the other; `tests/website/test_browsersim.py` compares them (needs `npm install --no-save @mujoco/mujoco@3.16.0`, the version `uv.lock` pins for Python). A constant it needs goes in `live_sim.browser_constants()`, never copied into the JavaScript.
+- `site/assets/mojito.js` is a port of `mojito/robot/leg.py`, `body.py`, `gaits.py`, `statics.py`. Change one, change the other; `tests/website/test_site_js.py` compares them. Its constants (placeholder dimensions, joint limits, gait presets, gravity, servo figures) come from `site/data/constants.js`, which `build_site.site_constants()` writes from the Python: add one there, never as a literal in the JavaScript. Pages load `data/constants.js` before `mojito.js`.
+- `site/assets/playground/browsersim.js` is a port of `mojito/sim/live_sim.py`, `actuators.py` (Servo) and `mjcf.py` (the quadruped). Change one, change the other; `tests/website/test_browsersim.py` compares them (needs `npm install --no-save @mujoco/mujoco@3.16.0`, the version `uv.lock` pins for Python). A constant it needs goes in `live_sim.browser_constants()`, never copied into the JavaScript.
 - `scripts/website/serve_site.py` is local only: it binds 127.0.0.1 and checks Host and Origin (tested in `tests/website/test_serve_site.py`). Do not add a public mode without asking the owner.
 - Say in the page what a lab does not model. The kinematic lab is static (no dynamics); the physics lab replays stored runs, no interpolation.
 
@@ -160,14 +181,24 @@ calibrate, make_demo and make_body_demos and update every number quoted in
 `README.md`, `docs/RESULTS.md`, `docs/PHYSICS.md` and `docs/PLAN.md` in the same branch. Edit
 `docs/demo_template.html`, not `docs/demo.html`.
 
+Scripts write results JSON only through `mojito.results.write_result`, which adds a `provenance` block (git commit,
+whether the tree was dirty, script and argv, Python/NumPy/MuJoCo versions, UTC time), and build output paths with
+`results_path(...)` / `repo_path(...)`. Values that describe a run (lengths, gains, timestep) are taken from the settings
+the run used (`gait_replay.settings_for`, `actuators.ServoParams`, `results.defaults_of(run_gait)`), never typed in.
+`build_site.py` moves the provenance blocks into `data/build.js`, so pages see the results unchanged.
+
 ## Environment notes
 
 - Dependencies: NumPy, SciPy, Matplotlib, Pillow. PyTorch and MuJoCo are optional (their tests skip if absent).
+- Python 3.10 or newer (`requires-python`); CI runs the NumPy tests on 3.10 and 3.12, PyTorch on 3.12. Do not use
+  3.11+ features (`tomllib`, `typing.Self`, `ExceptionGroup`, `datetime.UTC`).
+- ruff runs through `uvx` at a pinned version, not as a dev dependency: changing `uv.lock` needs the PyTorch
+  indexes, which some sessions cannot reach. Bump the version in the `justfile` and `.github/workflows/tests.yml` together.
 - Some cloud sessions cannot install packages. If PyTorch cannot be installed,
   do not claim the PyTorch path was run locally: push the branch and read the
   result of the `tests` GitHub Actions workflow, which runs both backends.
-- Plots follow one palette (`BLUE`, `ORANGE`, `AQUA` at the top of the
-  scripts), one y-axis per chart, text in neutral ink.
+- Plots follow one palette (`BLUE`, `ORANGE`, `AQUA`, `PURPLE`, `INK`, `GREY` from `mojito/palette.py`; never redefine
+  them in a script), one y-axis per chart, text in neutral ink.
 
 ## Open questions for the owner
 

@@ -5,20 +5,39 @@ on:
   pull_request:
 
 jobs:
+  # ruff, with the rules in pyproject.toml. Run through uvx at a pinned version, so it needs no entry in uv.lock (`just lint`).
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: ruff
+        run: uvx ruff@0.16.9 check . --output-format github
+
   tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        backend: [numpy, torch]
+        # numpy on the oldest Python pyproject.toml allows (requires-python >= 3.10) and on 3.12; torch on 3.12 only.
+        include:
+          - backend: numpy
+            python: "3.10"
+          - backend: numpy
+            python: "3.12"
+          - backend: torch
+            python: "3.12"
+    name: tests (${{ matrix.backend }}, Python ${{ matrix.python }})
+    env:
+      UV_PYTHON: ${{ matrix.python }}  # every uv sync and uv run below uses this interpreter
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        run: uv sync ${{ matrix.backend == 'torch' && '--extra torch-cpu' || '' }}
+        run: uv sync --locked --extra sim ${{ matrix.backend == 'torch' && '--extra torch-cpu' || '' }}
       - name: Unit tests
         run: uv run python -m unittest discover tests -v
       - name: Short training run and scripts on this backend
@@ -28,9 +47,13 @@ jobs:
           uv run python scripts/learning/train.py --steps 1500 --out /tmp/ci.npz --log /tmp/ci.json
           uv run python scripts/learning/calibrate.py --out /tmp/cal.json
           uv run python scripts/body/make_body_demos.py --no-gif
+          # Fail if these runs changed any tracked file outside results/. results/ is left out on purpose: make_body_demos
+          # rewrites results/body/body_metrics.json with a new provenance block (commit, time) on every run, and the torch
+          # backend computes in float32, so its numbers need not match the committed NumPy ones to the last digit.
           git diff --stat
+          git diff --exit-code --stat -- . ':(exclude)results'
 
-  # The in-browser simulation (site/assets/browsersim.js, MuJoCo WebAssembly) against the Python simulation: needs MuJoCo for Python,
+  # The in-browser simulation (site/assets/playground/browsersim.js, MuJoCo WebAssembly) against the Python simulation: needs MuJoCo for Python,
   # node, the npm package at the same MuJoCo version, and the site data that carries the constants. Skipped in the jobs above.
   browser-sim:
     runs-on: ubuntu-latest
@@ -41,7 +64,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        run: uv sync --extra sim
+        run: uv sync --locked --extra sim
       - name: MuJoCo WebAssembly package
         run: npm install --no-save --no-package-lock @mujoco/mujoco@3.16.0
       - name: Build site data

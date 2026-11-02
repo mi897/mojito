@@ -6,7 +6,7 @@
 <title>Mojito live gait</title>
 <style>
 :root{--bg:#fafaf8;--panel:#fff;--ink:#2b2b2b;--muted:#6b6b6b;--line:#dcdcd6;--grid:#d6d6d0;--accent:#2a78d6;--warn:#eb6834;
---FL:#2a78d6;--FR:#eb6834;--RL:#2aa198;--RR:#8a5cc2;--body:#333}
+--FL:#2a78d6;--FR:#eb6834;--RL:#1fa6a0;--RR:#8a5cc2;--body:#333}
 @media (prefers-color-scheme:dark){:root{--bg:#161616;--panel:#202020;--ink:#e8e8e4;--muted:#9a9a94;--line:#3a3a38;--grid:#3a3a38;--body:#ddd}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
@@ -135,7 +135,7 @@ function showMode(mode){
 function setDrive(on){drive.setOn(on);const b=document.getElementById('drive');b.classList.toggle('on',on);b.textContent='Drive: '+(on?'on':'off');}
 function setChase(on){view.chase=on;document.getElementById('chase').classList.toggle('on',on);if(on){view.zoom=Math.max(view.zoom,1.6);view.follow=true;document.getElementById('follow').classList.add('on');}}
 function resetRun(){history=[];view.start=null;if(drive)drive.forget();send('/reset');}
-// ---- drive: keyboard and gamepad (shared with the playground, site/assets/drive.js) ----
+// ---- drive: keyboard and gamepad (shared with the playground, site/assets/playground/drive.js) ----
 let drive=null;
 let touchpad=null;
 function startDrive(){

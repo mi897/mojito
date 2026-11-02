@@ -60,86 +60,86 @@ class URDFModel:
 
     # ---- structure queries ----
     def root(self) -> str:
-        children = {j.child for j in self.joints.values()}
-        roots = [l for l in self.links if l not in children]
+        children = {joint.child for joint in self.joints.values()}
+        roots = [link for link in self.links if link not in children]
         return roots[0]
 
     def parent_joint(self, link: str) -> Joint | None:
-        for j in self.joints.values():
-            if j.child == link:
-                return j
+        for joint in self.joints.values():
+            if joint.child == link:
+                return joint
         return None
 
     def chain(self, base: str, tip: str) -> list:
         """Joints from `base` down to `tip`, in order. Raises if tip is not below base."""
         if tip not in self.links:
             raise URDFError(f"link {tip!r} does not exist")
-        out, link = [], tip
+        joints_up, link = [], tip  # collected from the tip upwards
         while link != base:
-            j = self.parent_joint(link)
-            if j is None:
+            joint = self.parent_joint(link)
+            if joint is None:
                 raise URDFError(f"link {tip!r} is not a descendant of {base!r}")
-            out.append(j)
-            link = j.parent
-        return out[::-1]
+            joints_up.append(joint)
+            link = joint.parent
+        return joints_up[::-1]
 
     def children(self, link: str) -> list:
-        return [j for j in self.joints.values() if j.parent == link]
+        return [joint for joint in self.joints.values() if joint.parent == link]
 
     def leaves(self, below: str | None = None) -> list:
         start = below or self.root()
-        out, stack = [], [start]
+        leaf_links, stack = [], [start]
         while stack:
-            l = stack.pop()
-            kids = self.children(l)
-            if not kids and l != start:
-                out.append(l)
-            stack.extend(j.child for j in reversed(kids))
-        return out
+            link = stack.pop()
+            child_joints = self.children(link)
+            if not child_joints and link != start:
+                leaf_links.append(link)
+            stack.extend(joint.child for joint in reversed(child_joints))
+        return leaf_links
 
 
 # --------------------------------------------------------------------------- parse
-def _floats(text: str | None, n: int, default: tuple, where: str) -> tuple:
+def _floats(text: str | None, n_numbers: int, default: tuple, where: str) -> tuple:
     if text is None:
         return default
     parts = text.split()
     try:
-        vals = tuple(float(x) for x in parts)
+        values = tuple(float(part) for part in parts)
     except ValueError:
         raise URDFError(f"{where}: cannot read numbers from {text!r}") from None
-    if len(vals) != n:
-        raise URDFError(f"{where}: expected {n} numbers, got {len(vals)} in {text!r}")
-    return vals
+    if len(values) != n_numbers:
+        raise URDFError(f"{where}: expected {n_numbers} numbers, got {len(values)} in {text!r}")
+    return values
 
 
-def _parse_joint(el: ET.Element) -> Joint:
-    name = el.get("name")
+def _parse_joint(element: ET.Element) -> Joint:
+    name = element.get("name")
     if not name:
         raise URDFError("a <joint> has no name")
-    jtype = el.get("type")
-    if jtype not in JOINT_TYPES:
-        raise URDFError(f"joint {name!r}: unknown type {jtype!r}")
-    parent, child = el.find("parent"), el.find("child")
+    joint_type = element.get("type")
+    if joint_type not in JOINT_TYPES:
+        raise URDFError(f"joint {name!r}: unknown type {joint_type!r}")
+    parent, child = element.find("parent"), element.find("child")
     if parent is None or child is None or not parent.get("link") or not child.get("link"):
         raise URDFError(f"joint {name!r} needs <parent link=...> and <child link=...>")
-    origin, axis, limit, mimic = el.find("origin"), el.find("axis"), el.find("limit"), el.find("mimic")
+    origin, axis, limit, mimic = element.find("origin"), element.find("axis"), element.find("limit"), element.find("mimic")
     where = f"joint {name!r}"
-    kw = {}
+    limit_values = {}
     if limit is not None:
         for key in ("lower", "upper"):
             if limit.get(key) is not None:
-                kw[key] = float(limit.get(key))
-        if jtype == "revolute" and "lower" not in kw:
-            kw["lower"] = 0.0  # URDF default when only <limit> is present
-        if jtype == "revolute" and "upper" not in kw:
-            kw["upper"] = 0.0
+                limit_values[key] = float(limit.get(key))
+        if joint_type == "revolute" and "lower" not in limit_values:
+            limit_values["lower"] = 0.0  # URDF default when only <limit> is present
+        if joint_type == "revolute" and "upper" not in limit_values:
+            limit_values["upper"] = 0.0
     return Joint(
-        name=name, type=jtype, parent=parent.get("link"), child=child.get("link"),
+        name=name, type=joint_type, parent=parent.get("link"), child=child.get("link"),
         xyz=_floats(origin.get("xyz") if origin is not None else None, 3, (0.0, 0.0, 0.0), where + " origin xyz"),
         rpy=_floats(origin.get("rpy") if origin is not None else None, 3, (0.0, 0.0, 0.0), where + " origin rpy"),
         axis=_floats(axis.get("xyz") if axis is not None else None, 3, (1.0, 0.0, 0.0), where + " axis"),
         mimic=mimic.get("joint") if mimic is not None else None,
-        **kw,
+        **limit_values,
     )
 
 
@@ -148,25 +148,25 @@ def _check(model: URDFModel) -> None:
     if len(link_set) != len(model.links):
         raise URDFError("duplicate link names")
     seen_children = {}
-    for j in model.joints.values():
-        for end in (j.parent, j.child):
+    for joint in model.joints.values():
+        for end in (joint.parent, joint.child):
             if end not in link_set:
-                raise URDFError(f"joint {j.name!r} refers to link {end!r}, which is not defined")
-        if j.child in seen_children:
-            raise URDFError(f"link {j.child!r} has two parent joints ({seen_children[j.child]!r}, {j.name!r}); "
+                raise URDFError(f"joint {joint.name!r} refers to link {end!r}, which is not defined")
+        if joint.child in seen_children:
+            raise URDFError(f"link {joint.child!r} has two parent joints ({seen_children[joint.child]!r}, {joint.name!r}); "
                             "closed loops are not supported")
-        seen_children[j.child] = j.name
-    roots = [l for l in model.links if l not in seen_children]
+        seen_children[joint.child] = joint.name
+    roots = [link for link in model.links if link not in seen_children]
     if len(roots) != 1:
         raise URDFError(f"expected exactly one root link, found {roots or 'none (cycle)'}")
     # every link must reach the root, which also rules out cycles
-    for l in model.links:
-        hops, cur = 0, l
-        while cur in seen_children:
-            cur = model.joints[seen_children[cur]].parent
+    for link in model.links:
+        hops, current = 0, link
+        while current in seen_children:
+            current = model.joints[seen_children[current]].parent
             hops += 1
             if hops > len(model.links):
-                raise URDFError(f"cycle in the joint tree near link {l!r}")
+                raise URDFError(f"cycle in the joint tree near link {link!r}")
 
 
 def parse(source: str) -> URDFModel:
@@ -175,53 +175,53 @@ def parse(source: str) -> URDFModel:
     if "<" not in source:
         if not os.path.exists(source):
             raise URDFError(f"no such file: {source}")
-        with open(source, encoding="utf-8") as f:
-            text = f.read()
+        with open(source, encoding="utf-8") as urdf_file:
+            text = urdf_file.read()
     try:
         root = ET.fromstring(text)
-    except ET.ParseError as e:
-        raise URDFError(f"not valid XML: {e}") from None
+    except ET.ParseError as error:
+        raise URDFError(f"not valid XML: {error}") from None
     if root.tag != "robot":
         raise URDFError(f"root element is <{root.tag}>, expected <robot>")
-    links = [l.get("name") for l in root.findall("link")]
+    links = [link.get("name") for link in root.findall("link")]
     if not links or not all(links):
         raise URDFError("every <link> needs a name, and there must be at least one")
     joints = {}
-    for el in root.findall("joint"):
-        j = _parse_joint(el)
-        if j.name in joints:
-            raise URDFError(f"duplicate joint name {j.name!r}")
-        joints[j.name] = j
+    for element in root.findall("joint"):
+        joint = _parse_joint(element)
+        if joint.name in joints:
+            raise URDFError(f"duplicate joint name {joint.name!r}")
+        joints[joint.name] = joint
     model = URDFModel(name=root.get("name", "robot"), links=links, joints=joints, _tree=root)
     _check(model)
     return model
 
 
 # --------------------------------------------------------------------------- write
-def _fmt(values) -> str:
+def _format_numbers(values) -> str:
     return " ".join(repr(float(v)) for v in values)
 
 
-def _sub(parent: ET.Element, tag: str) -> ET.Element:
-    el = parent.find(tag)
-    return el if el is not None else ET.SubElement(parent, tag)
+def _find_or_add(parent: ET.Element, tag: str) -> ET.Element:
+    element = parent.find(tag)
+    return element if element is not None else ET.SubElement(parent, tag)
 
 
-def _sync_joint(el: ET.Element, j: Joint) -> None:
-    el.set("type", j.type)
-    _sub(el, "parent").set("link", j.parent)
-    _sub(el, "child").set("link", j.child)
-    origin = _sub(el, "origin")
-    origin.set("xyz", _fmt(j.xyz))
-    origin.set("rpy", _fmt(j.rpy))
-    if j.movable:
-        _sub(el, "axis").set("xyz", _fmt(j.axis))
-    if j.lower is not None or j.upper is not None:
-        limit = _sub(el, "limit")
-        if j.lower is not None:
-            limit.set("lower", repr(float(j.lower)))
-        if j.upper is not None:
-            limit.set("upper", repr(float(j.upper)))
+def _sync_joint(element: ET.Element, joint: Joint) -> None:
+    element.set("type", joint.type)
+    _find_or_add(element, "parent").set("link", joint.parent)
+    _find_or_add(element, "child").set("link", joint.child)
+    origin = _find_or_add(element, "origin")
+    origin.set("xyz", _format_numbers(joint.xyz))
+    origin.set("rpy", _format_numbers(joint.rpy))
+    if joint.movable:
+        _find_or_add(element, "axis").set("xyz", _format_numbers(joint.axis))
+    if joint.lower is not None or joint.upper is not None:
+        limit = _find_or_add(element, "limit")
+        if joint.lower is not None:
+            limit.set("lower", repr(float(joint.lower)))
+        if joint.upper is not None:
+            limit.set("upper", repr(float(joint.upper)))
         for key in ("effort", "velocity"):  # required by the URDF schema
             limit.attrib.setdefault(key, "0")
 
@@ -229,19 +229,19 @@ def _sync_joint(el: ET.Element, j: Joint) -> None:
 def to_xml(model: URDFModel) -> ET.ElementTree:
     root = copy.deepcopy(model._tree) if model._tree is not None else ET.Element("robot")
     root.set("name", model.name)
-    have_links = {l.get("name") for l in root.findall("link")}
+    have_links = {link.get("name") for link in root.findall("link")}
     for name in model.links:
         if name not in have_links:
             ET.SubElement(root, "link", name=name)
-    elements = {e.get("name"): e for e in root.findall("joint")}
-    for j in model.joints.values():
-        el = elements.get(j.name)
-        if el is None:
-            el = ET.SubElement(root, "joint", name=j.name)
-        _sync_joint(el, j)
-    for name, el in elements.items():
+    elements = {joint_element.get("name"): joint_element for joint_element in root.findall("joint")}
+    for joint in model.joints.values():
+        element = elements.get(joint.name)
+        if element is None:
+            element = ET.SubElement(root, "joint", name=joint.name)
+        _sync_joint(element, joint)
+    for name, element in elements.items():
         if name not in model.joints:
-            root.remove(el)
+            root.remove(element)
     ET.indent(root)
     return ET.ElementTree(root)
 
@@ -250,6 +250,6 @@ def write(model: URDFModel, path: str | None = None) -> str:
     """Serialise to URDF text; also saved to `path` when given."""
     text = ET.tostring(to_xml(model).getroot(), encoding="unicode") + "\n"
     if path is not None:
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(text)
+        with open(path, "w", encoding="utf-8") as urdf_file:
+            urdf_file.write(text)
     return text

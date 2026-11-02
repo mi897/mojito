@@ -8,7 +8,7 @@ Every figure in `ServoParams` is an unverified retailer number for the
 be replaced by a datasheet or a measurement, never as the robot's.
 
 Interface (what a later DC-motor model must also provide):
-    reset(n_joints)                                         forget history for n_joints joints
+    reset(n_joints)                                         forget history; n_joints joints from then on
     step(target_angles, joint_angles, joint_velocities, dt)  commanded joint targets and true state -> joint torques
     reports                       names of the signals the actuator itself feeds back
 A hobby servo reports nothing, so `reports` is empty; a motor with current
@@ -16,6 +16,7 @@ sensing would list ("position", "velocity", "current").
 """
 from __future__ import annotations
 
+import math
 from collections import deque
 from dataclasses import dataclass
 
@@ -68,16 +69,20 @@ class Servo:
     """
     reports: tuple = ()
 
-    def __init__(self, params: ServoParams | None = None):
+    def __init__(self, params: ServoParams | None = None, n_joints: int = 12):
         self.params = params or ServoParams()
-        self._queue: deque = deque()
-        self._time = 0.0
-        self._held = None
+        self.reset(n_joints)
 
     def reset(self, n_joints: int = 12) -> None:
-        self._queue.clear()
-        self._time = 0.0
+        """Forget queued commands and the held target; `last_saturated` becomes `n_joints` False values.
+
+        `n_joints` only sizes `last_saturated` until the first `step`, which takes any number of joints and sets
+        `last_saturated` to the size of its targets.
+        """
+        self._queue: deque = deque()  # (step index at which the command arrives, quantised target)
+        self._step_index = 0
         self._held = None
+        self.last_saturated = np.zeros(n_joints, bool)
 
     def quantise(self, target_angles):
         """Snap `target_angles` to the nearest multiple of the resolution, counted from `centre`:
@@ -86,16 +91,23 @@ class Servo:
         return self.params.centre + np.round((np.asarray(target_angles, float) - self.params.centre) / step) * step
 
     def step(self, target_angles, joint_angles, joint_velocities, dt: float) -> np.ndarray:
+        """Joint torques for one time step of `dt` s. `dt` must stay the same between `reset` calls: the latency is
+        counted in steps of the current `dt`, so a command already queued keeps the step count it was given."""
         params = self.params
-        self._queue.append((self._time + params.latency, self.quantise(target_angles)))
+        # A command sent at step k is seen at the first step j whose time is at least its send time plus the latency:
+        # j dt >= k dt + latency, so j = k + ceil(latency / dt). Counting whole steps keeps that exact over long runs,
+        # where an accumulated float time would drift. The 1e-9 lets a latency that is a multiple of dt up to rounding
+        # (0.02 s at 0.002 s) count as that multiple (10 steps), not one more. tests/sim/test_actuators.py checks it.
+        n_delay_steps = math.ceil(params.latency / dt - 1e-9)
+        self._queue.append((self._step_index + n_delay_steps, self.quantise(target_angles)))
         seen = None
-        while self._queue and self._queue[0][0] <= self._time + 1e-12:
+        while self._queue and self._queue[0][0] <= self._step_index:
             seen = self._queue.popleft()[1]
         if seen is not None:
             self._held = seen
         elif self._held is None:  # nothing has arrived yet: hold where the joint is
             self._held = self.quantise(joint_angles)
-        self._time += dt
+        self._step_index += 1
         joint_angles, joint_velocities = np.asarray(joint_angles, float), np.asarray(joint_velocities, float)
         # PD law on the delayed, quantised target:  torque = kp (target - angle) - kd velocity
         torque = params.kp * (self._held - joint_angles) - params.kd * joint_velocities

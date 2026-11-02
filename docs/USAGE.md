@@ -2,6 +2,27 @@
 
 # Using Mojito
 
+## Running the scripts
+
+`./scripts/setup.sh` (or `uv sync --extra sim`) installs the `mojito` package editable into `.venv`. Run a script with
+`uv run --extra sim python scripts/<topic>/<script>.py`, or with plain `python` after `source .venv/bin/activate`;
+either works from any directory, because outputs go to paths built from the repository root.
+
+Every results JSON a script writes goes through `mojito.results.write_result`, which adds a `provenance` block:
+
+```json
+"provenance": {"git_commit": "...", "git_dirty": false, "script": "scripts/gait/gait_replay.py", "argv": [],
+               "python": "...", "numpy": "...", "mujoco": "...", "utc": "YYYY-MM-DDTHH:MM:SSZ"}
+```
+
+`git_dirty: true` means tracked files differed from that commit, so the commit alone does not reproduce the numbers.
+Files committed before this was added have no block until their script is run again.
+
+To regenerate everything in dependency order, `just results` (about 75 min on a 4-CPU Linux container; the steps and their times are in the
+`justfile`): the weights, then evaluate, calibrate, make_demo and the body demos, then torque, stand and gait in
+physics, the sweeps and the design sweeps, then `site_sweep.py` and `build_site.py`. `just results-fast` keeps the
+current weights and skips the slow sweeps; `just results-from-weights` re-runs only what reads `weights/ik_leg.npz`.
+
 ## One leg
 
 Link lengths are never constants inside the maths. Every function takes them
@@ -54,7 +75,7 @@ only when asked for.
 
 | Scope | How |
 |---|---|
-| One command | `python scripts/learning/train.py --backend torch` |
+| One command | `uv run --extra sim python scripts/learning/train.py --backend torch` |
 | Whole shell session | `export MOJITO_BACKEND=torch` |
 | The rest of a Python process | `mojito.set_backend("torch")` |
 | One call | `mojito.load_model("weights/ik_leg.npz", backend="torch")` |
@@ -70,7 +91,8 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 - `predict` takes and returns NumPy arrays on both, so the body, gait and demo
   code does not care which is active.
 - Inside a larger PyTorch model, use `net.angles(target_position, lengths)` and
-  `mojito.torch_model.forward_kinematics(joint_angles, lengths)`: tensors in, tensors
+  `net.forward_kinematics(joint_angles, lengths)` (which is `net.config.forward`;
+  `leg.forward` and `LimbSpec.forward` both accept tensors): tensors in, tensors
   out, differentiable.
 - The tests check that the two backends agree on predictions, gradients and
   the path training takes. They run on both backends for every push.
@@ -78,11 +100,12 @@ new = mojito.make_model(backend="torch", device="cuda")         # untrained, on 
 ## Training for a different leg
 
 ```bash
-python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
+uv run --extra sim python scripts/learning/train.py --upper 0.15 --lower 0.14 --abduction 0.05 --tolerance 0.2
 ```
 
 `--tolerance` is how far each length is varied in training (0.2 means ±20%).
-Joint limits live in `JOINT_LIMITS` in `mojito/robot/leg.py`. After retraining,
+Joint limits live in `JOINT_LIMITS` in `mojito/geometry/placeholders.py` (`leg.JOINT_LIMITS` re-exports
+it; edit the placeholder, not leg.py, and regenerate `robots/` so the URDFs agree). After retraining,
 re-run the other scripts so the results match the new weights.
 
 ## Robots from URDF
@@ -102,9 +125,9 @@ robots/quadruped/quadruped.urdf + .json   <- the definition (any tool can read t
 ```
 
 ```bash
-python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
-python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
-python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
+uv run python -m mojito.geometry.spec robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json   # what the model will see
+uv run --extra sim python scripts/learning/train.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json
+uv run --extra sim python scripts/learning/calibrate.py --urdf robots/quadruped/quadruped.urdf --manifest robots/quadruped/quadruped.json --limb FR
 ```
 
 ```python

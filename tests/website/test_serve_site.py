@@ -12,6 +12,10 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "website"))
 import serve_site  # noqa: E402
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "gait"))
+import live_gait  # noqa: E402
+
 from mojito.sim import live_sim  # noqa: E402
 
 try:
@@ -114,11 +118,50 @@ class TestServer(unittest.TestCase):
         self.assertEqual(len(self.runner.seen), before)
 
 
+class TestLiveGaitServer(unittest.TestCase):
+    """scripts/gait/live_gait.py serves the same physics API at the root, with the same local-only guards."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.runner = FakeRunner()
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), live_gait.make_handler(cls.runner))
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+
+    get = TestServer.get
+
+    def test_shares_the_guards_with_the_site_server(self):
+        self.assertIs(serve_site.host_is_local, live_gait.host_is_local)
+        self.assertIs(serve_site.origin_is_local, live_gait.origin_is_local)
+
+    def test_local_requests_are_served(self):
+        status, body, _ = self.get("/state")
+        self.assertEqual((status, json.loads(body)), (200, {"time": 0.0}))
+        status, _, _ = self.get("/reset", method="POST", body="{}", headers={"Content-Length": "2", "Origin": "http://127.0.0.1:8765"})
+        self.assertEqual(status, 200)
+        self.assertEqual(self.runner.seen[-1], "reset")
+
+    def test_refuses_foreign_host_and_foreign_origin(self):
+        self.assertEqual(self.get("/", headers={"Host": "evil.example"})[0], 403)
+        self.assertEqual(self.get("/state", headers={"Host": "evil.example:8765"})[0], 403)
+        before = len(self.runner.seen)
+        for path, body in (("/params", '{"kp": 1}'), ("/reset", "{}"), ("/preset", '{"name": "crawl"}')):
+            for headers in ({"Origin": "https://evil.example"}, {"Host": "evil.example"}):
+                status, _, _ = self.get(path, method="POST", body=body, headers=dict(headers, **{"Content-Length": str(len(body))}))
+                self.assertEqual(status, 403, (path, headers))
+        self.assertEqual(len(self.runner.seen), before)
+
+
 @unittest.skipIf(mujoco is None, "mujoco not installed")
 class TestRobotDesignIsLive(unittest.TestCase):
     def test_longer_legs_lower_the_stand_and_ask_for_a_rebuild(self):
         sim = live_sim.LiveSim()
-        self.assertTrue(sim.set_params(lu=0.2, ll=0.2, height=0.3))
+        self.assertTrue(sim.set_params(upper_length=0.2, lower_length=0.2, height=0.3))
         sim.reset()
         self.assertTrue(sim.snapshot()["stance_reachable"])
         np.testing.assert_allclose(sim.robot.lengths[0], [0.05, 0.2, 0.2])
@@ -127,8 +170,22 @@ class TestRobotDesignIsLive(unittest.TestCase):
         sim.reset()
         self.assertEqual(sim.snapshot()["body_size"], [0.4, 0.2])
 
+    def test_old_parameter_names_are_still_accepted(self):
+        # la, lu, ll were renamed; a page cached before the rename still posts them to /params for one release
+        sim = live_sim.LiveSim()
+        self.assertTrue(sim.set_params(la=0.06, lu=0.18, ll=0.17))
+        self.assertEqual([sim.params[k] for k in ("abduction_offset", "upper_length", "lower_length")], [0.06, 0.18, 0.17])
+        self.assertFalse({"la", "lu", "ll"} & set(sim.params))
+        sim.set_params(lu=1.0)  # clamped like the new name
+        self.assertEqual(sim.params["upper_length"], live_sim.LIMITS["upper_length"][1])
+        # both names in one request: the new one wins, whichever comes first
+        sim.set_params(lu=0.1, upper_length=0.2)
+        self.assertEqual(sim.params["upper_length"], 0.2)
+        sim.set_params(upper_length=0.12, lu=0.22)
+        self.assertEqual(sim.params["upper_length"], 0.12)
+
     def test_a_stance_the_legs_cannot_reach_is_reported(self):
-        sim = live_sim.LiveSim({"height": 0.32, "lu": 0.08, "ll": 0.08})
+        sim = live_sim.LiveSim({"height": 0.32, "upper_length": 0.08, "lower_length": 0.08})
         self.assertFalse(sim.snapshot()["stance_reachable"])
 
     def test_supply_voltage_changes_the_stall_torque_live(self):
