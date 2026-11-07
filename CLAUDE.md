@@ -63,7 +63,7 @@ weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
 docs/NAMING.md         naming and equation-commenting conventions
 docs/USAGE.md  RESULTS.md  PHYSICS.md   usage, geometry results, physics results
-docs/PLAN.md           roadmap;  docs/LITERATURE.md  literature review (arXiv, 2021-2026);  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
+docs/PLAN.md           roadmap;  docs/LITERATURE.md  literature review (arXiv, 2021-2026);  docs/PAPER_COMPARISONS.md  comparisons with papers and things to try;  docs/STAGE2.md  current stage;  docs/demo.html  interactive leg demo (generated)
 ```
 
 ## Keeping folders small

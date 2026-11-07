@@ -8,11 +8,11 @@ What the recent literature says about the parts of Mojito's plan, and where Moji
   then a second round of targeted queries. About 190 papers were screened by title and abstract.
 - Citation counts are from the Semantic Scholar batch API on 2026-11-07. They favour older papers; a 2026 paper with 3
   citations is not worse than a 2022 paper with 150.
-- **Read in more detail (full text, key sections):** MorphIK, A Walk in the Park, Actuator Reality Shaping,
-  Gait in Eight, CPG-RL, Controlling the Solo12, Simulator Adaptation via Proprioceptive Distribution Matching.
-  **Skimmed (method and setup lines only):** Learning to Walk from Three Minutes, DayDreamer.
-  **Abstract only:** SPI-Active, URMA, Learning Torque Control, DrEureka, Boekel co-design, IKDiffuser.
-  What is said about a paper below only covers what was read.
+- **Read in more detail (key sections, found by searching the full text, not every line):** MorphIK, A Walk in the Park,
+  Actuator Reality Shaping, Gait in Eight, CPG-RL, Controlling the Solo12, Simulator Adaptation via Proprioceptive Distribution
+  Matching, SPI-Active, Learning Torque Control, Learning to Walk from Three Minutes (setup, results, limitations).
+  **Method and setup lines only:** URMA, DrEureka, Boekel co-design, IKDiffuser, DayDreamer.
+What is said about a paper below only covers what was read.
 - The search is keyword-based. "Nothing found" means this search found nothing, not that nothing exists.
 - Google Scholar was not reachable from the session. Semantic Scholar was, but rate-limited.
 - Nothing here is a result of Mojito. Mojito figures quoted come from `results/learning/metrics.json`.
@@ -22,7 +22,7 @@ What the recent literature says about the parts of Mojito's plan, and where Moji
 | Paper | What it does | Relation to Mojito |
 |---|---|---|
 | MorphIK, Clasmeier et al. 2026 ([2609.29908](https://arxiv.org/abs/2609.29908)) | One flow-matching model, conditioned on a transformer encoding of the robot read from its URDF, solves IK for unseen revolute serial arms with 6 to 9 DoF. Trained only on procedurally generated robots with forward kinematics giving the targets. Raw error about 5 cm on unseen real arms; under 1 cm after one damped-least-squares step and under 1 mm after three. | Same recipe as Mojito at a different scale: morphology as input, targets from forward kinematics, a Cartesian (FK) loss added so that the network commits to one solution rather than averaging several. Mojito's problem is much smaller (a 3-joint leg, 3 length inputs). Its use of a classical solver to polish a learned seed is the idea behind Mojito's calibration step, in the other direction. |
-| IKDiffuser 2025 ([2506.13087](https://arxiv.org/abs/2506.13087)) | Diffusion IK for kinematic trees (abstract only). | Not leg-specific. |
+| IKDiffuser 2025 ([2506.13087](https://arxiv.org/abs/2506.13087)) | Diffusion IK for kinematic trees with several end-effectors; one model per robot; used to seed optimization solvers; seven platforms including humanoids. | Not leg-specific. |
 
 Mojito measured on unseen legs with varied lengths: median foot error 0.17 mm, 95th percentile 0.84 mm
 (`results/learning/metrics.json`, key `learned_varied_legs`). The closed-form IK on the same legs is exact to rounding
@@ -67,10 +67,11 @@ nominal pose and picking a safe default stance are both supported.
   **Does not apply to the first Mojito robot:** the DS3218 has its own internal loop, no current access and no position
   feedback. It may apply to the later DC motors with position, velocity and current feedback.
 - **Solo12** (above): identified actuator friction and added an energy-loss penalty from Joule and friction losses.
-- **Learning Torque Control**, Chen et al. 2022 ([2203.05194](https://arxiv.org/abs/2203.05194)), abstract only: torque
-  actions instead of position targets.
-- **DrEureka**, Ma et al. 2024 ([2406.01967](https://arxiv.org/abs/2406.01967)), abstract only: language-model-guided
-  domain randomization.
+- **Learning Torque Control**, Chen et al. 2022 ([2203.05194](https://arxiv.org/abs/2203.05194)): A1 policy outputs torques at
+  200 Hz with no PD loop (position policies typically run at 20 to 100 Hz); reports a higher converged return in one comparison
+  with a simplified reward and no extra sim-to-real difficulty. Needs a torque command, so not applicable to the DS3218.
+- **DrEureka**, Ma et al. 2024 ([2406.01967](https://arxiv.org/abs/2406.01967)): a language model writes the reward and the
+  domain-randomization ranges; on a Go1 it reports 34% higher forward velocity than human-designed settings.
 - I found no paper that models hobby servos (torque-limited, internal loop, latency) for legged sim-to-real. Mojito's servo
   model (`mojito/sim/actuators.py`) therefore rests on its own assumptions, which `docs/STAGE2.md` already flags as unverified.
 
@@ -81,9 +82,10 @@ nominal pose and picking a safe default stance are both supported.
   observations and actions (a Wasserstein-based cost), so it needs neither motion capture nor time-aligned trajectories.
   Per its abstract, less than five minutes of hardware data is sufficient; evaluated on a Go2 quadruped in simulation
   ablations plus real-world experiments.
-- **SPI-Active**, Sobanbabu et al. 2025 ([2505.14266](https://arxiv.org/abs/2505.14266)), abstract only: sampling-based
-  identification of physical parameters with active exploration for informative real trajectories, without differentiable
-  dynamics or torque measurement.
+- **SPI-Active**, Sobanbabu et al. 2025 ([2505.14266](https://arxiv.org/abs/2505.14266)): sampling-based (CMA-ES)
+  identification of mass, inertia and actuator parameters on a Unitree Go2 and G1, then active exploration that optimizes
+  commands for Fisher information. It uses a per-joint tanh torque-saturation actuator model, which beat a plain PD and a
+  single shared saturation on two jump tasks. **Its base-state cost term uses motion-capture trajectories**, and it runs offline.
 
 **For Mojito.** Mojito will have joint-angle sensors and an IMU but no motion capture, so the proprioceptive-only matching
 of Dao et al. is the closer fit than methods that need ground-truth base trajectories.
@@ -93,7 +95,7 @@ of Dao et al. is the closer fit than methods that need ground-truth base traject
 | Paper | Robot | Real-world data | Notes |
 |---|---|---|---|
 | A Walk in the Park 2022 | Unitree A1 | 20 minutes | model-free, learned resets, PD target actions |
-| Learning to Walk from Three Minutes 2024 ([2410.09163](https://arxiv.org/abs/2410.09163)) | Unitree Go1 | about 3 minutes | model-based, semi-structured dynamics; base velocity from a Vicon system |
+| Learning to Walk from Three Minutes 2024 ([2410.09163](https://arxiv.org/abs/2410.09163)) | Unitree Go1 | 3.0 minutes (18 000 steps) | model-based; rigid-body model from the differentiable simulator Brax plus a learned residual; base velocity from a Vicon system; about 0.98 m/s on hard ground and 0.53 m/s on memory foam |
 | Gait in Eight 2025 | MAB HoneyBadger | 8 minutes | CrossQ; proprioceptive-only reward |
 | DayDreamer 2022 ([2206.14176](https://arxiv.org/abs/2206.14176)) | Unitree A1 | about 1 hour | world model; no resets; recovers from pushes in about 10 minutes |
 
@@ -110,12 +112,14 @@ training on a robot with 20 kg·cm hobby servos adds wear and a battery limit th
 
 ## 6. Design exploration (the design sweeps)
 
-- **URMA**, Bohlinger et al. 2024 ([2409.06366](https://arxiv.org/abs/2409.06366)), abstract only: one policy for many
-  morphologies, quadrupeds, humanoids and hexapods. Related: ManyQuadrupeds ([2310.10486](https://arxiv.org/abs/2310.10486)),
+- **URMA**, Bohlinger et al. 2024 ([2409.06366](https://arxiv.org/abs/2409.06366)): one policy for many morphologies via
+  attention encoders over per-joint and per-foot descriptions; trained on 16 simulated robots, zero-shot to a held-out A1 and
+  a MAB Silver Badger, and deployed zero-shot on three real robots. Related: ManyQuadrupeds ([2310.10486](https://arxiv.org/abs/2310.10486)),
   Multi-Loco ([2506.11470](https://arxiv.org/abs/2506.11470)).
-- **Boekel et al. 2026** ([2611.02462](https://arxiv.org/abs/2611.02462)): morphology-conditioned policy trained across
-  designs, then Bayesian optimization of the design with the policy held fixed; reports lower cost of transport on hardware for
-  two tasks. The robot has compliant four-bar legs, unlike Mojito's.
+- **Boekel et al. 2026** ([2611.02462](https://arxiv.org/abs/2611.02462)): morphology-conditioned policy (design vector in the
+  observation, leg scale factors 0.70 to 1.30 among the parameters) trained across designs in Isaac Lab, then Bayesian optimization
+  of the design with the policy held fixed; reports 18.6% and 35.7% lower cost of transport on hardware for two tasks. The robot has
+  compliant four-bar legs, unlike Mojito's.
 
 **For Mojito.** The design sweeps tune a scripted gait per design, which is a weaker controller than a learned one. A
 conclusion like "design A beats design B" may change once a learned policy is used. A morphology-conditioned policy (the
@@ -144,3 +148,5 @@ additively manufactured quadrupeds ([2410.00122](https://arxiv.org/abs/2410.0012
 - It does not show that any of these methods works on a hobby-servo robot, or on Mojito's.
 - It does not compare the papers' results with each other: they use different robots, rewards and metrics.
 - It covers arXiv preprints found by keyword. Peer review status was not checked, and journal-only work is missing.
+
+See `docs/PAPER_COMPARISONS.md` for the side-by-side comparisons with Mojito and the list of experiments these suggest.
