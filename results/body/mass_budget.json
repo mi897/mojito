@@ -273,12 +273,12 @@
   }
  },
  "provenance": {
-  "git_commit": "d8aa2fcdb2ac4d026538a78def1ce07778c5b47a",
-  "git_dirty": true,
+  "git_commit": "74aa1ffebf5900fd6de671f73a5e12085997b3a1",
+  "git_dirty": false,
   "script": "scripts/body/mass_budget.py",
   "argv": [],
   "python": "3.13.18",
   "numpy": "2.5.4",
-  "utc": "2026-11-07T08:58:30Z"
+  "utc": "2026-11-07T09:00:05Z"
  }
 }
