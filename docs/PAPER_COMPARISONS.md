@@ -118,7 +118,7 @@ Each item: what, source, why, what it needs, what it would not show. Marked **no
 18. **Camera-plus-IMU velocity estimate in simulation** against the IMU-plus-kinematics baseline (item 7): render a base-mounted camera in
     MuJoCo, estimate velocity and yaw rate, compare with ground truth across gait speeds. Possible now; best case only (no motion
     blur, rolling shutter or lighting).
-19. **Camera estimate on the robot,** checked against an external camera with markers. Needs hardware and a camera choice.
+19. **Onboard camera estimate on the robot,** checked against a hand-measured course. Needs hardware and a camera choice. An external camera with markers comes later (section 4, step 6b).
 
 ### Low priority
 
@@ -221,7 +221,9 @@ alternative to the IMU-plus-leg-kinematics estimate. Papers below are 2021 to 20
 - **Onboard camera:** what the robot itself could measure, so its estimate may be used for rewards, logging and, if timing allows, observations.
 - **External fixed camera with markers:** the Stage 3 option already in `docs/PLAN.md`. It measures where the body went, so it is for evaluation and for
   checking the onboard estimate, not for policy observations (`CLAUDE.md`: keep ground truth out of policy observations).
-Both are useful and they answer different questions. Which is wanted first is an open question below.
+**Decided (owner): onboard camera first, external camera later.** Until the external one exists, the reference on hardware is simulation
+ground truth in simulation and, on the robot, hand measurement (a marked course and a stopwatch or tape measure, as the Dao et al. paper did for
+final position), which is coarse. The external camera then replaces that.
 
 ### What the papers say
 | Paper | What it does | Relevance |
@@ -242,8 +244,9 @@ has no computer for visual processing, so frames would be streamed to the laptop
 3. **Estimator ladder, cheapest first:** (a) optical-flow velocity from a downward or forward camera, scaled by camera height known from leg kinematics (my idea, not from the papers); (b) visual-inertial odometry run on the laptop; (c) fuse (a) or (b) with leg odometry in an EKF, with the camera delayed measurement and prediction forward at IMU rate (as in the Dhédin paper); (d) optionally a learned inertial displacement (as in the Buchanan paper).
 4. **Measure** velocity and yaw-rate error, drift per metre travelled, tracking failures, and added latency against ground truth, across gait speeds, camera frame rates and added vibration, and compare each rung to the baseline from step 1.
 5. **Add realism to the rendered camera** (blur, rolling-shutter skew, noise, dropped frames, timestamp jitter) and see which rung survives. Without this, step 4 is a best case.
-6. **Hardware:** choose the camera (global shutter if possible), calibrate the camera-IMU extrinsics and time offset, mount an external camera with markers as the reference, and repeat step 4 on the robot. Slip can be detected by comparing the visual velocity with the kinematic velocity.
-7. **Use of the result:** the estimate feeds reward computation, logs and evaluation, and slow commands; joint-level control stays on the microcontroller (`docs/STAGE2.md`, network design points). It could also be a distribution-matching feature in section 3 once calibrated, since it adds body motion that joint logs alone lack.
+6. **Hardware, onboard camera:** choose the camera (global shutter if possible), calibrate the camera-IMU extrinsics and time offset, and repeat step 4 on the robot against the hand-measured reference (distance over a marked course, elapsed time, final heading). Slip can be detected by comparing the visual velocity with the kinematic velocity. Compare the onboard estimate with the IMU-plus-kinematics baseline on the same runs.
+6b. **Later, external camera with markers:** replaces the hand measurement and gives a continuous reference for velocity, drift and yaw, and for the Stage 3 and 4 uses of body position.
+7. **Use of the result:** the estimate feeds reward computation, logs and evaluation, and slow commands; joint-level control stays on the microcontroller (`docs/STAGE2.md`, network design points). Because the onboard estimate is something the robot can measure, it may be a policy observation, unlike ground truth. A policy trained on it in simulation has to see the estimator's output (or a noise model fitted to it), including its latency and failures, not the true velocity, otherwise the policy meets a different input on hardware. It could also be a distribution-matching feature in section 3 once calibrated, since it adds body motion that joint logs alone lack.
 
 ### What this plan will not show
 - Simulated frames are cleaner than real ones; a good result there says nothing about blur, lighting or servo vibration.
@@ -251,7 +254,8 @@ has no computer for visual processing, so frames would be streamed to the laptop
 
 ## 5. Open questions raised
 
-- Which camera is wanted first, the onboard one (estimator and possibly policy input) or an external one with markers (evaluation)?
+- Camera module, mounting and frame rate for the onboard camera. Options are open: the ESP32 has little compute, and the stream goes to the laptop.
+- How coarse can the interim hand-measured reference be before it stops being useful for choosing between estimators?
 
 
 - Gait in Eight and CPG-RL both use analytic IK. If Mojito's policy also goes through analytic IK, the learned IK network is not in the
