@@ -37,6 +37,10 @@ body *args:
 torque:
     {{py}} scripts/body/torque_envelope.py
 
+# Mass budget and printed-link strength (reads the torque envelope and gait replay results)
+budget:
+    {{py}} scripts/body/mass_budget.py
+
 # Stand and sit-to-stand in MuJoCo
 stand:
     {{py}} scripts/stand/stand_test.py
@@ -93,6 +97,7 @@ results-physics:
     {{py}} scripts/stand/sit_to_stand.py
     {{py}} scripts/stand/make_stand_demo.py
     {{py}} scripts/gait/gait_replay.py
+    {{py}} scripts/body/mass_budget.py
     {{py}} scripts/gait/make_gait_replay_demo.py
     {{py}} scripts/gait/make_gait_iso_demos.py
     {{py}} scripts/gait/gait_speed_diagnosis.py
