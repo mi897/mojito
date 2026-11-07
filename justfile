@@ -41,6 +41,10 @@ torque:
 budget:
     {{py}} scripts/body/mass_budget.py
 
+# Servo-box clearance and electronics fit (needs mujoco)
+fit:
+    {{py}} scripts/body/fit_check.py
+
 # Stand and sit-to-stand in MuJoCo
 stand:
     {{py}} scripts/stand/stand_test.py
@@ -98,6 +102,7 @@ results-physics:
     {{py}} scripts/stand/make_stand_demo.py
     {{py}} scripts/gait/gait_replay.py
     {{py}} scripts/body/mass_budget.py
+    {{py}} scripts/body/fit_check.py
     {{py}} scripts/gait/make_gait_replay_demo.py
     {{py}} scripts/gait/make_gait_iso_demos.py
     {{py}} scripts/gait/gait_speed_diagnosis.py

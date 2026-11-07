@@ -868,7 +868,7 @@ Each is one branch-sized step. Tick them off here as they land.
    - 12 of the 198 tuned cells have a mean speed ratio above 1.05 (faster than commanded); the score was closeness to 1, so these count as valid.
    - What this does and does not say: the tuned numbers are each design at its own best of a coarse grid, so they compare designs fairly, but a real robot has one set of settings per load and a search of 45 settings is not an optimum. The least bent knee in the grid (-74°) was chosen in 25 of the 66 entries (-129°, the most bent, in none), and the highest gains (kp 50) or lowest (kp 10) in 53 of 66, so a wider grid with straighter legs and other gains might do better. Everything remains a placeholder (servo figures, masses, friction, joint limits); the draws cover mass and latency only.
    *Not shown:* a different gait period, duty or stride might rescue a design that failed (only knee bend, swing height and gains were re-tuned, above); the table above is one run per cell (see the 10-draw repeat for how stable each is), and differences of a few hundredths in speed ratio between designs are within what one run can show; turning, terrain, friction; any of this for a real robot (all dimensions, masses, servo figures, friction and joint limits are placeholders; the joint limits decide several of the failures); leg mass scaling with leg length (masses are one factor on all roles); why 3.01 kg collapses the walks.
-6. [ ] **Mechanical fit and structure check** (in progress on `stage-2-mechanical-fit`; part 1, the mass budget and link strength, is done: see "Mass budget and link strength" below; servo boxes in the model, clearance and body volume are not). Servo-sized boxes in the model
+6. [ ] **Mechanical fit and structure check** (in progress: part 1, the mass budget and link strength, is merged, see "Mass budget and link strength" below; part 2, servo boxes, clearance and electronics fit, is on `stage-2-servo-fit`, see "Servo layout and fit"; the masses are not yet fed to the simulator). Servo-sized boxes in the model
    (listed 40 × 20 × 40.5 mm), a mass budget (servos, battery, electronics, frame,
    sensors), battery and electronics volume against the body, and link stiffness
    and strength against the peak joint torque from the stand test and gait
@@ -910,6 +910,36 @@ creep and heat near the servos (PLA softens near 55 to 60 C), impact on landing,
 
 Leg length that would fit the trot bound at this mass: scale 1.15 on the 150 mm design (the bound is inversely proportional to leg length,
 so this reads as headroom: the legs could be longer, not shorter, to the bound). It ignores the lighter links of a shorter leg.
+
+## Servo layout and fit
+
+`scripts/body/fit_check.py` (layout and packing in `mojito/robot/fit.py`, distances in `mojito/sim/clearance.py`, tests in
+`tests/robot/test_fit.py` and `tests/sim/test_clearance.py`) writes `results/body/fit_check.json`. Servos are boxes of the listed
+40 x 20 x 40.5 mm (unverified); where the shaft sits on the box (10 mm from the centre along the length), which side each servo
+body is on, and every electronics size are **my assumptions**. The boxes are massless and do not collide in the physics model
+(`mjcf_from_urdf(servo_boxes=...)`), so no earlier result changes. Layout (owner's decision A): abduction servos in the body with the
+shaft along x at the shoulder and the body toward the body centre; hip-pitch servo on the hip link; knee servo on the thigh. The check measures
+`mujoco.mj_geomDistance` between every pair of boxes on different rigid bodies (and the placeholder body envelope), one leg at a time over
+a 9 x 9 x 9 grid of its joint limits with the other legs standing, and over one cycle of the commanded trot and crawl. Gaps are capped at 50 mm.
+
+- **Hip servo on the body side of the thigh plane overlaps the abduction servo.** With the hip-pitch servo body inboard, the two boxes touch at zero abduction
+  (4.4 mm of overlap at the abduction limit), in all four legs, and in every commanded trot and crawl case (0.5 to 2.8 mm). Putting the
+  hip servo body *outboard*, with the horn pointing in, removes it: the smallest gap between them is 36.1 mm, at the abduction limit. That is the default.
+  What this costs and is not modelled: the thigh then runs between the hip servo and the body, and its mount to the horn is not drawn or checked.
+- **Knee servo against the body envelope.** Over the full joint range the front knee servos enter the placeholder 300 x 150 x 60 mm
+  body envelope by 7.3 mm in one corner pose (abduction -0.6 rad toward the body, hip pitch 1.31 rad, knee -2.3 rad); the rear legs do not. The
+  commanded gaits stay clear: nearest are the front knee servos, 9.5 mm from the envelope in the trot at 0.15 m/s (16.4 mm sideways at
+  0.10 m/s, 13.1 mm turning at 0.6 rad/s), and 25.1 mm and 29.0 mm in the crawl cases. These are commanded joint angles, not the angles the servos
+  reach under load, and the envelope is the drawn placeholder box, not a designed body.
+- **Everything else is at least 50 mm apart** over the joint range (not listed in the JSON): neighbouring legs, knee servo against other legs' servos.
+  The joint-range sweep covers more than the gaits use, so a collision there is a collision somewhere in the range, not necessarily in a walk.
+- **Electronics in the body.** The space between the plates (3 mm each) and between the front and rear abduction servos is 219 x 150 x 54 mm. The
+  battery, ESP32, PCA9685, two servo-rail regulators, logic regulator, IMU and fuse/switch (assumed sizes) shelf-pack into 28.7% of the floor
+  area and 8.6% of the volume. Not counted: wiring, connectors, standoffs, cable room, airflow. A shelf packing is not the best packing, so
+  "fits" is a yes from this packing only. The abduction servos' own volume and the Hall boards sit outside this space.
+
+Not done: servo horns, brackets and the tube thickness in the clearance (only the servo boxes are measured), the body as anything but a box,
+the servo wiring route, the structure of the body plates.
 
 ## What this stage will and will not show
 
