@@ -12,9 +12,11 @@ What the recent literature says about the parts of Mojito's plan, and where Moji
   Actuator Reality Shaping, Gait in Eight, CPG-RL, Controlling the Solo12, Simulator Adaptation via Proprioceptive Distribution
   Matching, SPI-Active, Learning Torque Control, Learning to Walk from Three Minutes (setup, results, limitations).
   **Method and setup lines only:** URMA, DrEureka, Boekel co-design, IKDiffuser, DayDreamer.
+  **Abstract plus a few searched lines:** the camera and IMU papers in section 8.
 What is said about a paper below only covers what was read.
 - The search is keyword-based. "Nothing found" means this search found nothing, not that nothing exists.
 - Google Scholar was not reachable from the session. Semantic Scholar was, but rate-limited.
+- A second round of six queries on camera-plus-IMU state estimation for legged robots was added on 2026-11-07 (section 8).
 - Nothing here is a result of Mojito. Mojito figures quoted come from `results/learning/metrics.json`.
 
 ## 1. Learned inverse kinematics (Stage 0)
@@ -131,6 +133,29 @@ Solo12 ([2309.16683](https://arxiv.org/abs/2309.16683)), HyperDog ([2209.09171](
 Q8bot ([2508.01149](https://arxiv.org/abs/2508.01149)), MEVIUS2 ([2603.22031](https://arxiv.org/abs/2603.22031)) and
 additively manufactured quadrupeds ([2410.00122](https://arxiv.org/abs/2410.00122)) are the nearest comparable platforms
 (titles and abstracts only, except Solo12). I found none using an ESP32 with a PCA9685 and learned control.
+
+## 8. Camera plus IMU state estimation (velocity and motion)
+
+Found by six queries on visual-inertial and leg odometry; read at the abstract level plus a few searched lines, so treat the
+descriptions as summaries of what the authors state.
+
+- **Cerberus**, Yang et al. 2022 ([2209.07654](https://arxiv.org/abs/2209.07654)): visual-inertial-leg odometry from stereo cameras, IMU,
+  joint encoders and contact sensors, with online kinematic calibration and contact outlier rejection; reports drift under 1% on an A1.
+- **Visual-Inertial and Leg Odometry Fusion for Dynamic Locomotion**, Dhedin et al. 2022
+  ([2210.02127](https://arxiv.org/abs/2210.02127)): stereo VIO fused with leg odometry in an EKF on a Solo12, with the delayed, low-rate
+  VIO estimate predicted forward at the IMU rate.
+- **WALK-VIO**, Lim et al. 2021 ([2111.15164](https://arxiv.org/abs/2111.15164)): VIO with leg-kinematic constraints that adapt to the walking motion.
+- **Learning Inertial Odometry for Dynamic Legged Robot State Estimation**, Buchanan et al. 2021
+  ([2111.00789](https://arxiv.org/abs/2111.00789)): learned IMU displacement fused with leg odometry; 37% lower relative pose error in
+  difficult cases on an ANYmal, 22% lower when combined with vision in visually degraded conditions.
+- **Sensor Configuration Matters**, Corlito et al. 2026 ([2606.19067](https://arxiv.org/abs/2606.19067)): SLAM benchmark on an ANYmal D;
+  global-shutter cameras reduced motion-induced tracking failures compared with rolling shutter, and tightly coupled inertial integration
+  could degrade tracking.
+- **Robust RL for Resource-Constrained Quadrupeds**, Plozza et al. 2025 ([2505.12537](https://arxiv.org/abs/2505.12537)): small quadruped
+  with a jointly trained policy and state estimator providing odometry, optionally fused with VIO.
+
+All use stereo or depth cameras and an onboard computer. I found no paper on camera-based velocity estimation for a hobby-servo quadruped with a
+microcontroller. Plan and caveats: `docs/PAPER_COMPARISONS.md`, section 4.
 
 ## Summary of how Mojito compares
 
