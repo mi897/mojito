@@ -634,13 +634,13 @@
   "not_counted": "wiring, connectors, standoffs, cable room, airflow, a second layer"
  },
  "provenance": {
-  "git_commit": "658cd253e8c38268448d26ef918a4cb65b167a3c",
-  "git_dirty": true,
+  "git_commit": "e9b01f675dcaa1c938b16bf2d7c28b8b77cd997f",
+  "git_dirty": false,
   "script": "scripts/body/fit_check.py",
   "argv": [],
   "python": "3.13.18",
   "numpy": "2.5.4",
-  "utc": "2026-11-07T09:22:36Z",
+  "utc": "2026-11-07T09:23:45Z",
   "mujoco": "3.16.0"
  }
 }
