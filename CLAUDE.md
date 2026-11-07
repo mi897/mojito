@@ -39,7 +39,7 @@ mojito/                the library, in four subpackages (each holds at most abou
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
                        placeholders.py (placeholder dimensions; QuadrupedDesign, STAGE1_QUADRUPED, SIM_QUADRUPED with masses), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
-                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound)
+                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound), budget.py (mass budget, printed-link strength)
   learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
                        torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),

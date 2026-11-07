@@ -1,0 +1,284 @@
+{
+ "what": "mass budget and printed-link strength of the first robot. Servo and battery masses are retailer listings (unverified); every other mass, the link section, the material figures and the stress concentration are my assumptions",
+ "material": {
+  "name": "PLA",
+  "density": 1240.0,
+  "youngs_modulus": 2000000000.0,
+  "strength": 40000000.0
+ },
+ "link_section_m": {
+  "depth": 0.02,
+  "width": 0.014,
+  "wall": 0.002
+ },
+ "target_kg": 1.5,
+ "total_kg": 1.559,
+ "over_target_kg": 0.059,
+ "by_group_kg": {
+  "servo": 0.72,
+  "battery": 0.076,
+  "electronics": 0.114,
+  "hardware": 0.26,
+  "frame": 0.389
+ },
+ "by_source_kg": {
+  "listed": 0.796,
+  "assumed": 0.763
+ },
+ "by_role_kg": {
+  "body": 0.687,
+  "hip": 0.342,
+  "thigh": 0.401,
+  "shank": 0.089,
+  "foot": 0.04
+ },
+ "role_masses_for_simulator_kg": {
+  "body": 0.6866,
+  "hip": 0.0854,
+  "thigh": 0.1003,
+  "shank": 0.0223,
+  "foot": 0.01
+ },
+ "simulator_masses_now_kg": {
+  "total": 1.72,
+  "body": 0.8,
+  "hip": 0.06,
+  "thigh": 0.1,
+  "shank": 0.06,
+  "foot": 0.01
+ },
+ "static_trot_bound_kg_5V_half_stall": 1.79,
+ "total_over_trot_bound": 0.87,
+ "leg_scale_that_fits_trot_bound": 1.15,
+ "parts": [
+  {
+   "name": "servo, abduction",
+   "count": 4,
+   "mass_each_kg": 0.06,
+   "total_kg": 0.24,
+   "where": "body",
+   "group": "servo",
+   "source": "listed"
+  },
+  {
+   "name": "servo, hip pitch",
+   "count": 4,
+   "mass_each_kg": 0.06,
+   "total_kg": 0.24,
+   "where": "hip",
+   "group": "servo",
+   "source": "listed"
+  },
+  {
+   "name": "servo, knee",
+   "count": 4,
+   "mass_each_kg": 0.06,
+   "total_kg": 0.24,
+   "where": "thigh",
+   "group": "servo",
+   "source": "listed"
+  },
+  {
+   "name": "battery, 2S 1500 mAh",
+   "count": 1,
+   "mass_each_kg": 0.076,
+   "total_kg": 0.076,
+   "where": "body",
+   "group": "battery",
+   "source": "listed"
+  },
+  {
+   "name": "ESP32 board",
+   "count": 1,
+   "mass_each_kg": 0.01,
+   "total_kg": 0.01,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "PCA9685 servo driver",
+   "count": 1,
+   "mass_each_kg": 0.01,
+   "total_kg": 0.01,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "servo-rail regulator",
+   "count": 2,
+   "mass_each_kg": 0.025,
+   "total_kg": 0.05,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "logic regulator",
+   "count": 1,
+   "mass_each_kg": 0.005,
+   "total_kg": 0.005,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "IMU board",
+   "count": 1,
+   "mass_each_kg": 0.003,
+   "total_kg": 0.003,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "wiring, connectors",
+   "count": 1,
+   "mass_each_kg": 0.06,
+   "total_kg": 0.06,
+   "where": "body",
+   "group": "hardware",
+   "source": "assumed"
+  },
+  {
+   "name": "fuse, switch",
+   "count": 1,
+   "mass_each_kg": 0.02,
+   "total_kg": 0.02,
+   "where": "body",
+   "group": "hardware",
+   "source": "assumed"
+  },
+  {
+   "name": "Hall sensor board, abduction",
+   "count": 4,
+   "mass_each_kg": 0.003,
+   "total_kg": 0.012,
+   "where": "body",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "horn, screws, bracket, abduction",
+   "count": 4,
+   "mass_each_kg": 0.015,
+   "total_kg": 0.06,
+   "where": "body",
+   "group": "hardware",
+   "source": "assumed"
+  },
+  {
+   "name": "Hall sensor board, hip pitch",
+   "count": 4,
+   "mass_each_kg": 0.003,
+   "total_kg": 0.012,
+   "where": "hip",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "horn, screws, bracket, hip pitch",
+   "count": 4,
+   "mass_each_kg": 0.015,
+   "total_kg": 0.06,
+   "where": "hip",
+   "group": "hardware",
+   "source": "assumed"
+  },
+  {
+   "name": "Hall sensor board, knee",
+   "count": 4,
+   "mass_each_kg": 0.003,
+   "total_kg": 0.012,
+   "where": "thigh",
+   "group": "electronics",
+   "source": "assumed"
+  },
+  {
+   "name": "horn, screws, bracket, knee",
+   "count": 4,
+   "mass_each_kg": 0.015,
+   "total_kg": 0.06,
+   "where": "thigh",
+   "group": "hardware",
+   "source": "assumed"
+  },
+  {
+   "name": "hip link",
+   "count": 4,
+   "mass_each_kg": 0.0074,
+   "total_kg": 0.0298,
+   "where": "hip",
+   "group": "frame",
+   "source": "assumed"
+  },
+  {
+   "name": "thigh tube",
+   "count": 4,
+   "mass_each_kg": 0.0223,
+   "total_kg": 0.0893,
+   "where": "thigh",
+   "group": "frame",
+   "source": "assumed"
+  },
+  {
+   "name": "shank tube",
+   "count": 4,
+   "mass_each_kg": 0.0223,
+   "total_kg": 0.0893,
+   "where": "shank",
+   "group": "frame",
+   "source": "assumed"
+  },
+  {
+   "name": "foot pad",
+   "count": 4,
+   "mass_each_kg": 0.01,
+   "total_kg": 0.04,
+   "where": "foot",
+   "group": "frame",
+   "source": "assumed"
+  },
+  {
+   "name": "body plates, top and bottom",
+   "count": 2,
+   "mass_each_kg": 0.0703,
+   "total_kg": 0.1406,
+   "where": "body",
+   "group": "frame",
+   "source": "assumed"
+  }
+ ],
+ "strength": {
+  "safety_factor_on_stall": 1.5,
+  "servo_stall_nm_5V": 1.863,
+  "stress_concentration": 3.0,
+  "walking_peak_fraction_of_servo_limit_max_over_runs": 1.0,
+  "links": {
+   "thigh": {
+    "design_torque_nm": 2.795,
+    "peak_stress_mpa": 14.2,
+    "allowable_mpa": 40.0,
+    "margin": 2.8,
+    "tip_sag_at_stall_mm": 1.18
+   },
+   "shank": {
+    "design_torque_nm": 2.795,
+    "peak_stress_mpa": 14.2,
+    "allowable_mpa": 40.0,
+    "margin": 2.8,
+    "tip_sag_at_stall_mm": 1.18
+   }
+  }
+ },
+ "provenance": {
+  "git_commit": "d8aa2fcdb2ac4d026538a78def1ce07778c5b47a",
+  "git_dirty": true,
+  "script": "scripts/body/mass_budget.py",
+  "argv": [],
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "utc": "2026-11-07T08:58:30Z"
+ }
+}

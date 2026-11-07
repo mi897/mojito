@@ -868,7 +868,7 @@ Each is one branch-sized step. Tick them off here as they land.
    - 12 of the 198 tuned cells have a mean speed ratio above 1.05 (faster than commanded); the score was closeness to 1, so these count as valid.
    - What this does and does not say: the tuned numbers are each design at its own best of a coarse grid, so they compare designs fairly, but a real robot has one set of settings per load and a search of 45 settings is not an optimum. The least bent knee in the grid (-74°) was chosen in 25 of the 66 entries (-129°, the most bent, in none), and the highest gains (kp 50) or lowest (kp 10) in 53 of 66, so a wider grid with straighter legs and other gains might do better. Everything remains a placeholder (servo figures, masses, friction, joint limits); the draws cover mass and latency only.
    *Not shown:* a different gait period, duty or stride might rescue a design that failed (only knee bend, swing height and gains were re-tuned, above); the table above is one run per cell (see the 10-draw repeat for how stable each is), and differences of a few hundredths in speed ratio between designs are within what one run can show; turning, terrain, friction; any of this for a real robot (all dimensions, masses, servo figures, friction and joint limits are placeholders; the joint limits decide several of the failures); leg mass scaling with leg length (masses are one factor on all roles); why 3.01 kg collapses the walks.
-6. [ ] **Mechanical fit and structure check.** Servo-sized boxes in the model
+6. [ ] **Mechanical fit and structure check** (in progress on `stage-2-mechanical-fit`; part 1, the mass budget and link strength, is done: see "Mass budget and link strength" below; servo boxes in the model, clearance and body volume are not). Servo-sized boxes in the model
    (listed 40 × 20 × 40.5 mm), a mass budget (servos, battery, electronics, frame,
    sensors), battery and electronics volume against the body, and link stiffness
    and strength against the peak joint torque from the stand test and gait
@@ -876,6 +876,40 @@ Each is one branch-sized step. Tick them off here as they land.
 7. [ ] **Locomotion learning.** Policy acts in foot space through the IK layer.
    Randomise mass, friction, servo strength and latency. Reintroduce the
    current-angle input and smoothness penalties. Only after 1–6.
+
+## Mass budget and link strength
+
+`scripts/body/mass_budget.py` (maths in `mojito/robot/budget.py`, test in `tests/robot/test_budget.py`) writes
+`results/body/mass_budget.json`. Only the servo (60 g) and battery (76 g) masses are retailer listings, themselves
+unverified; every other mass, the link section and the material figures are **my assumptions** until the owner names the
+parts, each tagged `listed` or `assumed` in the JSON. Layout assumed (owner's decision A): abduction servos in the body, the
+hip-pitch servo on the hip link, the knee servo on the thigh. Links are 20 x 14 mm rectangular tubes with 2 mm walls in PLA
+(density 1240 kg/m^3, E 2 GPa, strength 40 MPa along the layers: typical values, not measured on the owner's printer); body plates
+are two 3 mm plates at an assumed 25% effective fill.
+
+| | kg |
+|---|---|
+| Servos (12, listed) | 0.720 |
+| Battery (listed) | 0.076 |
+| Electronics (ESP32, PCA9685, regulators, IMU, Hall boards; assumed) | 0.114 |
+| Hardware (wiring, fuse, switch, horns, screws, brackets; assumed) | 0.260 |
+| Frame (links, foot pads, body plates; assumed) | 0.389 |
+| **Total** | **1.559** |
+
+That is 0.059 kg over the 1.5 kg working target and 87% of the 1.79 kg static trot bound (5 V, half of stall). Of the total, 0.796 kg
+is listed and 0.763 kg assumed, so the total moves with the assumptions. The simulator's masses (1.72 kg) are heavier than this budget in the
+shank (60 g against 22 g budgeted); `role_masses_for_simulator_kg` in the JSON holds the budget in the simulator's roles and is **not yet
+fed to the simulator**, so the stand, gait and sweep results above still use the 1.72 kg guess.
+
+Strength: a link's root moment equals the torque of the joint that drives it, and the servo cannot give more than its stall torque
+(1.863 N·m at 5 V). The gait replays already reach 100% of the servo limit in at least one run, so the walking load is the stall torque, not
+something lower; the design load is stall x a safety factor (default 1.5, a parameter), with an assumed stress concentration of 3 for screw
+holes and corners. For both thigh and shank that gives 14.2 MPa against 40 MPa, a margin of 2.8, and 1.18 mm of tip sag at stall. So the
+tube walls are not the limit. **Not checked:** the servo horn and screw interface, layer-direction weakness (strength across layers is lower),
+creep and heat near the servos (PLA softens near 55 to 60 C), impact on landing, the abduction link and the body plates.
+
+Leg length that would fit the trot bound at this mass: scale 1.15 on the 150 mm design (the bound is inversely proportional to leg length,
+so this reads as headroom: the legs could be longer, not shorter, to the bound). It ignores the lighter links of a shorter leg.
 
 ## What this stage will and will not show
 
