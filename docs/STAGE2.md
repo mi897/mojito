@@ -876,6 +876,15 @@ Each is one branch-sized step. Tick them off here as they land.
 7. [ ] **Locomotion learning.** Policy acts in foot space through the IK layer.
    Randomise mass, friction, servo strength and latency. Reintroduce the
    current-angle input and smoothness penalties. Only after 1–6.
+8. [ ] **Action-space comparison: joint targets versus foot offsets** (later; needs 7). *Why:* Gait in Eight
+   (Bohlinger et al. 2025, arXiv 2503.08375) compared joint-target offsets with a CPG whose policy output is a Cartesian
+   foot offset converted by analytic IK, and reported that they trade off (joint targets for agile high speed, foot offsets for
+   stable natural gaits). Our plan assumes foot space through the IK layer without having shown it is better here, so we run the
+   same comparison in our simulator to compare with the paper. Same learner, simulator, reward and servo model, several seeds;
+   arms: (a) joint-target offsets clipped around the nominal stance, (b) foot-offset residual on the scripted trot through the
+   closed-form IK, (c) the same through the learned IK network. Report speed tracking, share of valid runs, falls, peak joint torque,
+   action smoothness and learning curves. It shows nothing about hardware or hobby servos. Detail and related ideas:
+   `docs/PAPER_COMPARISONS.md`.
 
 ## Mass budget and link strength
 
