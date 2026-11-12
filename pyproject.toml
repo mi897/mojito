@@ -3,6 +3,7 @@ name = "mojito"
 version = "0.0.0"
 description = "Robots that learn to move by themselves: simulation first, then real interaction."
 requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
 dependencies = [
     "numpy",
     "scipy",

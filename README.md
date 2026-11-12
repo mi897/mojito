@@ -158,6 +158,12 @@ dirty, the script and its arguments, the library versions and the time.
   the closed-form IK, or a property such as "grounded feet do not move".
 - Numbers quoted here must come from a run, and must say what was measured.
 
+## License
+
+- Code, robot descriptions (`robots/`), scripts, the website source and the trained weights: Apache License 2.0 (`LICENSE`).
+- Documentation (`docs/`, this README) and generated results (`results/`: metrics, plots, animations): Creative Commons Attribution 4.0 International (`LICENSE-CC-BY-4.0.txt`).
+- The robot dimensions and joint limits are placeholders, not a released design. No hardware (CAD, electronics) is covered yet; it will get its own licence when it exists.
+
 ## Open questions
 
 These decide what Stage 2 and 3 look like.
