@@ -53,13 +53,15 @@ def _role(link: str, root: str) -> str:
 
 
 def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
-                   height: float = 0.0, timestep: float = 0.002, actuated: bool = False) -> str:
+                   height: float = 0.0, timestep: float = 0.002, actuated: bool = False, servo_boxes=()) -> str:
     """MJCF text for a floating-base robot described by `model`.
 
     body_size  (length, width, height) of the box drawn for the root link; default the simulator's placeholder body
                (placeholders.SIM_QUADRUPED) and BODY_THICKNESS.
     masses     overrides for DEFAULT_MASSES.
     height     starting height of the root link above the floor [m].
+    servo_boxes  `fit.ServoBox`es drawn as massless, non-colliding boxes on their links (for clearance checks, `sim.clearance`);
+               the link masses are unchanged.
     actuated   add a torque motor per movable joint (ctrl = N·m, driven by `actuators.Servo`) and a
                gyro and accelerometer at body_origin (sensors "gyro", "accel").
     """
@@ -85,7 +87,7 @@ def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
             body_element = ET.SubElement(parent_element, "body", name=link, pos=_numbers((0.0, 0.0, height)))
             ET.SubElement(body_element, "freejoint", name="base")
             ET.SubElement(body_element, "site", name="body_origin", size="0.004", rgba="1 0 0 1")
-            ET.SubElement(body_element, "geom", type="box", size=_numbers(np.array(body_size) / 2), mass=str(mass_of["body"]),
+            ET.SubElement(body_element, "geom", name="body_box", type="box", size=_numbers(np.array(body_size) / 2), mass=str(mass_of["body"]),
                           rgba="0.5 0.5 0.55 1")
         else:
             body_element = ET.SubElement(parent_element, "body", name=link, pos=_numbers(joint.xyz))
@@ -109,6 +111,11 @@ def mjcf_from_urdf(model: URDFModel, body_size=None, masses=None,
                 else:
                     ET.SubElement(body_element, "geom", type="sphere", size=str(LINK_RADIUS * 1.5), mass=str(mass_of[role]),
                                   rgba="0.8 0.8 0.85 1")
+        for box in servo_boxes:
+            if box.link == link:
+                x_axis, y_axis = box.rotation[:, 0], box.rotation[:, 1]
+                ET.SubElement(body_element, "geom", name=box.name, type="box", size=_numbers(box.half_size), pos=_numbers(box.center),
+                              xyaxes=_numbers(np.concatenate([x_axis, y_axis])), density="0", rgba="0.9 0.5 0.1 0.6")
         for child_joint in child_joints:
             build(body_element, child_joint.child, child_joint)
 

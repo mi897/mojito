@@ -39,18 +39,18 @@ mojito/                the library, in four subpackages (each holds at most abou
                        kinematics.py (FK, Jacobian, numeric IK for any serial chain), robots.py (generators for robots/),
                        placeholders.py (placeholder dimensions; QuadrupedDesign, STAGE1_QUADRUPED, SIM_QUADRUPED with masses), limb_model.py (LimbModel interface, Mirror)
   robot/               leg.py (3-joint leg, closed-form IK reference), body.py (legs on a body: frames, posture, per-leg solving),
-                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound), budget.py (mass budget, printed-link strength)
+                       gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound), budget.py (mass budget, printed-link strength), fit.py (servo boxes, electronics packing)
   learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
                        torch_model.py (PyTorch backend), backend.py (make_model, load_model)
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
-                       robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py,
+                       robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py, clearance.py (servo-box distances),
                        design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
 robots/                one folder per robot (quadruped/, hexapod/, planar/), each with its .urdf and .json manifest
 site/                  website: pages, assets/mojito.js (JS port of leg, body, gaits, statics; constants from the generated data/constants.js), charts, viewer,
                        assets/playground/ (common.js, kinematic.js and replay.js for the two labs, livephys, drive.js (keyboard and gamepad drive mode, also used by scripts/gait/live_gait.html), touchpad.js, browsersim.js (live_sim in the browser on MuJoCo WebAssembly; constants from the generated data/livemeta.js)); data/ and media/ are generated
 scripts/               entry points, one folder per topic
   learning/            train, evaluate, calibrate, make_demo
-  body/                make_body_demos, torque_envelope
+  body/                make_body_demos, torque_envelope, mass_budget, fit_check
   stand/               stand_test, sit_to_stand, make_stand_demo
   design/              design_sweep, design_sweep_draws, design_tune, design_sweep_tuned and a plot_ for each sweep (stand and walk 11 designs at three masses: one run, 10 draws, or gaits re-tuned per design; results/design/)
   gait/                gait_replay, gait_speed_diagnosis, pace_diagnosis, make_gait_replay_demo, make_gait_iso_demos, try_gait, live_gait (+ live_gait.html)

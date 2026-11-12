@@ -1,0 +1,646 @@
+{
+ "what": "servo-box clearance in MuJoCo and electronics packing. Placeholder layout and sizes: box size is a retailer listing (unverified), shaft position, which side the servo bodies sit on and every electronics size are my assumptions",
+ "servo_box_m": {
+  "length": 0.04,
+  "width": 0.02,
+  "height": 0.0405,
+  "shaft_offset": 0.01
+ },
+ "cap_mm": 50.0,
+ "layouts": {
+  "hip_servo_body_outboard (default)": {
+   "layout": {
+    "hip_body_inward": false,
+    "hip_long_part_out": true,
+    "knee_body_inward": true,
+    "knee_long_part_up": true
+   },
+   "joint_range_poses_per_leg": 729,
+   "joint_range_pairs_near": [
+    {
+     "boxes": [
+      "FL_servo_knee",
+      "body_box"
+     ],
+     "min_gap_mm": -7.3,
+     "pose": [
+      "FL",
+      [
+       -0.6,
+       1.3125,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_knee",
+      "body_box"
+     ],
+     "min_gap_mm": -7.3,
+     "pose": [
+      "FR",
+      [
+       0.6,
+       1.3125,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FL_servo_abduction",
+      "FL_servo_hip_pitch"
+     ],
+     "min_gap_mm": 36.1,
+     "pose": [
+      "FL",
+      [
+       0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_abduction",
+      "FR_servo_hip_pitch"
+     ],
+     "min_gap_mm": 36.1,
+     "pose": [
+      "FR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RL_servo_abduction",
+      "RL_servo_hip_pitch"
+     ],
+     "min_gap_mm": 36.1,
+     "pose": [
+      "RL",
+      [
+       0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RR_servo_abduction",
+      "RR_servo_hip_pitch"
+     ],
+     "min_gap_mm": 36.1,
+     "pose": [
+      "RR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FL_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 36.2,
+     "pose": [
+      "FL",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 36.2,
+     "pose": [
+      "FR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RL_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 36.2,
+     "pose": [
+      "RL",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RR_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 36.2,
+     "pose": [
+      "RR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    }
+   ],
+   "front_left_abduction_vs_hip_servo_first_contact_rad": {
+    "limits": [
+     -0.6,
+     0.6
+    ],
+    "positive": null,
+    "negative": null
+   },
+   "gait_nearest_pairs": {
+    "trot v=[0.15, 0.0] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 9.5,
+      "phase": 0.54
+     },
+     {
+      "boxes": [
+       "FR_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 9.5,
+      "phase": 0.07
+     },
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": 40.0,
+      "phase": 0.61
+     }
+    ],
+    "trot v=[0.0, 0.1] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 16.4,
+      "phase": 0.69
+     },
+     {
+      "boxes": [
+       "FR_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 16.4,
+      "phase": 0.31
+     },
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": 37.7,
+      "phase": 0.535
+     }
+    ],
+    "trot v=[0.0, 0.0] yaw=0.6": [
+     {
+      "boxes": [
+       "FL_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 13.1,
+      "phase": 0.785
+     },
+     {
+      "boxes": [
+       "FR_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 13.1,
+      "phase": 0.215
+     },
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": 37.7,
+      "phase": 0.54
+     }
+    ],
+    "crawl v=[0.1, 0.0] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 25.1,
+      "phase": 0.505
+     },
+     {
+      "boxes": [
+       "FR_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 25.1,
+      "phase": 0.005
+     },
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": 38.8,
+      "phase": 0.675
+     }
+    ],
+    "crawl v=[0.0, 0.0] yaw=0.3": [
+     {
+      "boxes": [
+       "FL_servo_knee",
+       "body_box"
+      ],
+      "min_gap_mm": 29.0,
+      "phase": 0.85
+     },
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": 37.7,
+      "phase": 0.345
+     },
+     {
+      "boxes": [
+       "RR_servo_abduction",
+       "RR_servo_hip_pitch"
+      ],
+      "min_gap_mm": 37.7,
+      "phase": 0.755
+     }
+    ]
+   }
+  },
+  "hip_servo_body_inboard": {
+   "layout": {
+    "hip_body_inward": true,
+    "hip_long_part_out": true,
+    "knee_body_inward": true,
+    "knee_long_part_up": true
+   },
+   "joint_range_poses_per_leg": 729,
+   "joint_range_pairs_near": [
+    {
+     "boxes": [
+      "FL_servo_knee",
+      "body_box"
+     ],
+     "min_gap_mm": -7.3,
+     "pose": [
+      "FL",
+      [
+       -0.6,
+       1.3125,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_knee",
+      "body_box"
+     ],
+     "min_gap_mm": -7.3,
+     "pose": [
+      "FR",
+      [
+       0.6,
+       1.3125,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FL_servo_abduction",
+      "FL_servo_hip_pitch"
+     ],
+     "min_gap_mm": -4.4,
+     "pose": [
+      "FL",
+      [
+       0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_abduction",
+      "FR_servo_hip_pitch"
+     ],
+     "min_gap_mm": -4.4,
+     "pose": [
+      "FR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RL_servo_abduction",
+      "RL_servo_hip_pitch"
+     ],
+     "min_gap_mm": -4.4,
+     "pose": [
+      "RL",
+      [
+       0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RR_servo_abduction",
+      "RR_servo_hip_pitch"
+     ],
+     "min_gap_mm": -4.4,
+     "pose": [
+      "RR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FL_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 2.2,
+     "pose": [
+      "FL",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "FR_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 2.2,
+     "pose": [
+      "FR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RL_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 2.2,
+     "pose": [
+      "RL",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    },
+    {
+     "boxes": [
+      "RR_servo_hip_pitch",
+      "body_box"
+     ],
+     "min_gap_mm": 2.2,
+     "pose": [
+      "RR",
+      [
+       -0.6,
+       0.0,
+       -2.3
+      ]
+     ]
+    }
+   ],
+   "front_left_abduction_vs_hip_servo_first_contact_rad": {
+    "limits": [
+     -0.6,
+     0.6
+    ],
+    "positive": 0.0,
+    "negative": 0.0
+   },
+   "gait_nearest_pairs": {
+    "trot v=[0.15, 0.0] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -0.5,
+      "phase": 0.0
+     },
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -0.5,
+      "phase": 0.0
+     },
+     {
+      "boxes": [
+       "RL_servo_abduction",
+       "RL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -0.5,
+      "phase": 0.0
+     }
+    ],
+    "trot v=[0.0, 0.1] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.535
+     },
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.465
+     },
+     {
+      "boxes": [
+       "RL_servo_abduction",
+       "RL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.035
+     }
+    ],
+    "trot v=[0.0, 0.0] yaw=0.6": [
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.54
+     },
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.46
+     },
+     {
+      "boxes": [
+       "RL_servo_abduction",
+       "RL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.46
+     }
+    ],
+    "crawl v=[0.1, 0.0] yaw=0.0": [
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -1.7,
+      "phase": 0.675
+     },
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -1.7,
+      "phase": 0.175
+     },
+     {
+      "boxes": [
+       "RL_servo_abduction",
+       "RL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -1.7,
+      "phase": 0.425
+     }
+    ],
+    "crawl v=[0.0, 0.0] yaw=0.3": [
+     {
+      "boxes": [
+       "FR_servo_abduction",
+       "FR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.345
+     },
+     {
+      "boxes": [
+       "RR_servo_abduction",
+       "RR_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.755
+     },
+     {
+      "boxes": [
+       "FL_servo_abduction",
+       "FL_servo_hip_pitch"
+      ],
+      "min_gap_mm": -2.8,
+      "phase": 0.735
+     }
+    ]
+   }
+  }
+ },
+ "electronics_in_body": {
+  "free_space_mm": [
+   219.0,
+   150.0,
+   54.0
+  ],
+  "parts": [
+   "battery, 2S 1500 mAh",
+   "ESP32 board",
+   "PCA9685 servo driver",
+   "servo-rail regulator",
+   "servo-rail regulator",
+   "logic regulator",
+   "IMU board",
+   "fuse, switch"
+  ],
+  "fits": true,
+  "unplaced": [],
+  "footprint_fraction": 0.287,
+  "volume_fraction": 0.086,
+  "not_counted": "wiring, connectors, standoffs, cable room, airflow, a second layer"
+ },
+ "provenance": {
+  "git_commit": "e9b01f675dcaa1c938b16bf2d7c28b8b77cd997f",
+  "git_dirty": false,
+  "script": "scripts/body/fit_check.py",
+  "argv": [],
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "utc": "2026-11-07T09:23:45Z",
+  "mujoco": "3.16.0"
+ }
+}
