@@ -44,6 +44,12 @@ class TestBudget(unittest.TestCase):
         roles = budget.role_masses(parts)
         self.assertAlmostEqual(roles["body"] + budget.LEGS * sum(roles[r] for r in ("hip", "thigh", "shank", "foot")), total["total"])
 
+    def test_simulator_masses_are_the_budget(self):
+        # the masses typed into SIM_QUADRUPED must be the budget's role masses (to the 4 decimals they are typed with)
+        roles = budget.role_masses(budget.default_parts(SIM_QUADRUPED))
+        for role, mass in roles.items():
+            self.assertAlmostEqual(SIM_QUADRUPED.masses[role], mass, places=4, msg=role)
+
     def test_listed_servo_and_battery_masses(self):
         parts = {p.name: p for p in budget.default_parts(SIM_QUADRUPED)}
         servos = sum(p.mass for p in parts.values() if p.group == "servo")

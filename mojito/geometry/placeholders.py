@@ -102,6 +102,9 @@ STAGE1_QUADRUPED = QuadrupedDesign(
 # The Stage 2 simulator's quadruped (docs/STAGE2.md, "Sizing"): legs and body length 1.25 times the Stage 0-1 ones, so the
 # listed servos are not oversized against the legs, and a wider body. The stance height is the one the stand test and the
 # crawl use; the tuned trot stands lower (`mojito.sim.gait_replay.TROT_STANCE_HEIGHT`). Servos are listed at 60 g.
+# The masses are the mass budget's, by simulator role (`role_masses_for_simulator_kg` in results/body/mass_budget.json, 1.559 kg
+# in all, 0.763 kg of it assumed: docs/STAGE2.md, "Mass budget"); tests/robot/test_budget.py checks they still match it.
+# Before this they were guesses (body 0.8, hip 0.06, thigh 0.10, shank 0.06, foot 0.01 kg: 1.72 kg).
 SIM_QUADRUPED = QuadrupedDesign(
     abduction_offset=0.05, upper_length=0.15, lower_length=0.15, body_length=0.30, body_width=0.15, stance_height=0.2125,
-    masses={"body": 0.8, "hip": 0.06, "thigh": 0.10, "shank": 0.06, "foot": 0.01})
+    masses={"body": 0.6866, "hip": 0.0854, "thigh": 0.1003, "shank": 0.0223, "foot": 0.01})
