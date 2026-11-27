@@ -40,11 +40,11 @@
   "foot": 0.01
  },
  "simulator_masses_now_kg": {
-  "total": 1.72,
-  "body": 0.8,
-  "hip": 0.06,
-  "thigh": 0.1,
-  "shank": 0.06,
+  "total": 1.559,
+  "body": 0.6866,
+  "hip": 0.0854,
+  "thigh": 0.1003,
+  "shank": 0.0223,
   "foot": 0.01
  },
  "static_trot_bound_kg_5V_half_stall": 1.79,
@@ -273,12 +273,12 @@
   }
  },
  "provenance": {
-  "git_commit": "74aa1ffebf5900fd6de671f73a5e12085997b3a1",
+  "git_commit": "462662dfd56dd775fb83929daf4db45310706020",
   "git_dirty": false,
   "script": "scripts/body/mass_budget.py",
   "argv": [],
   "python": "3.13.18",
-  "numpy": "2.5.4",
-  "utc": "2026-11-07T09:00:05Z"
+  "numpy": "2.5.3",
+  "utc": "2026-11-27T08:25:51Z"
  }
 }
