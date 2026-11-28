@@ -1,0 +1,113 @@
+{
+ "what": "Learned policy against the scripted trot on held-out episodes (40 seeds each), placeholder robot and servo",
+ "eval_seeds": [
+  10000,
+  10040
+ ],
+ "command_range": [
+  [
+   0.05,
+   0.25
+  ],
+  [
+   -0.03,
+   0.03
+  ],
+  [
+   -0.3,
+   0.3
+  ]
+ ],
+ "fast_command": [
+  0.3,
+  0.0,
+  0.0
+ ],
+ "randomisation": {
+  "mass_scale": [
+   0.8,
+   1.2
+  ],
+  "friction": [
+   0.6,
+   1.2
+  ],
+  "torque_scale": [
+   0.8,
+   1.0
+  ],
+  "latency": [
+   0.01,
+   0.04
+  ]
+ },
+ "reward_weights": {
+  "tracking_width": 0.1,
+  "tracking": 1.0,
+  "yaw_tracking": 0.5,
+  "upright": 2.0,
+  "torque": 0.02,
+  "smooth": 0.05,
+  "alive": 0.2
+ },
+ "results": {
+  "scripted_trot_randomised": {
+   "episodes": 40,
+   "mean_return": 308.68009208936957,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.07887611039102911,
+   "mean_peak_torque_fraction": 0.8524335055598481,
+   "mean_action_change": 0.0
+  },
+  "policy_randomised": {
+   "episodes": 40,
+   "mean_return": 356.60547007630083,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.0598582064201757,
+   "mean_peak_torque_fraction": 0.9776596377757777,
+   "mean_action_change": 0.1771774363887928
+  },
+  "scripted_trot_nominal": {
+   "episodes": 40,
+   "mean_return": 310.13617529761206,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.08182506384345405,
+   "mean_peak_torque_fraction": 0.7304570464968867,
+   "mean_action_change": 0.0
+  },
+  "policy_nominal": {
+   "episodes": 40,
+   "mean_return": 352.15046588284866,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.062134763962309256,
+   "mean_peak_torque_fraction": 0.9332776413555827,
+   "mean_action_change": 0.07524325727976179
+  },
+  "scripted_trot_fast_command": {
+   "episodes": 40,
+   "mean_return": 230.75095738121863,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.13425772626925697,
+   "mean_peak_torque_fraction": 0.9673159197582593,
+   "mean_action_change": 0.0
+  },
+  "policy_fast_command": {
+   "episodes": 40,
+   "mean_return": 232.58154030373575,
+   "fell_fraction": 0.0,
+   "mean_tracking_error_m_s": 0.15556221024014963,
+   "mean_peak_torque_fraction": 1.0,
+   "mean_action_change": 0.17946830234402483
+  }
+ },
+ "provenance": {
+  "git_commit": "3cfd2704f620294d01dd50a57ee8fa8847b2ac2f",
+  "git_dirty": false,
+  "script": "scripts/locomotion/train_policy.py",
+  "argv": [],
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "utc": "2026-11-28T03:49:13Z",
+  "mujoco": "3.16.0"
+ }
+}

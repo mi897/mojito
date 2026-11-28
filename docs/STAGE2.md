@@ -903,6 +903,26 @@ Each is one branch-sized step. Tick them off here as they land.
 7. [ ] **Locomotion learning.** Policy acts in foot space through the IK layer.
    Randomise mass, friction, servo strength and latency. Reintroduce the
    current-angle input and smoothness penalties. Only after 1–6.
+   *First slice, branch `stage-2-locomotion-learning` (package stays open):* `mojito/locomotion/` (environment, NumPy MLP policy,
+   evolution-strategies trainer), `scripts/locomotion/train_policy.py`, `results/locomotion/` (`loco_eval.json`, `training_log.json`,
+   `loco_learning.png`), `weights/loco_policy.npz`. The policy adds a foot offset (up to 20 mm) to the scripted trot through the
+   closed-form IK (a zero action is the scripted trot); 47 observations from the sensor models only (no ground truth), 50 Hz control;
+   mass 0.8-1.2x, floor friction 0.6-1.2, servo torque 0.8-1.0x and latency 10-40 ms randomised per episode; 150 ES iterations, 16
+   antithetic pairs, 2 episodes per candidate, one training run (seed 0). Measured on 40 held-out episodes per row (`loco_eval.json`):
+
+   | condition | scripted trot return | policy return | tracking error m/s (scripted / policy) | peak torque, share of stall (scripted / policy) | falls |
+   | --- | --- | --- | --- | --- | --- |
+   | randomised, commands 0.05-0.25 m/s | 308.7 | 356.6 | 0.079 / 0.060 | 0.85 / 0.98 | 0 / 40 both |
+   | nominal robot | 310.1 | 352.2 | 0.082 / 0.062 | 0.73 / 0.93 | 0 / 40 both |
+   | command 0.30 m/s (above training range) | 230.8 | 232.6 | 0.134 / 0.156 | 0.97 / 1.00 | 0 / 40 both |
+
+   *Shows:* in simulation a small residual learned by ES tracks the commanded velocity about 25% more closely than the scripted trot
+   inside the training range, with no falls in either. *Does not show:* the return gain is partly the reward's own terms (what was
+   optimised), the policy uses more of the servo's torque (peak 0.98 of stall against 0.85, so less margin on a real servo), it does
+   not help above the training range (tracking is worse at 0.30 m/s), and it is one training seed with no learning-curve repeat, so
+   the size of the gain is not established. Nothing about hardware, turning, terrain or the learned IK network; the current-angle
+   input is the sensor reading, the smoothness penalty is a plain action-change term, and PPO or PyTorch were not tried. Still to do:
+   several seeds, a torque-margin term in the reward, wider command range, and the comparison in package 8.
 8. [ ] **Action-space comparison: joint targets versus foot offsets** (later; needs 7). *Why:* Gait in Eight
    (Bohlinger et al. 2025, arXiv 2503.08375) compared joint-target offsets with a CPG whose policy output is a Cartesian
    foot offset converted by analytic IK, and reported that they trade off (joint targets for agile high speed, foot offsets for

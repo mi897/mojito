@@ -32,7 +32,7 @@ for the overview, `docs/RESULTS.md` and `docs/PHYSICS.md` for results, `docs/USA
 ## Layout
 
 ```
-mojito/                the library, in four subpackages (each holds at most about a dozen files), plus
+mojito/                the library, in five subpackages (each holds at most about a dozen files), plus
                        results.py (write_result: results JSON with a provenance block; paths from the repo root)
                        and palette.py (the one plot palette)
   geometry/            urdf.py (read and write URDF, no NumPy), spec.py (URDF + manifest -> LimbSpec / RobotSpec),
@@ -42,6 +42,7 @@ mojito/                the library, in four subpackages (each holds at most abou
                        gaits.py (trot, crawl, stability margin), statics.py (static joint torques, mass bound), budget.py (mass budget, printed-link strength), fit.py (servo boxes, electronics packing)
   learning/            base.py (IKNetBase shared by both backends, reconcile), model.py (IK network, NumPy, Adam),
                        torch_model.py (PyTorch backend), backend.py (make_model, load_model)
+  locomotion/          env.py (LocomotionEnv: scripted trot + policy foot offsets), policy.py (NumPy MLP), es.py (evolution strategies), rollout.py, train.py
   sim/                 mjcf.py (MuJoCo model from a URDF), actuators.py (servo model), sensors.py (joint sensor, IMU),
                        robot.py (SimRobot: the actuated model, joint lookups, foot loads, pose readouts), stand.py, gait_replay.py, clearance.py (servo-box distances),
                        design_sweep.py, gait_plots.py, live_sim.py (need mujoco, except actuators and sensors)
@@ -57,7 +58,7 @@ scripts/               entry points, one folder per topic
   gait/sweeps/         trot_period_sweep, trot_period_robustness, trot_1p7_parameter_sweep, trot_1p7_one_at_a_time, trot_1p7_kp_kd_grid, trot_1p7_combined
                        and a plot_<name> for each (outputs in results/gait/sweeps/{period,parameters,servo_gains,combined}/)
   website/             build_site, serve_site, site_sweep, make_og_image, make_favicon
-tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, website/;
+tests/                 unittest suites, mirroring the layout: geometry/, robot/, learning/, sim/, locomotion/, website/;
                        test_results.py for mojito/results.py (and that scripts use it and the palette)
 weights/ik_leg.npz     the trained leg network
 results/               generated, committed: learning/, body/, stand/, design/, gait/ (json metrics, png plots, gif animations); gait/sweeps/ has period/, parameters/, servo_gains/, combined/
