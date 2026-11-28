@@ -100,12 +100,12 @@
   }
  },
  "provenance": {
-  "git_commit": "c7dca30f7011518e9f14fbcec0d10969c1db0dc8",
+  "git_commit": "462662dfd56dd775fb83929daf4db45310706020",
   "git_dirty": false,
   "script": "scripts/body/torque_envelope.py",
   "argv": [],
-  "python": "3.12.3",
-  "numpy": "2.5.4",
-  "utc": "2026-11-01T08:11:34Z"
+  "python": "3.13.18",
+  "numpy": "2.5.3",
+  "utc": "2026-11-27T08:24:56Z"
  }
 }

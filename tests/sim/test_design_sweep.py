@@ -104,7 +104,7 @@ class TestEvaluateDesign(unittest.TestCase):
         path = os.path.join(os.path.dirname(__file__), "..", "..", "results", "stand", "stand_test.json")
         with open(path) as f:
             stored = json.load(f)
-        self.assertAlmostEqual(self.result["stand"]["total_mass_kg"], 1.72, places=2)
+        self.assertAlmostEqual(self.result["stand"]["total_mass_kg"], design_sweep.REFERENCE_DESIGN.total_mass, places=9)
         self.assertTrue(self.result["stand"]["stood"])
         self.assertEqual(stored["lengths_m"], design_sweep.REFERENCE_DESIGN.lengths.tolist())
 

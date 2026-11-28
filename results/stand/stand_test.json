@@ -98,60 +98,60 @@
  },
  "default_masses": {
   "5.0 V": {
-   "total_mass_kg": 1.72,
+   "total_mass_kg": 1.5586,
    "servo_limit_nm": 1.8633,
    "peak_torque_nm_by_joint_max_over_legs": {
-    "abduction": 0.1656,
-    "hip_pitch": 0.1267,
-    "knee": 0.5207
+    "abduction": 0.1474,
+    "hip_pitch": 0.0988,
+    "knee": 0.4743
    },
-   "peak_torque_fraction_of_limit_last_window": 0.2794,
-   "peak_torque_fraction_of_limit_whole_run": 0.3365,
+   "peak_torque_fraction_of_limit_last_window": 0.2546,
+   "peak_torque_fraction_of_limit_whole_run": 0.3024,
    "stood": true,
    "max_tilt_deg_last_window": 0.5,
    "saturated": false,
    "foot_load_n_FL_FR_RL_RR": [
-    3.446,
-    3.446,
-    4.991,
-    4.991
+    3.216,
+    3.216,
+    4.429,
+    4.429
    ],
    "foot_load_share_percent_FL_FR_RL_RR": [
-    20.4,
-    20.4,
-    29.6,
-    29.6
+    21.0,
+    21.0,
+    29.0,
+    29.0
    ],
-   "max_knee_gap_deg": 2.743,
-   "body_height_drop_mm": 6.0
+   "max_knee_gap_deg": 2.478,
+   "body_height_drop_mm": 5.95
   },
   "6.0 V": {
-   "total_mass_kg": 1.72,
+   "total_mass_kg": 1.5586,
    "servo_limit_nm": 1.9995,
    "peak_torque_nm_by_joint_max_over_legs": {
-    "abduction": 0.1656,
-    "hip_pitch": 0.1267,
-    "knee": 0.5207
+    "abduction": 0.1474,
+    "hip_pitch": 0.0988,
+    "knee": 0.4743
    },
-   "peak_torque_fraction_of_limit_last_window": 0.2604,
-   "peak_torque_fraction_of_limit_whole_run": 0.3136,
+   "peak_torque_fraction_of_limit_last_window": 0.2372,
+   "peak_torque_fraction_of_limit_whole_run": 0.2818,
    "stood": true,
    "max_tilt_deg_last_window": 0.5,
    "saturated": false,
    "foot_load_n_FL_FR_RL_RR": [
-    3.446,
-    3.446,
-    4.991,
-    4.991
+    3.216,
+    3.216,
+    4.429,
+    4.429
    ],
    "foot_load_share_percent_FL_FR_RL_RR": [
-    20.4,
-    20.4,
-    29.6,
-    29.6
+    21.0,
+    21.0,
+    29.0,
+    29.0
    ],
-   "max_knee_gap_deg": 2.743,
-   "body_height_drop_mm": 6.0
+   "max_knee_gap_deg": 2.478,
+   "body_height_drop_mm": 5.95
   }
  },
  "mass_sweep_5v_light_legs": {
@@ -828,42 +828,42 @@
    "body_height_drop_mm": 14.06
   },
   "default_masses": {
-   "total_mass_kg": 1.72,
+   "total_mass_kg": 1.5586,
    "servo_limit_nm": 1.8633,
    "peak_torque_nm_by_joint_max_over_legs": {
-    "abduction": 0.1666,
-    "hip_pitch": 0.1438,
-    "knee": 0.6557
+    "abduction": 0.1477,
+    "hip_pitch": 0.1119,
+    "knee": 0.5967
    },
-   "peak_torque_fraction_of_limit_last_window": 0.3519,
-   "peak_torque_fraction_of_limit_whole_run": 0.444,
+   "peak_torque_fraction_of_limit_last_window": 0.3202,
+   "peak_torque_fraction_of_limit_whole_run": 0.4009,
    "stood": true,
-   "max_tilt_deg_last_window": 0.8,
+   "max_tilt_deg_last_window": 0.7,
    "saturated": false,
    "foot_load_n_FL_FR_RL_RR": [
-    3.328,
-    3.328,
-    5.108,
-    5.108
+    3.125,
+    3.125,
+    4.52,
+    4.52
    ],
    "foot_load_share_percent_FL_FR_RL_RR": [
-    19.7,
-    19.7,
-    30.3,
-    30.3
+    20.4,
+    20.4,
+    29.6,
+    29.6
    ],
-   "max_knee_gap_deg": 3.856,
-   "body_height_drop_mm": 9.19
+   "max_knee_gap_deg": 3.519,
+   "body_height_drop_mm": 9.0
   }
  },
  "provenance": {
-  "git_commit": "e0f151db4110ee488d04c33207cff4e4dbff9678",
+  "git_commit": "462662dfd56dd775fb83929daf4db45310706020",
   "git_dirty": false,
   "script": "scripts/stand/stand_test.py",
   "argv": [],
   "python": "3.13.18",
-  "numpy": "2.5.4",
-  "utc": "2026-11-01T02:10:43Z",
+  "numpy": "2.5.3",
+  "utc": "2026-11-27T08:24:57Z",
   "mujoco": "3.16.0"
  }
 }

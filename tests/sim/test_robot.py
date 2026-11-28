@@ -32,7 +32,8 @@ class TestDesigns(unittest.TestCase):
             _ = placeholders.STAGE1_QUADRUPED.total_mass
         self.assertEqual(gait_replay.DEFAULT_STANCE_HEIGHT, design.stance_height)
         # body plus four legs of hip, thigh, shank and foot, summed by hand
-        self.assertAlmostEqual(design.total_mass, 0.8 + 4 * (0.06 + 0.10 + 0.06 + 0.01), places=12)
+        m = design.masses
+        self.assertAlmostEqual(design.total_mass, m["body"] + 4 * (m["hip"] + m["thigh"] + m["shank"] + m["foot"]), places=12)
         self.assertEqual(mjcf.GRAVITY, -statics.G)
 
     def test_a_design_pickles(self):
@@ -125,8 +126,9 @@ class TestSimRobot(unittest.TestCase):
     def test_a_partial_mass_override_keeps_the_design_masses(self):
         heavy = dataclasses.replace(placeholders.SIM_QUADRUPED, masses=dict(placeholders.SIM_QUADRUPED.masses, body=2.0))
         built = sim_robot_module.SimRobot(heavy, masses={"foot": 0.02})
-        # body 2.0 + 4 legs of hip 0.06, thigh 0.10, shank 0.06 and the overridden foot 0.02
-        self.assertAlmostEqual(built.total_mass, 2.0 + 4 * (0.06 + 0.10 + 0.06 + 0.02), places=9)
+        # body 2.0 + 4 legs of the design's hip, thigh and shank and the overridden foot 0.02
+        m = placeholders.SIM_QUADRUPED.masses
+        self.assertAlmostEqual(built.total_mass, 2.0 + 4 * (m["hip"] + m["thigh"] + m["shank"] + 0.02), places=9)
         geometry_only = sim_robot_module.SimRobot(dataclasses.replace(placeholders.STAGE1_QUADRUPED, stance_height=0.17))
         self.assertAlmostEqual(geometry_only.total_mass, placeholders.SIM_QUADRUPED.total_mass, places=9)  # DEFAULT_MASSES
 
